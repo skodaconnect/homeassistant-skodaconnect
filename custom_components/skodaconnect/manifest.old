@@ -1,0 +1,9 @@
+{
+    "domain": "skodaconnect",
+    "name": "Skoda Connect",
+    "documentation": "tbd",
+    "issue_tracker": "tbd",
+    "dependencies": [],
+    "codeowners": ["tbd"],
+    "requirements": ["volkswagencarnet==4.4.22"]
+}
