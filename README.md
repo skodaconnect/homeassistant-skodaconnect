@@ -152,9 +152,7 @@ Save these automations in your automations file `<config dir>/automations.yaml`
 ```yaml
 logger:
     default: info
-    logs:
-        skodaconnect: debug
-        dashboard: debug
+    logs:        
         custom_components.skodaconnect: debug
         custom_components.skodaconnect.climate: debug
         custom_components.skodaconnect.lock: debug
