@@ -5,5 +5,5 @@
     "issue_tracker": "tbd",
     "dependencies": [],
     "codeowners": ["tbd"],
-    "requirements": []
+    "requirements": ["volkswagencarnet==4.4.22"]
 }
