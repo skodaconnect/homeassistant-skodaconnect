@@ -299,7 +299,7 @@ class Connection:
                     _LOGGER.info('Session expired, creating new login session to skoda connect.')
                     await self._login()
             else:
-                self._session_first_update = True
+                self._session_first_update = True                
 
             # fetch vehicles
             _LOGGER.debug('Fetching vehicles')
@@ -340,6 +340,11 @@ class Connection:
         url = vehicle._url
         self._vin=url
         _LOGGER.debug(f'Updating vehicle status {vehicle.vin}')
+
+        try:
+            await self.getHomeRegion(url)
+        except Exception as err:
+            _LOGGER.debug(f'Cannot get homeregion, error: {err}')
         
         #https://msg.volkswagen.de/fs-car/promoter/portfolio/v1/skoda/CZ/vehicle/$vin/carportdata
         try:
@@ -410,6 +415,11 @@ class Connection:
                 _LOGGER.debug(f'Could not fetch heating: {response}')
         except Exception as err:
             _LOGGER.debug(f'Could not fetch heating, error: {err}')
+    
+    async def getHomeRegion(self, vin):
+        _LOGGER.debug("Getting homeregion for {vin}")
+        response = await self.get('https://mal-1a.prd.ece.vwg-connect.com/api/cs/vds/v1/vehicles/$vin/homeRegion', vin)
+        self._session_auth_ref_url = response['homeRegion']['baseUri']['content'].split("/api")[0].replace("mal-", "fal-") if response['homeRegion']['baseUri']['content'] != "https://mal-1a.prd.ece.vwg-connect.com/api" else "https://msg.volkswagen.de"
 
     def vehicle(self, vin):
         """Return vehicle for given vin."""
@@ -480,15 +490,58 @@ class Vehicle:
                 await self._connection._login()
 
             res = await self.post(query, **data)
+            #heating actions
             if res.get('performActionResponse', {}).get('requestId', False):
                 _LOGGER.info('Message delivered, requestId=%s', res.get('performActionResponse', {}).get('requestId', 0))
-                return True
+                return res.get('performActionResponse', {}).get('requestId', False)
+            #status refresh actions
+            elif res.get('CurrentVehicleDataResponse', {}).get('requestId', False):
+                _LOGGER.info('Message delivered, requestId=%s', res.get('CurrentVehicleDataResponse', {}).get('requestId', 0))
+                return res.get('CurrentVehicleDataResponse', {}).get('requestId', False)
+            #car lock action
+            elif res.get('rluActionResponse', {}).get('requestId', False):
+                _LOGGER.info('Message delivered, requestId=%s', res.get('rluActionResponse', {}).get('requestId', 0))
+                return res.get('rluActionResponse', {}).get('requestId', False)
             else:
                 _LOGGER.warning(f'Failed to execute {query}, response is:{str(res)}')
                 return
 
         except Exception as error:
             _LOGGER.warning(f'Failure to execute: {error}')
+    
+    async def getRequestProgressStatus(self, requestId, sectionId, retryCount=36):
+        #retry count means that after 36x5seconds=3 minutes it will give up and not wait for status
+        retryCount -= 1
+        if (retryCount == 0):
+            _LOGGER.warning(f'Timeout of waiting for result of {requestId} in section {sectionId}. It doesnt mean it wasnt success...')
+            return
+
+        try:
+            if not await self._connection.validate_login:
+                _LOGGER.info('Session expired, reconnecting to skoda connect.')
+                await self._connection._login()
+            
+            url = "fs-car/bs/$sectionId/v1/Skoda/CZ/vehicles/$vin/requests/$requestId/status"
+            url = re.sub("\$requestId", requestId, url)
+            url = re.sub("\$sectionId", sectionId, url)
+            
+            res = await self.get(url)
+            if res.get('requestStatusResponse', {}).get('status', False):
+                if res.get('requestStatusResponse', {}).get('status', False) == "request_in_progress":
+                    _LOGGER.debug(f'Request {requestId}, sectionId {sectionId} still in progress, sleeping for 5 seconds and check status again...')
+                    time.sleep(5)                    
+                    return await self.getRequestProgressStatus(requestId, sectionId, retryCount)
+                else:
+                    result=res.get('requestStatusResponse', {}).get('status', False)
+                    _LOGGER.debug(f'Request result: {result}')
+                    return True
+            else:
+                _LOGGER.warning(f'Incorrect response for status response for request={requestId}, section={sectionId}, response is:{str(res)}')
+                return
+
+        except Exception as error:
+            _LOGGER.warning(f'Failure during get request progress status: {error}')
+            return
     
     async def requestSecToken(self,spin):
         try:             
@@ -522,6 +575,10 @@ class Vehicle:
         return find_path(self.attrs, attr)
 
     def dashboard(self, **config):
+        #Classic python notation
+        #from dashboardskoda import Dashboard
+        #return Dashboard(self, **config)
+        #HA notation
         from . import dashboardskoda        
         return dashboardskoda.Dashboard(self, **config)
 
@@ -862,6 +919,17 @@ class Vehicle:
         if self.is_electric_climatisation_supported:
             if self.attrs.get('vehicleEmanager', {}).get('rpc', {}).get('status', {}).get('windowHeatingAvailable', False):
                 return True
+
+    @property
+    def combustion_engine_heatingventilation_status(self):
+        """Return status of combustion engine heating/ventilation."""
+        return self.attrs.get('heating', {}).get('climatisationStateReport', {}).get('climatisationState', 'Unknown')         
+
+    @property
+    def is_combustion_engine_heatingventilation_status_supported(self):
+        """Return true if vehichle has combustion engine heating/ventilation."""
+        if self.attrs.get('heating', {}).get('climatisationStateReport', {}).get('climatisationState', False):
+            return True
 
     @property
     def combustion_engine_heating(self):
@@ -1244,25 +1312,76 @@ class Vehicle:
         else:
             _LOGGER.error('No request update support.')
 
-    async def lock_car(self, spin):
+    async def lock_car(self, spin):        
         if spin:
-            resp = await self.call('-/vsr/remote-lock', spin=spin)
-            if not resp:
-                _LOGGER.warning('Failed to lock car')
+            if self.is_door_locked_supported:
+                secToken = await self.requestSecToken(spin)                                
+                url = "fs-car/bs/rlu/v1/skoda/CZ/vehicles/$vin/actions"
+                data = "<rluAction xmlns=\"http://audi.de/connect/rlu\"><action>lock</action></rluAction>"
+                if "Content-Type" in self._connection._session_headers:
+                    contType = self._connection._session_headers["Content-Type"]
+                else:
+                    contType = ''
+
+                try:                                                                         
+                    self._connection._session_headers["Content-Type"] = "application/vnd.vwg.mbb.RemoteLockUnlock_v1_0_0+xml"
+                    self._connection._session_headers["x-mbbSecToken"] = secToken
+                    #self._connection._session_headers["X-App-Id"] = "cz.skodaauto.connect"
+                    #self._connection._session_headers["X-App-Name"] = "ConnectApp"
+                    #self._connection._session_headers["X-Language-Id"] = "en"
+                    #self._connection._session_headers["Accept-Language"] = "en-CZ"
+                    #self._connection._session_headers["User-Agent"] = 
+                    #self._connection._session_headers["X-Platform"] = "apple"
+                    #self._connection._session_headers["X-Country-Id"] = "CZ"
+                    resp = await self.call(url, data=data)
+                    if not resp:
+                        _LOGGER.warning('Failed to lock car')
+                    else:
+                        await self.getRequestProgressStatus(resp,"rlu")
+                        await self.update()                        
+                        return 
+                except Exception as error:
+                    _LOGGER.error('Failed to lock car - %s' % error)
+                
+                #Cleanup headers
+                if "x-mbbSecToken" in self._connection._session_headers: del self._connection._session_headers["x-mbbSecToken"]
+                if "Content-Type" in self._connection._session_headers: del self._connection._session_headers["Content-Type"]
+                if contType: self._connection._session_headers["Content-Type"]=contType
             else:
-                await self.update()
-                return resp
+                _LOGGER.error('No car lock support.')
         else:
-            _LOGGER.error('Invalid SPIN provided')
+            _LOGGER.error('Invalid SPIN provided')      
 
     async def unlock_car(self, spin):
         if spin:
-            resp = await self.call('-/vsr/remote-unlock', spin=spin)
-            if not resp:
-                _LOGGER.warning('Failed to unlock car')
+            if self.is_door_locked_supported:
+                secToken = await self.requestSecToken(spin)                                
+                url = "fs-car/bs/rlu/v1/skoda/CZ/vehicles/$vin/actions"
+                data = '<rluAction xmlns="http://audi.de/connect/rlu"><action>unlock</action></rluAction>'
+                if "Content-Type" in self._connection._session_headers:
+                    contType = self._connection._session_headers["Content-Type"]
+                else:
+                    contType = ''
+
+                try:
+                    self._connection._session_headers["Content-Type"] = "application/vnd.vwg.mbb.RemoteLockUnlock_v1_0_0+xml; charset=UTF-8"
+                    self._connection._session_headers["x-mbbSecToken"] = secToken
+                    resp = await self.call(url, data=data)
+                    if not resp:
+                        _LOGGER.warning('Failed to unlock car')
+                    else:
+                        await self.getRequestProgressStatus(resp,"rlu")
+                        await self.update()                        
+                        return 
+                except Exception as error:
+                    _LOGGER.error('Failed to unlock car - %s' % error)
+                
+                #Cleanup headers
+                if "x-mbbSecToken" in self._connection._session_headers: del self._connection._session_headers["x-mbbSecToken"]
+                if "Content-Type" in self._connection._session_headers: del self._connection._session_headers["Content-Type"]
+                if contType: self._connection._session_headers["Content-Type"]=contType
             else:
-                await self.update()
-                return resp
+                _LOGGER.error('No car lock support.')
         else:
             _LOGGER.error('Invalid SPIN provided')
 
@@ -1330,11 +1449,8 @@ class Vehicle:
                     if not resp:
                         _LOGGER.warning('Failed to start combustion engine heating')
                     else:
-                        time.sleep(30)
-                        await self.update()
-                        if not self.combustion_engine_heating:
-                            time.sleep(60)
-                            await self.update()
+                        await self.getRequestProgressStatus(resp,"rs")
+                        await self.update()                        
                         return 
                 except Exception as error:
                     _LOGGER.error('Failed to start combustion engine heating - %s' % error)
@@ -1363,6 +1479,7 @@ class Vehicle:
                 if not resp:
                     _LOGGER.warning('Failed to stop combustion engine heating')
                 else:
+                    await self.getRequestProgressStatus(resp,"rs")
                     await self.update()
                     return 
             except Exception as error:
@@ -1392,11 +1509,8 @@ class Vehicle:
                     if not resp:
                         _LOGGER.warning('Failed to start combustion engine climatisation')
                     else:
-                        time.sleep(30)
+                        await self.getRequestProgressStatus(resp,"rs")
                         await self.update()
-                        if not self.combustion_climatisation:
-                            time.sleep(60)
-                            await self.update()                        
                 except Exception as error:
                     _LOGGER.error('Failed to start combustion engine climatisation - %s' % error)
                 
@@ -1483,9 +1597,7 @@ async def main():
     elif "-vv" in argv:
         logging.basicConfig(level=logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.ERROR)
-
-    logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.ERROR)   
 
     async with ClientSession(headers={'Connection': 'keep-alive'}) as session:
         connection = Connection(session, **read_config())
@@ -1494,6 +1606,8 @@ async def main():
                 for vehicle in connection.vehicles:
                     print(f'Vehicle id: {vehicle}')
                     print('Supported sensors:')
+                    #await vehicle.lock_car("1234")
+                    #await vehicle.stop_combustion_engine_heating()
                     for instrument in vehicle.dashboard().instruments:
                         print(f' - {instrument.name} (domain:{instrument.component}) - {instrument.str_state}')
                     #print(vehicle.last_connected)

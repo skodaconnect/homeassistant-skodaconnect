@@ -92,6 +92,7 @@ RESOURCES = [
     "trip_last_average_fuel_consumption",
     "trip_last_duration",
     "trip_last_length",
+    "combustion_engine_heatingventilation_status",
 ]
 
 CONFIG_SCHEMA = vol.Schema(

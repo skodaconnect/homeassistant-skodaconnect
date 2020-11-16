@@ -471,7 +471,7 @@ def create_instruments():
         ElectricClimatisation(),
         ElectricClimatisationClimate(),
         CombustionClimatisation(),
-        CombustionClimatisationClimate(),
+        #CombustionClimatisationClimate(),
         Charging(),
         WindowHeater(),
         CombustionEngineHeating(),
@@ -600,6 +600,12 @@ def create_instruments():
             name="Last trip total electric consumption",
             icon="mdi:car-battery",
             unit="kWh/100 km",
+        ),
+        Sensor(
+            attr="combustion_engine_heatingventilation_status",
+            name="Combustion engine heating/ventilation status",
+            icon="mdi:radiator",
+            unit="",
         ),
         BinarySensor(
             attr="external_power",
