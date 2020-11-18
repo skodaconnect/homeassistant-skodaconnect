@@ -21,8 +21,8 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.util.dt import utcnow
-#from skoda.skoda import Connection
-from . import skoda
+from skodaconnect import Connection
+#from . import skoda
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ async def async_setup(hass, config):
     session = async_get_clientsession(hass)
 
     _LOGGER.debug("Creating connection to skoda connect")        
-    connection = skoda.skoda.Connection(
+    connection = Connection(
         session=session,
         username=config[DOMAIN].get(CONF_USERNAME),
         password=config[DOMAIN].get(CONF_PASSWORD),

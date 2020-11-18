@@ -1,9 +1,9 @@
 {
     "domain": "skodaconnect",
     "name": "Skoda Connect",
-    "documentation": "tbd",
-    "issue_tracker": "tbd",
+    "documentation": "https://github.com/lendy007/homeassistant-skodaconnect",
+    "issue_tracker": "https://github.com/lendy007/homeassistant-skodaconnect/issues",
     "dependencies": [],
-    "codeowners": ["tbd"],
-    "requirements": ["volkswagencarnet==4.4.22"]
+    "codeowners": ["@lendy007"],
+    "requirements": ["skodaconnect==1.0.7.dev2"]
 }
