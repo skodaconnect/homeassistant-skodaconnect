@@ -1,3 +1,7 @@
+![Version](https://img.shields.io/github/v/release/lendy007/homeassistant-skodaconnect)
+![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20pypi)
+![Downloads](https://img.shields.io/github/downloads/lendy007/homeassistant-skodaconnect/total)
+
 # Be aware this is a TEST version of plugin, not recommended to use if you don't want to test it
 
 # Skoda Connect - An home assistant plugin to add integration with your car
