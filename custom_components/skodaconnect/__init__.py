@@ -24,7 +24,7 @@ from homeassistant.util.dt import utcnow
 from skodaconnect import Connection
 #from . import skoda
 
-__version__ = "1.0.8"
+__version__ = "1.0.9"
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "skodaconnect"
