@@ -73,7 +73,7 @@ skodaconnect:
         - window_closed_right_back
         - sunroof_closed
 	- service_inspection_km
-        - oil_inspection_km
+	- oil_inspection_km
 	- outside_temperature
 	- electric_climatisation
 	- window_heater
