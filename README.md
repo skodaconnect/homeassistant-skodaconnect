@@ -72,24 +72,24 @@ skodaconnect:
         - window_closed_right_front
         - window_closed_right_back
         - sunroof_closed
-	- service_inspection_km
-	- oil_inspection_km
-	- outside_temperature
-	- electric_climatisation
-	- window_heater
-	- charging
-	- battery_level
-	- charging_time_left
-	- electric_range
-	- combined_range
-	- charge_max_ampere
-	- climatisation_target_temperature
-	- external_power
-	- climatisation_without_external_power
-	- charging_cable_connected
-	- charging_cable_locked
-	- trip_last_average_electric_consumption
-	- hood_closed
+        - service_inspection_km
+        - oil_inspection_km
+        - outside_temperature
+        - electric_climatisation
+        - window_heater
+        - charging
+        - battery_level
+        - charging_time_left
+        - electric_range
+        - combined_range
+        - charge_max_ampere
+        - climatisation_target_temperature
+        - external_power
+        - climatisation_without_external_power
+        - charging_cable_connected
+        - charging_cable_locked
+        - trip_last_average_electric_consumption
+        - hood_closed
 ```
 
 * **resources:** if not specified, it will create all supported entities
