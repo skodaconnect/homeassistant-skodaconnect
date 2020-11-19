@@ -3,8 +3,8 @@ Support for Skoda Connect Platform
 """
 import logging
 
-#from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate import ClimateDevice
+from homeassistant.components.climate import ClimateEntity
+#from homeassistant.components.climate import ClimateDevice
 from homeassistant.components.climate.const import (
     HVAC_MODE_HEAT,
     HVAC_MODE_OFF,
@@ -31,8 +31,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities([SkodaClimate(hass.data[DATA_KEY], *discovery_info)])
 
 
-#class SkodaClimate(SkodaEntity, ClimateEntity):
-class SkodaClimate(SkodaEntity, ClimateDevice):
+class SkodaClimate(SkodaEntity, ClimateEntity):
+#class SkodaClimate(SkodaEntity, ClimateDevice):
     """Representation of a Skoda Carnet Climate."""
 
     @property
