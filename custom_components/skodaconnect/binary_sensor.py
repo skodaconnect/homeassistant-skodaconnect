@@ -3,7 +3,8 @@ Support for Skoda Connect.
 """
 import logging
 
-from homeassistant.components.binary_sensor import DEVICE_CLASSES, BinarySensorEntity
+#from homeassistant.components.binary_sensor import DEVICE_CLASSES, BinarySensorEntity
+from homeassistant.components.binary_sensor import DEVICE_CLASSES, BinarySensorDevice
 
 from . import DATA_KEY, SkodaEntity
 
@@ -17,7 +18,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities([SkodaBinarySensor(hass.data[DATA_KEY], *discovery_info)])
 
 
-class SkodaBinarySensor(SkodaEntity, BinarySensorEntity):
+#class SkodaBinarySensor(SkodaEntity, BinarySensorEntity):
+class SkodaBinarySensor(SkodaEntity, BinarySensorDevice):
     """Representation of a Skoda Binary Sensor """
 
     @property

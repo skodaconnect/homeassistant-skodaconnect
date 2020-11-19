@@ -24,6 +24,7 @@ from homeassistant.util.dt import utcnow
 from skodaconnect import Connection
 #from . import skoda
 
+__version__ = "1.0.8"
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "skodaconnect"
@@ -34,6 +35,8 @@ CONF_MUTABLE = "mutable"
 CONF_SPIN = "spin"
 CONF_COMBUSTIONENGINEHEATINGDURATION = "combustion_engine_heating_duration"
 CONF_COMBUSTIONENGINECLIMATISATIONDURATION = "combustion_engine_climatisation_duration"
+CONF_ELECTRICENGINEHEATINGDURATION = "electric_engine_heating_duration"
+CONF_ELECTRICENGINECLIMATISATIONDURATION = "electric_engine_climatisation_duration"
 CONF_SCANDINAVIAN_MILES = "scandinavian_miles"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
@@ -80,6 +83,9 @@ RESOURCES = [
     "door_closed_right_back",
     "trunk_locked",
     "trunk_closed",
+    "hood_closed",
+    "charging_cable_connected",
+    "charging_cable_locked",
     "request_in_progress",
     "windows_closed",
     "window_closed_left_front",
@@ -93,6 +99,9 @@ RESOURCES = [
     "trip_last_duration",
     "trip_last_length",
     "combustion_engine_heatingventilation_status",
+    "service_inspection_km",
+    "oil_inspection_km",
+    "outside_temperature",
 ]
 
 CONFIG_SCHEMA = vol.Schema(
@@ -105,7 +114,9 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(CONF_MUTABLE, default=True): cv.boolean,
                 vol.Optional(CONF_SPIN, default=""): cv.string,
                 vol.Optional(CONF_COMBUSTIONENGINEHEATINGDURATION, default=30): vol.In([10,20,30,40,50,60]),
+                vol.Optional(CONF_ELECTRICENGINEHEATINGDURATION, default=30): vol.In([10,20,30,40,50,60]),
                 vol.Optional(CONF_COMBUSTIONENGINECLIMATISATIONDURATION, default=30): vol.In([10,20,30,40,50,60]),
+                vol.Optional(CONF_ELECTRICENGINECLIMATISATIONDURATION, default=30): vol.In([10,20,30,40,50,60]),
                 vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): (
                     vol.All(cv.time_period, vol.Clamp(min=MIN_UPDATE_INTERVAL))
                 ),
@@ -158,7 +169,9 @@ async def async_setup(hass, config):
             spin=config[DOMAIN][CONF_SPIN],
             scandinavian_miles=config[DOMAIN][CONF_SCANDINAVIAN_MILES],
             combustionengineheatingduration=config[DOMAIN][CONF_COMBUSTIONENGINEHEATINGDURATION],
-            combustionengineclimatisationduration=config[DOMAIN][CONF_COMBUSTIONENGINECLIMATISATIONDURATION],				
+            electricengineheatingduration=config[DOMAIN][CONF_ELECTRICENGINEHEATINGDURATION],
+            combustionengineclimatisationduration=config[DOMAIN][CONF_COMBUSTIONENGINECLIMATISATIONDURATION],
+            electricengineclimatisationduration=config[DOMAIN][CONF_ELECTRICENGINECLIMATISATIONDURATION],
         )
 
         for instrument in (

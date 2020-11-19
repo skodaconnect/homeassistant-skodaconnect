@@ -5,6 +5,7 @@ import logging
 
 from homeassistant.components.device_tracker import SOURCE_TYPE_GPS
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+#from homeassistant.helpers.dispatcher import (dispatcher_connect, dispatcher_send)
 from homeassistant.util import slugify
 
 from . import DATA_KEY, SIGNAL_STATE_UPDATED
@@ -17,7 +18,7 @@ async def async_setup_scanner(hass, config, async_see, discovery_info=None):
     if discovery_info is None:
         return
 
-    vin, component, attr = discovery_info    
+    vin, component, attr = discovery_info
     data = hass.data[DATA_KEY]
     instrument = data.instrument(vin, component, attr)
 

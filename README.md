@@ -15,9 +15,11 @@
 - last trip info
 - position
 - auxiliary heating/ventilation control
+- electric engine related information 
+- electric climatisation and window_heater information
 
 ## What is NOT working / under development
-- electro engine related things - start/stop charging, start electric climatisation, start window heater, electric consumption information
+- start/stop electric climatisation and window_heater
 - for auxiliary heating/ventilation - after enabling you need to wait about 2 minutes to get true status if it is really enabled or not
 - trigger status refresh from car - for status changes where car doesn't report it automatically to server (for example car was unlocked on the garden and you just lock it) it still shows old status until car will upload new status or status is refreshed from Skoda Connect App
 
@@ -70,7 +72,27 @@ skodaconnect:
         - window_closed_right_front
         - window_closed_right_back
         - sunroof_closed
+		- service_inspection_km
+        - oil_inspection_km
+		- outside_temperature
+		- electric_climatisation
+		- window_heater
+		- charging
+		- battery_level
+		- charging_time_left
+		- electric_range
+		- combined_range
+		- charge_max_ampere
+		- climatisation_target_temperature
+		- external_power
+		- climatisation_without_external_power
+		- charging_cable_connected
+		- charging_cable_locked
+		- trip_last_average_electric_consumption
+		- hood_closed
 ```
+
+* **resources:** if not specified, it will create all supported entities
 
 * **spin:** (optional) required for supporting combustion engine heating start/stop.
 
