@@ -15,9 +15,9 @@
 - auxiliary heating/ventilation control
 - electric engine related information 
 - electric climatisation and window_heater information
-
-## What is NOT working / under development
 - start/stop electric climatisation and window_heater
+
+### What is NOT working / under development
 - for auxiliary heating/ventilation - after enabling you need to wait about 2 minutes to get true status if it is really enabled or not
 - trigger status refresh from car - for status changes where car doesn't report it automatically to server (for example car was unlocked on the garden and you just lock it) it still shows old status until car will upload new status or status is refreshed from Skoda Connect App
 
@@ -88,6 +88,7 @@ skodaconnect:
         - charging_cable_locked
         - trip_last_average_electric_consumption
         - hood_closed
+		- kodiaq_combustion_engine_heating_ventilation_status
 ```
 
 * **resources:** if not specified, it will create all supported entities

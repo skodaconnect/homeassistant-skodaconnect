@@ -1,1 +1,1 @@
-volkswagencarnet==4.4.22
+skodaconnect==1.0.10
