@@ -13,9 +13,10 @@
 - last trip info
 - position
 - auxiliary heating/ventilation control
-- electric engine related information 
-- electric climatisation and window_heater information
-- start/stop electric climatisation and window_heater
+- electric engine related information thanks to @Farfar
+- electric climatisation and window_heater information thanks to @Farfar
+- start/stop electric climatisation and window_heater thanks to @Farfar
+- lock/unlock car thanks to @tanelvakker
 
 ### What is NOT working / under development
 - for auxiliary heating/ventilation - after enabling you need to wait about 2 minutes to get true status if it is really enabled or not
@@ -88,7 +89,7 @@ skodaconnect:
         - charging_cable_locked
         - trip_last_average_electric_consumption
         - hood_closed
-		- kodiaq_combustion_engine_heating_ventilation_status
+        - kodiaq_combustion_engine_heating_ventilation_status
 ```
 
 * **resources:** if not specified, it will create all supported entities
