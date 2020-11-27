@@ -4,7 +4,7 @@
 
 # Skoda Connect - An home assistant plugin to add integration with your car
 
-# v1.0.14
+# v1.0.16
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) where I am trying to modify the code to support Skoda Connect.
 
