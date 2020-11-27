@@ -24,7 +24,7 @@ from homeassistant.util.dt import utcnow
 from skodaconnect import Connection
 #from . import skoda
 
-__version__ = "1.0.14"
+__version__ = "1.0.16"
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "skodaconnect"
@@ -140,6 +140,7 @@ async def async_setup(hass, config):
     """Setup skoda connect component"""
     session = async_get_clientsession(hass)
 
+    _LOGGER.info(f"Starting Skoda Connect, version {__version__}")
     _LOGGER.debug("Creating connection to skoda connect")        
     connection = Connection(
         session=session,
