@@ -5,5 +5,5 @@
     "issue_tracker": "https://github.com/lendy007/homeassistant-skodaconnect/issues",
     "dependencies": [],
     "codeowners": ["@lendy007"],
-    "requirements": ["skodaconnect==1.0.17"]
+    "requirements": ["skodaconnect==1.0.18"]
 }

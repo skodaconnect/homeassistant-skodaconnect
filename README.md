@@ -4,9 +4,11 @@
 
 # Skoda Connect - An home assistant plugin to add integration with your car
 
-# v1.0.17
+# v1.0.18
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) where I am trying to modify the code to support Skoda Connect.
+
+## Big thanks to @Farfar who is making great contribution to this project!
 
 ### What is working
 - odometer
@@ -95,6 +97,8 @@ skodaconnect:
         - kodiaq_combustion_engine_heating_ventilation_status
         - vehicleMoving
         - parkingTime
+        - energy_flow
+        - requests_remaining
 ```
 
 * **resources:** if not specified, it will create all supported entities
