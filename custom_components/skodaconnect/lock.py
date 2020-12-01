@@ -4,9 +4,11 @@ Support for Skoda Connect Platform
 import logging
 
 from homeassistant.components.lock import LockEntity
-#from homeassistant.components.lock import LockDevice
 
 from . import DATA_KEY, SkodaEntity
+
+# from homeassistant.components.lock import LockDevice
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 
 class SkodaLock(SkodaEntity, LockEntity):
-#class SkodaLock(SkodaEntity, LockDevice):
+    # class SkodaLock(SkodaEntity, LockDevice):
     """Represents a Skoda Connect Lock."""
 
     @property
