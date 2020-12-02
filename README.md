@@ -32,7 +32,7 @@ Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/cus
     
 ## Configure
 
-Add a volkswagencarnet configuration block to your `<config dir>/configuration.yaml`:
+Add a skodaconnect configuration block to your `<config dir>/configuration.yaml`:
 ```yaml
 skodaconnect:
     username: <username for skoda connect>
@@ -94,9 +94,6 @@ skodaconnect:
         - charging_cable_locked
         - trip_last_average_electric_consumption
         - hood_closed
-        - kodiaq_combustion_engine_heating_ventilation_status
-        - vehicleMoving
-        - parkingTime
         - energy_flow
         - requests_remaining
 ```
