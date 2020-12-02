@@ -94,7 +94,7 @@ skodaconnect:
         - charging_cable_locked
         - trip_last_average_electric_consumption
         - hood_closed
-        - kodiaq_combustion_engine_heating_ventilation_status
+        - combustion_engine_heatingventilation_status
         - vehicleMoving
         - parkingTime
         - energy_flow
