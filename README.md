@@ -4,7 +4,7 @@
 
 # Skoda Connect - An home assistant plugin to add integration with your car
 
-# v1.0.19
+# v1.0.20
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) where I am trying to modify the code to support Skoda Connect.
 
@@ -41,6 +41,7 @@ skodaconnect:
     combustion_engine_heating_duration: <allowed values 10,20,30,40,50,60 (minutes)>
     combustion_engine_climatisation_duration: <allowed values 10,20,30,40,50,60 (minutes)>
     scandinavian_miles: false
+    imperial_units: false
     scan_interval:
         minutes: 5
     name:
@@ -107,7 +108,9 @@ skodaconnect:
 
 * **scan_interval:** (optional) specify in minutes how often to fetch status data from carnet. (default 5 min, minimum 1 min)
 
-* **scandinavian_miles:** (optional) specify true if you want to change from km to mil on sensors
+* **scandinavian_miles:** (optional) specify true if you want to change from km to mi on sensors
+
+* **imperial_units:** (optional) specify true if you want imperial units for all sensors. Overrides scandinavian_miles
 
 * **name:** (optional) map the vehicle identification number (VIN) to a friendly name of your car. This name is then used for naming all entities. See the configuration example. (by default, the VIN is used). VIN need to be entered lower case
 

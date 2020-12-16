@@ -37,6 +37,7 @@ CONF_SPIN = "spin"
 CONF_COMBUSTIONENGINEHEATINGDURATION = "combustion_engine_heating_duration"
 CONF_COMBUSTIONENGINECLIMATISATIONDURATION = "combustion_engine_climatisation_duration"
 CONF_SCANDINAVIAN_MILES = "scandinavian_miles"
+CONF_IMPERIAL_UNITS = "imperial_units"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
 
@@ -132,6 +133,7 @@ CONFIG_SCHEMA = vol.Schema(
                     cv.ensure_list, [vol.In(RESOURCES)]
                 ),
                 vol.Optional(CONF_SCANDINAVIAN_MILES, default=False): cv.boolean,
+                vol.Optional(CONF_IMPERIAL_UNITS, default=False): cv.boolean,
             }
         ),
     },
@@ -166,6 +168,7 @@ async def async_setup(hass, config):
             mutable=config[DOMAIN][CONF_MUTABLE],
             spin=config[DOMAIN][CONF_SPIN],
             scandinavian_miles=config[DOMAIN][CONF_SCANDINAVIAN_MILES],
+            imperial_units=config[DOMAIN][CONF_IMPERIAL_UNITS],
             combustionengineheatingduration=config[DOMAIN][
                 CONF_COMBUSTIONENGINEHEATINGDURATION
             ],
