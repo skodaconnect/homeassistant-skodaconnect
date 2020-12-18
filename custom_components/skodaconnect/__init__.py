@@ -22,7 +22,8 @@ from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.util.dt import utcnow
 from skodaconnect import Connection
-#from . import skoda
+
+# from . import skoda
 
 __version__ = "1.0.18"
 _LOGGER = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ CONF_SPIN = "spin"
 CONF_COMBUSTIONENGINEHEATINGDURATION = "combustion_engine_heating_duration"
 CONF_COMBUSTIONENGINECLIMATISATIONDURATION = "combustion_engine_climatisation_duration"
 CONF_SCANDINAVIAN_MILES = "scandinavian_miles"
+CONF_IMPERIAL_UNITS = "imperial_units"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
 
@@ -113,8 +115,12 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(CONF_REGION, default=DEFAULT_REGION): cv.string,
                 vol.Optional(CONF_MUTABLE, default=True): cv.boolean,
                 vol.Optional(CONF_SPIN, default=""): cv.string,
-                vol.Optional(CONF_COMBUSTIONENGINEHEATINGDURATION, default=30): vol.In([10,20,30,40,50,60]),
-                vol.Optional(CONF_COMBUSTIONENGINECLIMATISATIONDURATION, default=30): vol.In([10,20,30,40,50,60]),
+                vol.Optional(CONF_COMBUSTIONENGINEHEATINGDURATION, default=30): vol.In(
+                    [10, 20, 30, 40, 50, 60]
+                ),
+                vol.Optional(
+                    CONF_COMBUSTIONENGINECLIMATISATIONDURATION, default=30
+                ): vol.In([10, 20, 30, 40, 50, 60]),
                 vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): (
                     vol.All(cv.time_period, vol.Clamp(min=MIN_UPDATE_INTERVAL))
                 ),
@@ -127,6 +133,7 @@ CONFIG_SCHEMA = vol.Schema(
                     cv.ensure_list, [vol.In(RESOURCES)]
                 ),
                 vol.Optional(CONF_SCANDINAVIAN_MILES, default=False): cv.boolean,
+                vol.Optional(CONF_IMPERIAL_UNITS, default=False): cv.boolean,
             }
         ),
     },
@@ -139,7 +146,7 @@ async def async_setup(hass, config):
     session = async_get_clientsession(hass)
 
     _LOGGER.info(f"Starting Skoda Connect, version {__version__}")
-    _LOGGER.debug("Creating connection to skoda connect")        
+    _LOGGER.debug("Creating connection to skoda connect")
     connection = Connection(
         session=session,
         username=config[DOMAIN].get(CONF_USERNAME),
@@ -161,8 +168,13 @@ async def async_setup(hass, config):
             mutable=config[DOMAIN][CONF_MUTABLE],
             spin=config[DOMAIN][CONF_SPIN],
             scandinavian_miles=config[DOMAIN][CONF_SCANDINAVIAN_MILES],
-            combustionengineheatingduration=config[DOMAIN][CONF_COMBUSTIONENGINEHEATINGDURATION],
-            combustionengineclimatisationduration=config[DOMAIN][CONF_COMBUSTIONENGINECLIMATISATIONDURATION],
+            imperial_units=config[DOMAIN][CONF_IMPERIAL_UNITS],
+            combustionengineheatingduration=config[DOMAIN][
+                CONF_COMBUSTIONENGINEHEATINGDURATION
+            ],
+            combustionengineclimatisationduration=config[DOMAIN][
+                CONF_COMBUSTIONENGINECLIMATISATIONDURATION
+            ],
         )
 
         for instrument in (

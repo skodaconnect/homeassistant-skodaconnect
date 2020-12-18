@@ -5,7 +5,8 @@ import logging
 
 from homeassistant.components.device_tracker import SOURCE_TYPE_GPS
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-#from homeassistant.helpers.dispatcher import (dispatcher_connect, dispatcher_send)
+
+# from homeassistant.helpers.dispatcher import (dispatcher_connect, dispatcher_send)
 from homeassistant.util import slugify
 
 from . import DATA_KEY, SIGNAL_STATE_UPDATED
