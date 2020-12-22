@@ -4,7 +4,7 @@
 
 # Skoda Connect - An home assistant plugin to add integration with your car
 
-# v1.0.24
+# v1.0.26
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) where I am trying to modify the code to support Skoda Connect.
 
@@ -26,13 +26,14 @@
 - for auxiliary heating/ventilation - after enabling you need to wait about 2 minutes to get true status if it is really enabled or not
 - trigger status refresh from car - for status changes where car doesn't report it automatically to server (for example car was unlocked on the garden and you just lock it) it still shows old status until car will upload new status or status is refreshed from Skoda Connect App
 - when vehicleMoving=yes device_tracker GPS stays on old values until parked
+- Hass.io compatibility issues, should be fixed with 1.0.26 release (?)
 
 ### Install
 Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/custom_component/skodaconnect' into '<config dir>/custom_components'
     
 ## Configure
 
-Add a volkswagencarnet configuration block to your `<config dir>/configuration.yaml`:
+Add a skodaconnect configuration block to your `<config dir>/configuration.yaml`:
 ```yaml
 skodaconnect:
     username: <username for skoda connect>
