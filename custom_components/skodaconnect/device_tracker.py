@@ -28,13 +28,23 @@ async def async_setup_scanner(hass, config, async_see, discovery_info=None):
         host_name = data.vehicle_name(instrument.vehicle)
         dev_id = "{}".format(slugify(host_name))
         _LOGGER.debug("Getting location of %s" % host_name)
-        await async_see(
-            dev_id=dev_id,
-            host_name=host_name,
-            source_type=SOURCE_TYPE_GPS,
-            gps=instrument.state,
-            icon="mdi:car",
-        )
+        if instrument.state[0] is None:
+            _LOGGER.debug("No GPS location data available.")
+            await async_see(
+                dev_id=dev_id,
+                host_name=host_name,
+                location_name="not_home",
+                source_type=SOURCE_TYPE_GPS,
+                icon="mdi:car",
+            )
+        else:
+            await async_see(
+                dev_id=dev_id,
+                host_name=host_name,
+                source_type=SOURCE_TYPE_GPS,
+                gps=instrument.state,
+                icon="mdi:car",
+            )
 
     async_dispatcher_connect(hass, SIGNAL_STATE_UPDATED, see_vehicle)
 
