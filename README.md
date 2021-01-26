@@ -2,37 +2,51 @@
 ![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20pypi)
 ![Downloads](https://img.shields.io/github/downloads/lendy007/homeassistant-skodaconnect/total)
 
-# Skoda Connect - An home assistant plugin to add integration with your car
+# Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
 # v1.0.30
+**WARNING!**
+***Version 1.0.30 and later has undergone major code changes since release 1.0.27.
+If you are updating, be sure to backup all your data***
+Major changes are entity names and climate entitys are removed.
 
-## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) where I am trying to modify the code to support Skoda Connect.
-
-## Big thanks to @Farfar who is making great contribution to this project!
+## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API
 
 ### What is working
-- odometer
+- odometer and service info
 - fuel level, range, adblue level
-- lock status, window status
+- lock, windows, trunk, hood, sunroof and door status
 - last trip info
-- position - gps coordinates, vehicleMoving, parkingTime
-- auxiliary heating/ventilation control
-- electric engine related information
+- position - gps coordinates, if vehicle is moving, time parked
+- electric engine related information - charging, battery level, plug connected and more
 - electric climatisation and window_heater information
 - start/stop auxiliary climatisation for PHEV cars
 - start/stop electric climatisation and window_heater
 - lock/unlock car
-- trigger status refresh from car - for status changes where car doesn't report it automatically to server (for example car was unlocked on the garden and you just lock it) it still shows old status until car will upload new status or status is refreshed from Skoda Connect App
 - parking heater heating/ventilation (for non-PHEV cars)
+- requests information - latest status, requests remaining until throttled
+- device tracker - entity is set to 'not_home' when car is moving
+- trigger data refresh - for status changes where car doesn't report it automatically to server (for example car was unlocked on the garden and you just lock it) it still shows old status until car will upload new status or status is refreshed app
 
 ### What is NOT working / under development
-- climate entitites are somewhat, or totally, broken. Do not use. WIP to enable heating/ventilation option for parking heater and electric/auxiliary for PHEV cars with aux heater. Fix needed for target temp for parking heater.
+- climate entitites has been removed since they didn't map very well for requests to Skoda Connect API.
 
 ### Breaking changes
- - combustion heater/ventilation is now named parking heater so it's not mixed up with aux heater for PHEV
- - Many resources have changed names to avoid confusion in the code
+- Combustion heater/ventilation is now named parking heater so it's not mixed up with aux heater for PHEV
+- Many resources have changed names to avoid confusion in the code, some have changed from sensor to switch and vice versa
+- Major code changes has been made for requests handling.
+  - request_in_progress is now a binary sensor instead of a switch
+  - force_data_refresh is a new switch with the same functionality as "request_in_progress" previously, it will force refresh data from car
 
-### Install
+## Installation
+
+### Install with HACS (recomended)
+If you have HACS (Home Assistant Community Store) installed, just search for Skoda Connect and install it direct from HACS.
+HACS will keep track of updates and you can easly upgrade to the latest version when a new release is available.
+
+If you don't have it installed, check it out here: [HACS](https://community.home-assistant.io/t/custom-component-hacs)
+
+### Manual installation
 Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/custom_component/skodaconnect' into '<config dir>/custom_components'
 
 ## Configure
@@ -55,9 +69,9 @@ skodaconnect:
 
 * **spin:** (optional) required for supporting combustion engine heating start/stop.
 
-* **scandinavian_miles:** (optional) set to true if you want to change from km to mi on sensors. Conversion between fahrenheit and celcius is taken care of by Home Assistant.
+* **scandinavian_miles:** (optional) set to true if you want to change from km to mi on sensors. Conversion between fahrenheit and celcius is taken care of by Home Assistant. (Default: false)
 
-* **scan_interval:** (optional) specify in minutes how often to fetch status data from Skoda Connect. (default 5 min, minimum 1 min)
+* **scan_interval:** (optional) specify in minutes how often to fetch status data from Skoda Connect. (Default: 5 min, minimum 1 min)
 
 * **name:** (optional) map the vehicle identification number (VIN) to a friendly name of your car. This name is then used for naming all entities. See the configuration example. (by default, the VIN is used). VIN need to be entered lower case
 
@@ -131,7 +145,7 @@ Additional optional configuration options, only add if needed:
         - window_heater
 ```
 
-* **response_debug:** (optional) set to true to log raw HTTP data from Skoda Connect. This will flood the log, only enable if needed.
+* **response_debug:** (optional) set to true to log raw HTTP data from Skoda Connect. This will flood the log, only enable if needed. (Default: false)
 
 * **resources:** (optional) use to disable entities, if specified only the listed sensors will be created. If not specified all supported entities will be created.
 
@@ -208,6 +222,7 @@ Save these automations in your automations file `<config dir>/automations.yaml`
 ```
 
 ## Enable debug logging
+For comprehensive debug logging you can add this to your `<config dir>/configuration.yaml`:
 ```yaml
 logger:
     default: info
@@ -222,3 +237,12 @@ logger:
         custom_components.skodaconnect.binary_sensor: debug
         custom_components.skodaconnect.sensor: debug
  ```
+* **skodaconnect.connection:** Set the debug level for the Connection class of the Skoda Connect library. This handles the GET/SET requests towards the API
+
+* **skodaconnect.vehicle:** Set the debug level for the Vehicle class of the Skoda Connect library. One object created for every vehicle in account and stores all data.
+
+* **skodaconnect.dashboard:** Set the debug level for the Dashboard class of the Skoda Connect library. A wrapper class between hass component and library.
+
+* **custom_components.skodaconnect:** Set debug level for the custom component. The communication between hass and library.
+
+* **custom_components.skodaconnect.XYZ** Sets debug level for individual entity types in the custom component.
