@@ -35,8 +35,7 @@ CONF_MUTABLE = "mutable"
 CONF_SPIN = "spin"
 CONF_FULLDEBUG = "response_debug"
 CONF_PHEATER_DURATION = "climatisation_duration"
-CONF_SCANDINAVIAN_MILES = "scandinavian_miles"
-CONF_IMPERIAL_UNITS = "imperial_units"
+CONF_MILES = "scandinavian_miles"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
 
@@ -53,7 +52,7 @@ COMPONENTS = {
 }
 
 RESOURCES = [
-    "location",
+    "position",
     "distance",
     "request_in_progress",
     "requests_remaining",
@@ -127,8 +126,7 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(CONF_RESOURCES): vol.All(
                     cv.ensure_list, [vol.In(RESOURCES)]
                 ),
-                vol.Optional(CONF_SCANDINAVIAN_MILES, default=False): cv.boolean,
-                vol.Optional(CONF_IMPERIAL_UNITS, default=False): cv.boolean,
+                vol.Optional(CONF_MILES, default=False): cv.boolean,
             }
         ),
     },
@@ -162,8 +160,7 @@ async def async_setup(hass, config):
         dashboard = vehicle.dashboard(
             mutable=config[DOMAIN][CONF_MUTABLE],
             spin=config[DOMAIN][CONF_SPIN],
-            scandinavian_miles=config[DOMAIN][CONF_SCANDINAVIAN_MILES],
-            imperial_units=config[DOMAIN][CONF_IMPERIAL_UNITS],
+            miles=config[DOMAIN][CONF_MILES],
         )
 
         for instrument in (
