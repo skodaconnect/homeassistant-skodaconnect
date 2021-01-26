@@ -34,7 +34,9 @@ class SkodaLock(SkodaEntity, LockEntity):
     async def async_lock(self, **kwargs):
         """Lock the car."""
         await self.instrument.lock()
+        await super().update_hass()
 
     async def async_unlock(self, **kwargs):
         """Unlock the car."""
         await self.instrument.unlock()
+        await super().update_hass()
