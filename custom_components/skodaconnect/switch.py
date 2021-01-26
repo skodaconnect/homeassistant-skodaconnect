@@ -19,7 +19,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 class SkodaSwitch(SkodaEntity, ToggleEntity):
     """Representation of a Skoda Connect Switch."""
-
     @property
     def is_on(self):
         """Return true if switch is on."""
@@ -30,13 +29,13 @@ class SkodaSwitch(SkodaEntity, ToggleEntity):
         """Turn the switch on."""
         _LOGGER.debug("Turning ON %s." % self.instrument.attr)
         await self.instrument.turn_on()
-        self.async_write_ha_state()
+        await super().update_hass()
 
     async def async_turn_off(self, **kwargs):
         """Turn the switch off."""
         _LOGGER.debug("Turning OFF %s." % self.instrument.attr)
         await self.instrument.turn_off()
-        self.async_write_ha_state()
+        await super().update_hass()
 
     @property
     def assumed_state(self):

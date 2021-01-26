@@ -10,6 +10,7 @@ from homeassistant.const import (
     CONF_RESOURCES,
     CONF_SCAN_INTERVAL,
     CONF_USERNAME,
+    EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.helpers import discovery
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -25,17 +26,15 @@ from skodaconnect import Connection
 
 # from . import skoda
 
-__version__ = "1.0.27"
+__version__ = "1.0.30"
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "skodaconnect"
 DATA_KEY = DOMAIN
-CONF_REGION = "region"
-DEFAULT_REGION = "CZ"
 CONF_MUTABLE = "mutable"
 CONF_SPIN = "spin"
-CONF_COMBUSTIONENGINEHEATINGDURATION = "combustion_engine_heating_duration"
-CONF_COMBUSTIONENGINECLIMATISATIONDURATION = "combustion_engine_climatisation_duration"
+CONF_FULLDEBUG = "response_debug"
+CONF_PHEATER_DURATION = "climatisation_duration"
 CONF_SCANDINAVIAN_MILES = "scandinavian_miles"
 CONF_IMPERIAL_UNITS = "imperial_units"
 
@@ -54,29 +53,40 @@ COMPONENTS = {
 }
 
 RESOURCES = [
-    "position",
+    "location",
     "distance",
-    "electric_climatisation",
-    "combustion_climatisation",
-    "window_heater",
-    "combustion_engine_heating",
-    "charging",
+    "request_in_progress",
+    "requests_remaining",
+    "request_results",
+    "last_connected",
+    "parking_light",
     "adblue_level",
     "battery_level",
     "fuel_level",
+    "combustion_range",
+    "electric_range",
+    "combined_range",
     "service_inspection",
     "oil_inspection",
-    "last_connected",
+    "service_inspection_km",
+    "oil_inspection_km",
+    "charging",
+    "charging_cable_connected",
+    "charging_cable_locked",
     "charging_time_left",
-    "electric_range",
-    "combustion_range",
-    "combined_range",
     "charge_max_ampere",
-    "climatisation_target_temperature",
     "external_power",
     "energy_flow",
-    "parking_light",
+    "outside_temperature",
+    "climatisation_target_temperature",
     "climatisation_without_external_power",
+    "window_heater",
+    "electric_climatisation",
+    "auxiliary_climatisation",
+    "pheater_heating",
+    "pheater_ventilation",
+    "pheater_status",
+    "pheater_duration",
     "door_locked",
     "door_closed_left_front",
     "door_closed_right_front",
@@ -85,10 +95,6 @@ RESOURCES = [
     "trunk_locked",
     "trunk_closed",
     "hood_closed",
-    "charging_cable_connected",
-    "charging_cable_locked",
-    "request_in_progress",
-    "requests_remaining",
     "windows_closed",
     "window_closed_left_front",
     "window_closed_right_front",
@@ -100,10 +106,6 @@ RESOURCES = [
     "trip_last_average_fuel_consumption",
     "trip_last_duration",
     "trip_last_length",
-    "combustion_engine_heatingventilation_status",
-    "service_inspection_km",
-    "oil_inspection_km",
-    "outside_temperature",
 ]
 
 CONFIG_SCHEMA = vol.Schema(
@@ -112,20 +114,13 @@ CONFIG_SCHEMA = vol.Schema(
             {
                 vol.Required(CONF_USERNAME): cv.string,
                 vol.Required(CONF_PASSWORD): cv.string,
-                vol.Optional(CONF_REGION, default=DEFAULT_REGION): cv.string,
                 vol.Optional(CONF_MUTABLE, default=True): cv.boolean,
                 vol.Optional(CONF_SPIN, default=""): cv.string,
-                vol.Optional(CONF_COMBUSTIONENGINEHEATINGDURATION, default=30): vol.In(
-                    [10, 20, 30, 40, 50, 60]
-                ),
-                vol.Optional(
-                    CONF_COMBUSTIONENGINECLIMATISATIONDURATION, default=30
-                ): vol.In([10, 20, 30, 40, 50, 60]),
+                vol.Optional(CONF_FULLDEBUG, default=False): cv.boolean,
+                vol.Optional(CONF_PHEATER_DURATION, default=20): vol.In([10,20,30,40,50,60]),
                 vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): (
                     vol.All(cv.time_period, vol.Clamp(min=MIN_UPDATE_INTERVAL))
                 ),
-                # vol.Optional(CONF_NAME, default={}): vol.Schema(
-                #     {cv.slug: cv.string}),
                 vol.Optional(CONF_NAME, default={}): cv.schema_with_slug_keys(
                     cv.string
                 ),
@@ -140,7 +135,6 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
-
 async def async_setup(hass, config):
     """Setup skoda connect component"""
     session = async_get_clientsession(hass)
@@ -151,6 +145,7 @@ async def async_setup(hass, config):
         session=session,
         username=config[DOMAIN].get(CONF_USERNAME),
         password=config[DOMAIN].get(CONF_PASSWORD),
+        fulldebug=config[DOMAIN].get(CONF_FULLDEBUG),
     )
 
     interval = config[DOMAIN].get(CONF_SCAN_INTERVAL)
@@ -169,12 +164,6 @@ async def async_setup(hass, config):
             spin=config[DOMAIN][CONF_SPIN],
             scandinavian_miles=config[DOMAIN][CONF_SCANDINAVIAN_MILES],
             imperial_units=config[DOMAIN][CONF_IMPERIAL_UNITS],
-            combustionengineheatingduration=config[DOMAIN][
-                CONF_COMBUSTIONENGINEHEATINGDURATION
-            ],
-            combustionengineclimatisationduration=config[DOMAIN][
-                CONF_COMBUSTIONENGINECLIMATISATIONDURATION
-            ],
         )
 
         for instrument in (
@@ -197,33 +186,38 @@ async def async_setup(hass, config):
     async def update(now):
         """Update status from skoda connect"""
         try:
-            # check if we can login
+            # Try to login
             if not connection.logged_in:
                 await connection._login()
                 if not connection.logged_in:
                     _LOGGER.warning(
-                        "Could not login to skoda connect, please check your credentials and verify that the service is working"
+                        "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
                     )
                     return False
 
-            # update vehicles
+            # Update vehicle information
             if not await connection.update():
-                _LOGGER.warning("Could not query update from skoda connect")
+                _LOGGER.warning("Could not query update from Skoda Connect")
                 return False
 
-            _LOGGER.debug("Updating data from skoda connect")
+            _LOGGER.debug("Updating data from Skoda Connect")
             for vehicle in connection.vehicles:
                 if vehicle.vin not in data.vehicles:
-                    _LOGGER.info(f"Adding data for VIN: {vehicle.vin} from carnet")
+                    _LOGGER.info(f"Adding data for VIN: {vehicle.vin} from Skoda Connect")
                     discover_vehicle(vehicle)
 
             async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
             return True
-
         finally:
             async_track_point_in_utc_time(hass, update, utcnow() + interval)
 
+    async def cleanup():
+        """Terminate session and clean up."""
+        await connection.terminate()
+
     _LOGGER.info("Starting skodaconnect component")
+    # Register callback for Home-Assistant STOP event
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, cleanup)
     return await update(utcnow())
 
 
@@ -254,11 +248,12 @@ class SkodaData:
         """Provide a friendly name for a vehicle."""
         if vehicle.vin and vehicle.vin.lower() in self.names:
             return self.names[vehicle.vin.lower()]
+        elif vehicle.is_nickname_supported:
+            return vehicle.nickname
         elif vehicle.vin:
             return vehicle.vin
         else:
             return ""
-
 
 class SkodaEntity(Entity):
     """Base class for all Skoda entities."""
@@ -277,6 +272,10 @@ class SkodaEntity(Entity):
                 self.hass, SIGNAL_STATE_UPDATED, self.async_write_ha_state
             )
         )
+
+    async def update_hass(self):
+        _LOGGER.debug('In SkodaEntity updater...')
+        async_dispatcher_send(self.hass, SIGNAL_STATE_UPDATED)
 
     @property
     def instrument(self):

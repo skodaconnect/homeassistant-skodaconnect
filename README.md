@@ -4,7 +4,7 @@
 
 # Skoda Connect - An home assistant plugin to add integration with your car
 
-# v1.0.27
+# v1.0.30
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) where I am trying to modify the code to support Skoda Connect.
 
@@ -15,22 +15,26 @@
 - fuel level, range, adblue level
 - lock status, window status
 - last trip info
-- position - gps coordinates, vehicleMoving, parkingTime 
+- position - gps coordinates, vehicleMoving, parkingTime
 - auxiliary heating/ventilation control
-- electric engine related information thanks to @Farfar
-- electric climatisation and window_heater information thanks to @Farfar
-- start/stop electric climatisation and window_heater thanks to @Farfar
-- lock/unlock car thanks to @tanelvakker
+- electric engine related information
+- electric climatisation and window_heater information
+- start/stop auxiliary climatisation for PHEV cars
+- start/stop electric climatisation and window_heater
+- lock/unlock car
+- trigger status refresh from car - for status changes where car doesn't report it automatically to server (for example car was unlocked on the garden and you just lock it) it still shows old status until car will upload new status or status is refreshed from Skoda Connect App
+- parking heater heating/ventilation (for non-PHEV cars)
 
 ### What is NOT working / under development
-- for auxiliary heating/ventilation - after enabling you need to wait about 2 minutes to get true status if it is really enabled or not
-- trigger status refresh from car - for status changes where car doesn't report it automatically to server (for example car was unlocked on the garden and you just lock it) it still shows old status until car will upload new status or status is refreshed from Skoda Connect App
-- when vehicleMoving=yes device_tracker GPS stays on old values until parked
-- Hass.io compatibility issues, should be fixed with 1.0.26 release (?)
+- climate entitites are somewhat, or totally, broken. Do not use. WIP to enable heating/ventilation option for parking heater and electric/auxiliary for PHEV cars with aux heater. Fix needed for target temp for parking heater.
+
+### Breaking changes
+ - combustion heater/ventilation is now named parking heater so it's not mixed up with aux heater for PHEV
+ - Many resources have changed names to avoid confusion in the code
 
 ### Install
 Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/custom_component/skodaconnect' into '<config dir>/custom_components'
-    
+
 ## Configure
 
 Add a skodaconnect configuration block to your `<config dir>/configuration.yaml`:
@@ -39,85 +43,101 @@ skodaconnect:
     username: <username for skoda connect>
     password: <password for skoda connect>
     spin: <S-PIN for skoda connect>
-    combustion_engine_heating_duration: <allowed values 10,20,30,40,50,60 (minutes)>
-    combustion_engine_climatisation_duration: <allowed values 10,20,30,40,50,60 (minutes)>
     scandinavian_miles: false
-    imperial_units: false
     scan_interval:
-        minutes: 5
+        minutes: 1
     name:
         wvw1234567812356: 'Kodiaq'
+```
+* **username:** (required) the username to your Skoda Connect account
+
+* **password:** (required) the password to your Skoda Connect account
+
+* **spin:** (optional) required for supporting combustion engine heating start/stop.
+
+* **scandinavian_miles:** (optional) set to true if you want to change from km to mi on sensors. Conversion between fahrenheit and celcius is taken care of by Home Assistant.
+
+* **scan_interval:** (optional) specify in minutes how often to fetch status data from Skoda Connect. (default 5 min, minimum 1 min)
+
+* **name:** (optional) map the vehicle identification number (VIN) to a friendly name of your car. This name is then used for naming all entities. See the configuration example. (by default, the VIN is used). VIN need to be entered lower case
+
+
+Additional optional configuration options, only add if needed:
+```yaml
+    response_debug: False
     resources:
-        - combustion_engine_heating         
-        - combustion_climatisation
-        - distance
-        - position
-        - service_inspection
-        - oil_inspection
-        - door_locked
-        - trunk_locked
-        - request_in_progress
-        - fuel_level        
-        - windows_closed        
-        - adblue_level
-        - climatisation_target_temperature
-        - last_connected
-        - combustion_range
-        - trip_last_average_speed
-        - trip_last_average_fuel_consumption
-        - trip_last_duration
-        - trip_last_length
-        - parking_light
-        - door_closed_left_front        
+       # Binary sensors
+        - charging_cable_connected
+        - charging_cable_locked
+        - door_closed_left_front
         - door_closed_left_back
         - door_closed_right_front
         - door_closed_right_back
+        - doors_locked
+        - energy_flow
+        - external_power
+        - hood_closed
+        - parking_light
+        - request_in_progress
+        - sunroof_closed
         - trunk_closed
+        - trunk_locked
+        - vehicle_moving
         - window_closed_left_front
         - window_closed_left_back
         - window_closed_right_front
         - window_closed_right_back
-        - sunroof_closed
-        - service_inspection_km
-        - oil_inspection_km
-        - outside_temperature
-        - electric_climatisation
-        - window_heater
-        - charging
+        - windows_closed
+      # Device tracker
+        - position
+      # Locks
+        - door_locked
+        - trunk_locked
+      # Sensors
+        - adblue_level
         - battery_level
+        - charger_max_ampere
         - charging_time_left
-        - electric_range
-        - combined_range
-        - charge_max_ampere
         - climatisation_target_temperature
-        - external_power
-        - climatisation_without_external_power
-        - charging_cable_connected
-        - charging_cable_locked
-        - trip_last_average_electric_consumption
-        - hood_closed
-        - combustion_engine_heatingventilation_status
-        - vehicleMoving
-        - parkingTime
-        - energy_flow
+        - combined_range
+        - combustion_range
+        - electric_range
+        - fuel_level
+        - last_connected
+        - last_trip_average_electric_consumption
+        - last_trip_average_fuel_consumption
+        - last_trip_average_speed
+        - last_trip_duration
+        - last_trip_length
+        - odometer
+        - oil_inspection_days
+        - oil_inspection_distance
+        - outside_temperature
+        - parking_time
+        - pheater_status
+        - pheater_duration
+        - request_results
         - requests_remaining
+        - service_inspection_days
+        - service_inspection_distance
+      # Switches
+        - auxiliary_climatisation
+        - charging
+        - climatisation_from_battery
+        - electric_climatisation
+        - force_data_refresh
+        - parking_heater_heating
+        - parking_heater_ventilation
+        - window_heater
 ```
 
-* **resources:** if not specified, it will create all supported entities
+* **response_debug:** (optional) set to true to log raw HTTP data from Skoda Connect. This will flood the log, only enable if needed.
 
-* **spin:** (optional) required for supporting combustion engine heating start/stop.
-
-* **scan_interval:** (optional) specify in minutes how often to fetch status data from carnet. (default 5 min, minimum 1 min)
-
-* **scandinavian_miles:** (optional) specify true if you want to change from km to mi on sensors
-
-* **imperial_units:** (optional) specify true if you want imperial units for all sensors. Overrides scandinavian_miles
-
-* **name:** (optional) map the vehicle identification number (VIN) to a friendly name of your car. This name is then used for naming all entities. See the configuration example. (by default, the VIN is used). VIN need to be entered lower case
+* **resources:** (optional) use to disable entities, if specified only the listed sensors will be created. If not specified all supported entities will be created.
 
 ## Automations
 
-In this example we are sending notifications to an ios device
+In this example we are sending notifications to an ios device. The Android companion app does not currently support dynamic content in notifications (maps etc.)
 
 Save these automations in your automations file `<config dir>/automations.yaml`
 
@@ -191,7 +211,9 @@ Save these automations in your automations file `<config dir>/automations.yaml`
 ```yaml
 logger:
     default: info
-    logs:        
+    logs:
+        skodaconnect.connection: debug
+        skodaconnect.vehicle: debug
         custom_components.skodaconnect: debug
         custom_components.skodaconnect.climate: debug
         custom_components.skodaconnect.lock: debug
@@ -200,4 +222,3 @@ logger:
         custom_components.skodaconnect.binary_sensor: debug
         custom_components.skodaconnect.sensor: debug
  ```
-
