@@ -19,6 +19,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 class SkodaSwitch(SkodaEntity, ToggleEntity):
     """Representation of a Skoda Connect Switch."""
+
     @property
     def is_on(self):
         """Return true if switch is on."""

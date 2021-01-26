@@ -35,8 +35,7 @@ CONF_MUTABLE = "mutable"
 CONF_SPIN = "spin"
 CONF_FULLDEBUG = "response_debug"
 CONF_PHEATER_DURATION = "climatisation_duration"
-CONF_SCANDINAVIAN_MILES = "scandinavian_miles"
-CONF_IMPERIAL_UNITS = "imperial_units"
+CONF_MILES = "scandinavian_miles"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
 
@@ -53,7 +52,7 @@ COMPONENTS = {
 }
 
 RESOURCES = [
-    "location",
+    "position",
     "distance",
     "request_in_progress",
     "requests_remaining",
@@ -117,7 +116,9 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(CONF_MUTABLE, default=True): cv.boolean,
                 vol.Optional(CONF_SPIN, default=""): cv.string,
                 vol.Optional(CONF_FULLDEBUG, default=False): cv.boolean,
-                vol.Optional(CONF_PHEATER_DURATION, default=20): vol.In([10,20,30,40,50,60]),
+                vol.Optional(CONF_PHEATER_DURATION, default=20): vol.In(
+                    [10, 20, 30, 40, 50, 60]
+                ),
                 vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): (
                     vol.All(cv.time_period, vol.Clamp(min=MIN_UPDATE_INTERVAL))
                 ),
@@ -127,13 +128,13 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(CONF_RESOURCES): vol.All(
                     cv.ensure_list, [vol.In(RESOURCES)]
                 ),
-                vol.Optional(CONF_SCANDINAVIAN_MILES, default=False): cv.boolean,
-                vol.Optional(CONF_IMPERIAL_UNITS, default=False): cv.boolean,
+                vol.Optional(CONF_MILES, default=False): cv.boolean,
             }
         ),
     },
     extra=vol.ALLOW_EXTRA,
 )
+
 
 async def async_setup(hass, config):
     """Setup skoda connect component"""
@@ -162,8 +163,7 @@ async def async_setup(hass, config):
         dashboard = vehicle.dashboard(
             mutable=config[DOMAIN][CONF_MUTABLE],
             spin=config[DOMAIN][CONF_SPIN],
-            scandinavian_miles=config[DOMAIN][CONF_SCANDINAVIAN_MILES],
-            imperial_units=config[DOMAIN][CONF_IMPERIAL_UNITS],
+            miles=config[DOMAIN][CONF_MILES],
         )
 
         for instrument in (
@@ -203,7 +203,9 @@ async def async_setup(hass, config):
             _LOGGER.debug("Updating data from Skoda Connect")
             for vehicle in connection.vehicles:
                 if vehicle.vin not in data.vehicles:
-                    _LOGGER.info(f"Adding data for VIN: {vehicle.vin} from Skoda Connect")
+                    _LOGGER.info(
+                        f"Adding data for VIN: {vehicle.vin} from Skoda Connect"
+                    )
                     discover_vehicle(vehicle)
 
             async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
@@ -255,6 +257,7 @@ class SkodaData:
         else:
             return ""
 
+
 class SkodaEntity(Entity):
     """Base class for all Skoda entities."""
 
@@ -274,7 +277,7 @@ class SkodaEntity(Entity):
         )
 
     async def update_hass(self):
-        _LOGGER.debug('In SkodaEntity updater...')
+        _LOGGER.debug("In SkodaEntity updater...")
         async_dispatcher_send(self.hass, SIGNAL_STATE_UPDATED)
 
     @property
