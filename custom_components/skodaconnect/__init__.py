@@ -26,7 +26,7 @@ from skodaconnect import Connection
 
 # from . import skoda
 
-__version__ = "1.0.30-rc"
+__version__ = "1.0.30-rc2"
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "skodaconnect"
