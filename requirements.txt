@@ -1,1 +1,1 @@
-skodaconnect==1.0.30rc4
+skodaconnect==1.0.30rc5
