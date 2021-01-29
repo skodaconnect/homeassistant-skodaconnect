@@ -26,7 +26,7 @@ from skodaconnect import Connection
 
 # from . import skoda
 
-__version__ = "1.0.30-rc5"
+__version__ = "1.0.30-rc6"
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "skodaconnect"
@@ -134,6 +134,13 @@ CONFIG_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
+SERVICE_SET_PHEATER_DURATION = "set_pheater_duration"
+SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
+    {
+        vol.Required("vin"): cv.string,
+        vol.Required("duration"): vol.In([10,20,30,40,50,60]),
+    }
+)
 
 
 async def async_setup(hass, config):
@@ -147,6 +154,7 @@ async def async_setup(hass, config):
         username=config[DOMAIN].get(CONF_USERNAME),
         password=config[DOMAIN].get(CONF_PASSWORD),
         fulldebug=config[DOMAIN].get(CONF_FULLDEBUG),
+        interval=config[DOMAIN].get(CONF_SCAN_INTERVAL),
     )
 
     interval = config[DOMAIN].get(CONF_SCAN_INTERVAL)
@@ -203,9 +211,7 @@ async def async_setup(hass, config):
             _LOGGER.debug("Updating data from Skoda Connect")
             for vehicle in connection.vehicles:
                 if vehicle.vin not in data.vehicles:
-                    _LOGGER.info(
-                        f"Adding data for VIN: {vehicle.vin} from Skoda Connect"
-                    )
+                    _LOGGER.info(f"Adding data for VIN: {vehicle.vin} from Skoda Connect")
                     discover_vehicle(vehicle)
 
             async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
@@ -213,13 +219,38 @@ async def async_setup(hass, config):
         finally:
             async_track_point_in_utc_time(hass, update, utcnow() + interval)
 
-    async def cleanup():
+    async def set_pheater_duration(call):
+        """Prepare data and modify parking heater duration."""
+        try:
+            _LOGGER.debug("Try to fetch object for VIN: %s" % call.data.get("vin", ""))
+            vin = call.data.get("vin")
+            car = connection.vehicle(vin)
+            _LOGGER.debug(f"Found car: {car.nickname}")
+            _LOGGER.debug(f"Set climatisation duration to {call.data.get('duration', 0)}")
+            car.pheater_duration = call.data.get("duration")
+            async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
+            return
+        except Exception as error:
+            _LOGGER.warning(f"Couldn't execute, error: {err}")
+            async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
+        raise Exception(f"Service call failed")
+
+    async def cleanup(call):
         """Terminate session and clean up."""
+        _LOGGER.info(f'Cleaning up')
         await connection.terminate()
 
     _LOGGER.info("Starting skodaconnect component")
-    # Register callback for Home-Assistant STOP event
+
+    # Register services and callbacks
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_PHEATER_DURATION,
+        set_pheater_duration,
+        schema=SERVICE_SET_PHEATER_DURATION_SCHEMA
+    )
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, cleanup)
+
     return await update(utcnow())
 
 
@@ -277,7 +308,7 @@ class SkodaEntity(Entity):
         )
 
     async def update_hass(self):
-        _LOGGER.debug("In SkodaEntity updater...")
+        """Send signal to home assistant to update states."""
         async_dispatcher_send(self.hass, SIGNAL_STATE_UPDATED)
 
     @property
