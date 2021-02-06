@@ -4,13 +4,18 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.30-RC7
+# v1.0.30
 **WARNING!**
 ***Version 1.0.30 and later has undergone major code changes since release 1.0.27.
 If you are updating, be sure to backup all your data***
-Major changes are entity names and climate entitys are removed.
+Major changes are entity names and climate entities are removed.
+Supported features are automatically discovered through API calls, this hasn't been tested on all cars and might prove unreliable for some.
 
-## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API
+## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
+This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
+Skoda Connect never fetch data directly from car, the car sends updated data to VAG servers on specific events such as lock/unlock, charging events, climatisation events and when vehicle is parked. The integration will then fetch this data from the servers.
+When vehicle actions fails or return with no response, a force refresh might help. This will trigger a "wake up" call from VAG servers to the car.
+The scan_interval is how often the integration should fetch data from the servers, if there's no new data from the car then entities won't be updated-
 
 ### What is working
 - odometer and service info
@@ -26,12 +31,14 @@ Major changes are entity names and climate entitys are removed.
 - parking heater heating/ventilation (for non-PHEV cars)
 - requests information - latest status, requests remaining until throttled
 - device tracker - entity is set to 'not_home' when car is moving
-- trigger data refresh - for status changes where car doesn't report it automatically to server (for example car was unlocked on the garden and you just lock it) it still shows old status until car will upload new status or status is refreshed app
+- trigger data refresh - this will trigger a wake up call so the car sends new data
 
 ### What is NOT working / under development
 - climate entitites has been removed since they didn't map very well for requests to Skoda Connect API.
+- switches doesn't immediately update "request reulsts" and "request_in_progress". Long running requests will not show up until next scan interval.
 
 ### Breaking changes
+- Enabled API endpoints (functions) are discovered through fetching "operationlist". This has not been tested for all cars and might prove unreliable.
 - Combustion heater/ventilation is now named parking heater so it's not mixed up with aux heater for PHEV
 - Many resources have changed names to avoid confusion in the code, some have changed from sensor to switch and vice versa
 - Major code changes has been made for requests handling.
@@ -76,7 +83,9 @@ skodaconnect:
 * **name:** (optional) map the vehicle identification number (VIN) to a friendly name of your car. This name is then used for naming all entities. See the configuration example. (by default, the VIN is used). VIN need to be entered lower case
 
 
-Additional optional configuration options, only add if needed:
+Additional optional configuration options, only add if needed!
+The resources option will limit what entities gets added to home assistant, only the specified resources will be added if they are supported.
+If not specified then the integration will add all supported entities:
 ```yaml
     response_debug: False
     resources:
@@ -147,7 +156,7 @@ Additional optional configuration options, only add if needed:
 
 * **response_debug:** (optional) set to true to log raw HTTP data from Skoda Connect. This will flood the log, only enable if needed. (Default: false)
 
-* **resources:** (optional) use to disable entities, if specified only the listed sensors will be created. If not specified all supported entities will be created.
+* **resources:** (optional) use to enable/disable entities. If specified, only the listed entities will be created. If not specified all supported entities will be created.
 
 ## Automations
 
