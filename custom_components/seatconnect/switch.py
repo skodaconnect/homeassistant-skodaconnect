@@ -1,24 +1,24 @@
 """
-Support for Skoda Connect Platform
+Support for Seat Connect Platform
 """
 import logging
 
 from homeassistant.helpers.entity import ToggleEntity
 
-from . import DATA_KEY, SkodaEntity
+from . import DATA_KEY, SeatEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """ Setup the Skoda switch."""
+    """ Setup the Seat switch."""
     if discovery_info is None:
         return
-    async_add_entities([SkodaSwitch(hass.data[DATA_KEY], *discovery_info)])
+    async_add_entities([SeatSwitch(hass.data[DATA_KEY], *discovery_info)])
 
 
-class SkodaSwitch(SkodaEntity, ToggleEntity):
-    """Representation of a Skoda Connect Switch."""
+class SeatSwitch(SeatEntity, ToggleEntity):
+    """Representation of a Seat Connect Switch."""
 
     @property
     def is_on(self):

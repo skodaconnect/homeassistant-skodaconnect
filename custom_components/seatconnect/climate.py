@@ -1,5 +1,5 @@
 """
-Support for Skoda Connect Platform
+Support for Seat Connect Platform
 """
 import logging
 
@@ -20,21 +20,21 @@ from homeassistant.const import (
 
 SUPPORT_HVAC = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
 
-from . import DATA_KEY, SkodaEntity
+from . import DATA_KEY, SeatEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """ Setup the skoda climate."""
+    """ Setup the Seat climate."""
     if discovery_info is None:
         return
-    async_add_entities([SkodaClimate(hass.data[DATA_KEY], *discovery_info)])
+    async_add_entities([SeatClimate(hass.data[DATA_KEY], *discovery_info)])
 
 
-class SkodaClimate(SkodaEntity, ClimateEntity):
-    # class SkodaClimate(SkodaEntity, ClimateDevice):
-    """Representation of a Skoda Carnet Climate."""
+class SeatClimate(SeatEntity, ClimateEntity):
+    # class SeatClimate(SeatEntity, ClimateDevice):
+    """Representation of a Seat Carnet Climate."""
 
     @property
     def supported_features(self):

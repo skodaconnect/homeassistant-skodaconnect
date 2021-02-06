@@ -1,8 +1,8 @@
-![Version](https://img.shields.io/github/v/release/lendy007/homeassistant-skodaconnect?include_prereleases)
-![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20pypi)
-![Downloads](https://img.shields.io/github/downloads/lendy007/homeassistant-skodaconnect/total)
+![Version](https://img.shields.io/github/v/release/farfar/homeassistant-seatconnect?include_prereleases)
+![PyPi](https://img.shields.io/pypi/v/seatconnect?label=latest%20pypi)
+![Downloads](https://img.shields.io/github/downloads/farfar/homeassistant-seatconnect/total)
 
-# Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
+# Seat Connect - A Home Assistant custom component for Seat Connect
 
 # v1.0.30
 **WARNING!**
@@ -11,9 +11,9 @@ If you are updating, be sure to backup all your data***
 Major changes are entity names and climate entities are removed.
 Supported features are automatically discovered through API calls, this hasn't been tested on all cars and might prove unreliable for some.
 
-## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
-This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
-Skoda Connect never fetch data directly from car, the car sends updated data to VAG servers on specific events such as lock/unlock, charging events, climatisation events and when vehicle is parked. The integration will then fetch this data from the servers.
+## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Seat Connect through native app API (API calls directly to vwg-connect services)
+This integration for Home Assistant will fetch data from Seat Connect servers related to your Seat Connect enabled car.
+Seat Connect never fetch data directly from car, the car sends updated data to VAG servers on specific events such as lock/unlock, charging events, climatisation events and when vehicle is parked. The integration will then fetch this data from the servers.
 When vehicle actions fails or return with no response, a force refresh might help. This will trigger a "wake up" call from VAG servers to the car.
 The scan_interval is how often the integration should fetch data from the servers, if there's no new data from the car then entities won't be updated-
 
@@ -34,7 +34,7 @@ The scan_interval is how often the integration should fetch data from the server
 - trigger data refresh - this will trigger a wake up call so the car sends new data
 
 ### What is NOT working / under development
-- climate entitites has been removed since they didn't map very well for requests to Skoda Connect API.
+- climate entitites has been removed since they didn't map very well for requests to Seat Connect API.
 - switches doesn't immediately update "request reulsts" and "request_in_progress". Long running requests will not show up until next scan interval.
 
 ### Breaking changes
@@ -48,37 +48,37 @@ The scan_interval is how often the integration should fetch data from the server
 ## Installation
 
 ### Install with HACS (recomended)
-If you have HACS (Home Assistant Community Store) installed, just search for Skoda Connect and install it direct from HACS.
+If you have HACS (Home Assistant Community Store) installed, just search for Seat Connect and install it direct from HACS.
 HACS will keep track of updates and you can easly upgrade to the latest version when a new release is available.
 
 If you don't have it installed, check it out here: [HACS](https://community.home-assistant.io/t/custom-component-hacs)
 
 ### Manual installation
-Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/custom_component/skodaconnect' into '<config dir>/custom_components'
+Clone or copy the repository and copy the folder 'homeassistant-seatconnect/custom_component/seatconnect' into '<config dir>/custom_components'
 
 ## Configure
 
-Add a skodaconnect configuration block to your `<config dir>/configuration.yaml`:
+Add a seatconnect configuration block to your `<config dir>/configuration.yaml`:
 ```yaml
-skodaconnect:
-    username: <username for skoda connect>
-    password: <password for skoda connect>
-    spin: <S-PIN for skoda connect>
+seatconnect:
+    username: <username for seat connect>
+    password: <password for seat connect>
+    spin: <S-PIN for seat connect>
     scandinavian_miles: false
     scan_interval:
         minutes: 1
     name:
         wvw1234567812356: 'Kodiaq'
 ```
-* **username:** (required) the username to your Skoda Connect account
+* **username:** (required) the username to your Seat Connect account
 
-* **password:** (required) the password to your Skoda Connect account
+* **password:** (required) the password to your Seat Connect account
 
 * **spin:** (optional) required for supporting combustion engine heating start/stop.
 
 * **scandinavian_miles:** (optional) set to true if you want to change from km to mi on sensors. Conversion between fahrenheit and celcius is taken care of by Home Assistant. (Default: false)
 
-* **scan_interval:** (optional) specify in minutes how often to fetch status data from Skoda Connect. (Default: 5 min, minimum 1 min)
+* **scan_interval:** (optional) specify in minutes how often to fetch status data from Seat Connect. (Default: 5 min, minimum 1 min)
 
 * **name:** (optional) map the vehicle identification number (VIN) to a friendly name of your car. This name is then used for naming all entities. See the configuration example. (by default, the VIN is used). VIN need to be entered lower case
 
@@ -154,7 +154,7 @@ If not specified then the integration will add all supported entities:
         - window_heater
 ```
 
-* **response_debug:** (optional) set to true to log raw HTTP data from Skoda Connect. This will flood the log, only enable if needed. (Default: false)
+* **response_debug:** (optional) set to true to log raw HTTP data from Seat Connect. This will flood the log, only enable if needed. (Default: false)
 
 * **resources:** (optional) use to enable/disable entities. If specified, only the listed entities will be created. If not specified all supported entities will be created.
 
@@ -166,18 +166,18 @@ Save these automations in your automations file `<config dir>/automations.yaml`
 
 ### Get notification when your car is on a new place and show a map with start position and end position
 ```yaml
-- id: notify_skoda_position_change
+- id: notify_seat_position_change
   description: Notify when position has been changed
-  alias: Skoda position changed notification
+  alias: Seat position changed notification
   trigger:
     - platform: state
-      entity_id: device_tracker.kodiaq
+      entity_id: device_tracker.arona
   action:
     - service: notify.ios_my_ios_device
       data_template:
-        title: "Kodiaq Position Changed"
+        title: "Arona Position Changed"
         message: |
-          🚗 Skoda Car is now on a new place.
+          🚗 Seat Car is now on a new place.
         data:
           url: /lovelace/car
           apns_headers:
@@ -193,65 +193,28 @@ Save these automations in your automations file `<config dir>/automations.yaml`
             shows_traffic: true
 ```
 
-### Announce when your car is unlocked but no one is home
-```yaml
-- id: 'notify_skoda_car_is_unlocked'
-  alias: Skoda is at home and unlocked
-  trigger:
-    - entity_id: binary_sensor.vw_carid_external_power
-      platform: state
-      to: 'on'
-      for: 00:10:00
-  condition:
-    - condition: state
-      entity_id: lock.kodiaq_door_locked
-      state: unlocked
-    - condition: state
-      entity_id: device_tracker.kodiaq
-      state: home
-    - condition: time
-      after: '07:00:00'
-      before: '21:00:00'
-  action:
-    # Notification via push message to smartphone
-    - service: notify.device
-      data:
-        message: "The car is unlocked!"
-        target:
-          - device/my_device
-    # Notification via smart speaker (kitchen)
-    - service: media_player.volume_set
-      data:
-        entity_id: media_player.kitchen
-        volume_level: '0.6'
-    - service: tts.google_translate_say
-      data:
-        entity_id: media_player.kitchen
-        message: "My Lord, the car is unlocked. Please attend this this issue at your earliest inconvenience!"
-```
-
 ## Enable debug logging
 For comprehensive debug logging you can add this to your `<config dir>/configuration.yaml`:
 ```yaml
 logger:
     default: info
     logs:
-        skodaconnect.connection: debug
-        skodaconnect.vehicle: debug
-        custom_components.skodaconnect: debug
-        custom_components.skodaconnect.climate: debug
-        custom_components.skodaconnect.lock: debug
-        custom_components.skodaconnect.device_tracker: debug
-        custom_components.skodaconnect.switch: debug
-        custom_components.skodaconnect.binary_sensor: debug
-        custom_components.skodaconnect.sensor: debug
+        seatconnect.connection: debug
+        seatconnect.vehicle: debug
+        custom_components.seatconnect: debug
+        custom_components.seatconnect.climate: debug
+        custom_components.seatconnect.lock: debug
+        custom_components.seatconnect.device_tracker: debug
+        custom_components.seatconnect.switch: debug
+        custom_components.seatconnect.binary_sensor: debug
+        custom_components.seatconnect.sensor: debug
  ```
-* **skodaconnect.connection:** Set the debug level for the Connection class of the Skoda Connect library. This handles the GET/SET requests towards the API
+* **seatconnect.connection:** Set the debug level for the Connection class of the Seat Connect library. This handles the GET/SET requests towards the API
 
-* **skodaconnect.vehicle:** Set the debug level for the Vehicle class of the Skoda Connect library. One object created for every vehicle in account and stores all data.
+* **seatconnect.vehicle:** Set the debug level for the Vehicle class of the Seat Connect library. One object created for every vehicle in account and stores all data.
 
-* **skodaconnect.dashboard:** Set the debug level for the Dashboard class of the Skoda Connect library. A wrapper class between hass component and library.
+* **seatconnect.dashboard:** Set the debug level for the Dashboard class of the Seat Connect library. A wrapper class between hass component and library.
 
-* **custom_components.skodaconnect:** Set debug level for the custom component. The communication between hass and library.
+* **custom_components.seatconnect:** Set debug level for the custom component. The communication between hass and library.
 
-* **custom_components.skodaconnect.XYZ** Sets debug level for individual entity types in the custom component.
+* **custom_components.seatconnect.XYZ** Sets debug level for individual entity types in the custom component.

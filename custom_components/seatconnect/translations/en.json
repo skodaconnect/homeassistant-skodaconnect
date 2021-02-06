@@ -1,10 +1,10 @@
 {
-    "title": "Skoda Connect",
+    "title": "Seat Connect",
     "config": {
         "step": {
             "user": {
-                "title": "Carnet Configuration",
-                "description": "Fill in Carnet information",
+                "title": "Seat Connect Configuration",
+                "description": "Fill in Seat Connect information",
                 "data": {
                     "username": "Username",
                     "password": "Password"

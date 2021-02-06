@@ -1,0 +1,9 @@
+{
+    "domain": "seatconnect",
+    "name": "Seat Connect",
+    "documentation": "https://github.com/farfar/homeassistant-seatconnect",
+    "issue_tracker": "https://github.com/farfar/homeassistant-seatconnect/issues",
+    "dependencies": [],
+    "codeowners": ["@farfar"],
+    "requirements": ["seatconnect==1.0.30"]
+}

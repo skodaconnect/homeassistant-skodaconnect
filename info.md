@@ -1,5 +1,5 @@
 
-This plugin allows you to use Skoda Connect connection to your car.
+This plugin allows you to use Seat Connect connection to your car.
 
 {%- if selected_tag == "master" %}
 ## This is a development version!
@@ -13,10 +13,10 @@ Please be careful and do NOT install this on production systems. Also make sure 
 {% endif %}
 
 # Changes
-You can find change log under [releases](https://github.com/lendy007/homeassistant-skodaconnect/releases)
+You can find change log under [releases](https://github.com/farfar/homeassistant-seatconnect/releases)
 
 # Links
-- [Automations](https://github.com/lendy007/homeassistant-skodaconnect/blob/master/README.md#automations)
-- [Change log](https://github.com/lendy007/homeassistant-skodaconnect/releases)
-- [Configuration](https://github.com/lendy007/homeassistant-skodaconnect/blob/master/README.md#configure)
-- [Documentation](https://github.com/lendy007/homeassistant-skodaconnect/blob/master/README.md)
+- [Automations](https://github.com/farfar/homeassistant-seatconnect/blob/master/README.md#automations)
+- [Change log](https://github.com/farfar/homeassistant-seatconnect/releases)
+- [Configuration](https://github.com/farfar/homeassistant-seatconnect/blob/master/README.md#configure)
+- [Documentation](https://github.com/farfar/homeassistant-seatconnect/blob/master/README.md)

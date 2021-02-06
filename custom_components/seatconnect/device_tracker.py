@@ -1,5 +1,5 @@
 """
-Support for Skoda Connect Platform
+Support for Seat Connect Platform
 """
 import logging
 
@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_scanner(hass, config, async_see, discovery_info=None):
-    """Set up the Skoda tracker."""
+    """Set up the Seat tracker."""
     if discovery_info is None:
         return
 

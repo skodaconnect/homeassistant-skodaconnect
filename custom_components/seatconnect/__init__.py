@@ -22,14 +22,12 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.util.dt import utcnow
-from skodaconnect import Connection
-
-# from . import skoda
+from seatconnect import Connection
 
 __version__ = "1.0.30"
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = "skodaconnect"
+DOMAIN = "seatconnect"
 DATA_KEY = DOMAIN
 CONF_MUTABLE = "mutable"
 CONF_SPIN = "spin"
@@ -144,11 +142,11 @@ SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
 
 
 async def async_setup(hass, config):
-    """Setup skoda connect component"""
+    """Setup seat connect component"""
     session = async_get_clientsession(hass)
 
-    _LOGGER.info(f"Starting Skoda Connect, version {__version__}")
-    _LOGGER.debug("Creating connection to skoda connect")
+    _LOGGER.info(f"Starting Seat Connect, version {__version__}")
+    _LOGGER.debug("Creating connection to seat connect")
     connection = Connection(
         session=session,
         username=config[DOMAIN].get(CONF_USERNAME),
@@ -158,7 +156,7 @@ async def async_setup(hass, config):
     )
 
     interval = config[DOMAIN].get(CONF_SCAN_INTERVAL)
-    data = hass.data[DATA_KEY] = SkodaData(config)
+    data = hass.data[DATA_KEY] = SeatData(config)
 
     def is_enabled(attr):
         """Return true if the user has enabled the resource."""
@@ -192,26 +190,26 @@ async def async_setup(hass, config):
             )
 
     async def update(now):
-        """Update status from skoda connect"""
+        """Update status from Seat Connect"""
         try:
             # Try to login
             if not connection.logged_in:
                 await connection._login()
                 if not connection.logged_in:
                     _LOGGER.warning(
-                        "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
+                        "Could not login to Seat Connect, please check your credentials and verify that the service is working"
                     )
                     return False
 
             # Update vehicle information
             if not await connection.update():
-                _LOGGER.warning("Could not query update from Skoda Connect")
+                _LOGGER.warning("Could not query update from Seat Connect")
                 return False
 
-            _LOGGER.debug("Updating data from Skoda Connect")
+            _LOGGER.debug("Updating data from Seat Connect")
             for vehicle in connection.vehicles:
                 if vehicle.vin not in data.vehicles:
-                    _LOGGER.info(f"Adding data for VIN: {vehicle.vin} from Skoda Connect")
+                    _LOGGER.info(f"Adding data for VIN: {vehicle.vin} from Seat Connect")
                     discover_vehicle(vehicle)
 
             async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
@@ -240,7 +238,7 @@ async def async_setup(hass, config):
         _LOGGER.info(f'Cleaning up')
         await connection.terminate()
 
-    _LOGGER.info("Starting skodaconnect component")
+    _LOGGER.info("Starting seatconnect component")
 
     # Register services and callbacks
     hass.services.async_register(
@@ -254,7 +252,7 @@ async def async_setup(hass, config):
     return await update(utcnow())
 
 
-class SkodaData:
+class SeatData:
     """Hold component state."""
 
     def __init__(self, config):
@@ -289,8 +287,8 @@ class SkodaData:
             return ""
 
 
-class SkodaEntity(Entity):
-    """Base class for all Skoda entities."""
+class SeatEntity(Entity):
+    """Base class for all Seat entities."""
 
     def __init__(self, data, vin, component, attribute):
         """Initialize the entity."""
@@ -368,7 +366,7 @@ class SkodaEntity(Entity):
         return {
             "identifiers": {(DOMAIN, self.vin)},
             "name": self._vehicle_name,
-            "manufacturer": "Skoda",
+            "manufacturer": "Seat",
             "model": self.vehicle.model,
             "sw_version": self.vehicle.model_year,
         }
