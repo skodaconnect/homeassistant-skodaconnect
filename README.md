@@ -4,7 +4,7 @@
 
 # Seat Connect - A Home Assistant custom component for Seat Connect
 
-# v1.0.30
+# v1.0.31
 **WARNING!**
 ***Version 1.0.30 and later has undergone major code changes since release 1.0.27.
 If you are updating, be sure to backup all your data***
