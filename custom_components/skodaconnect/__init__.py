@@ -26,7 +26,7 @@ from skodaconnect import Connection
 
 # from . import skoda
 
-__version__ = "1.0.30"
+__version__ = "1.0.32"
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "skodaconnect"
@@ -141,6 +141,13 @@ SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
         vol.Required("duration"): vol.In([10,20,30,40,50,60]),
     }
 )
+SERVICE_SET_MAX_CURRENT = "set_charger_max_current"
+SERVICE_SET_MAX_CURRENT_SCHEMA = vol.Schema(
+    {
+        vol.Required("vin"): cv.string,
+        vol.Required("current"): vol.In(["maximum", "reduced"]),
+    }
+)
 
 
 async def async_setup(hass, config):
@@ -231,9 +238,30 @@ async def async_setup(hass, config):
             async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
             return
         except Exception as error:
-            _LOGGER.warning(f"Couldn't execute, error: {err}")
+            _LOGGER.warning(f"Couldn't execute, error: {error}")
             async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
         raise Exception(f"Service call failed")
+
+    async def set_current(call):
+        """Prepare data and modify for data call."""
+        if call.data.get('current') in ("maximum", "reduced"):
+            try:
+                if call.data.get('current') == "maximum":
+                    current = 254
+                else:
+                    current = 252
+                _LOGGER.debug("Try to fetch object for VIN: %s" % call.data.get("vin", ""))
+                vin = call.data.get("vin")
+                car = connection.vehicle(vin)
+                _LOGGER.debug(f"Found car: {car.nickname}")
+                _LOGGER.debug(f"Set charger current to {call.data.get('current')} ({current})")
+                await car.set_charger_current(current)
+                async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
+                return
+            except Exception as error:
+                _LOGGER.warning(f"Couldn't execute, error: {error}")
+                async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
+            raise Exception(f"Service call failed")
 
     async def cleanup(call):
         """Terminate session and clean up."""
@@ -248,6 +276,12 @@ async def async_setup(hass, config):
         SERVICE_SET_PHEATER_DURATION,
         set_pheater_duration,
         schema=SERVICE_SET_PHEATER_DURATION_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_MAX_CURRENT,
+        set_current,
+        schema=SERVICE_SET_MAX_CURRENT_SCHEMA
     )
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, cleanup)
 

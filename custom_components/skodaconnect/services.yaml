@@ -7,3 +7,12 @@ set_pheater_duration:
     duration:
       description: "[10,20,30,40,50,60] Parking heater duration for heating/ventilation"
       example: '20'
+set_charger_max_current:
+  description: "Set maximum current for charger"
+  fields:
+    vin:
+      description: "VIN number for vehicle to control. [VIN-number] str (required)"
+      example: "ABCDE9FG0H1234567"
+    current:
+      description: "[maximum, reduced] The max current setting"
+      example: 'maximum'
