@@ -164,6 +164,35 @@ In this example we are sending notifications to an ios device. The Android compa
 
 Save these automations in your automations file `<config dir>/automations.yaml`
 
+### Use input_select to change pre-heater duration
+First create a input_number, via editor in configuration.yaml or other included config file, or via GUI Helpers editor.
+It is important to set minimum value to 10, maximum to 60 and step to 10. Otherwise the service call might not work.
+```yaml
+# configuration.yaml
+input_number:
+  pheater_duration:
+    name: "Pre-heater duration"
+    initial: 20
+    min: 10
+    max: 60
+    step: 10
+    unit_of_measurement: min
+```
+Create the automation, in yaml or via GUI editor.
+```yaml
+# automations.yaml
+- alias: Set pre-heater duration
+  trigger:
+  - platform: state
+    entity_id: input_number.pheater_duration
+  action:
+  - service: skodaconnect.set_pheater_duration
+    data_template:
+     vin: <VIN-number of car>
+     duration: >
+        {{ trigger.to_state.state }}
+```
+
 ### Get notification when your car is on a new place and show a map with start position and end position
 ```yaml
 - id: notify_skoda_position_change
