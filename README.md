@@ -165,6 +165,8 @@ In this example we are sending notifications to an ios device. The Android compa
 Save these automations in your automations file `<config dir>/automations.yaml`
 
 ### Get notification when your car is on a new place and show a map with start position and end position
+Note: only available for iOS devices since Android companion app does not support this yet.
+This might be broken since 1.0.30 when device_tracker changed behaviour.
 ```yaml
 - id: notify_skoda_position_change
   description: Notify when position has been changed
