@@ -40,7 +40,7 @@ The scan_interval is how often the integration should fetch data from the server
 ### Breaking changes
 - Enabled API endpoints (functions) are discovered through fetching "operationlist". This has not been tested for all cars and might prove unreliable.
 - Combustion heater/ventilation is now named parking heater so it's not mixed up with aux heater for PHEV
-- Many resources have changed names to avoid confusion in the code, some have changed from sensor to switch and vice versa
+- Many resources have changed names to avoid confusion in the code, some have changed from sensor to switch and vice versa. Sensors with trailing "_km" in the name has been renamed to "_distance" for better compability between imperial and non-imperial units.
 - Major code changes has been made for requests handling.
   - request_in_progress is now a binary sensor instead of a switch
   - force_data_refresh is a new switch with the same functionality as "request_in_progress" previously, it will force refresh data from car
