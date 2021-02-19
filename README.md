@@ -56,7 +56,7 @@ If you don't have it installed, check it out here: [HACS](https://community.home
 ### Manual installation
 Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/custom_component/skodaconnect' into '<config dir>/custom_components'
 
-## Configure
+## Configuration
 
 Add a skodaconnect configuration block to your `<config dir>/configuration.yaml`:
 ```yaml
@@ -82,7 +82,7 @@ skodaconnect:
 
 * **name:** (optional) map the vehicle identification number (VIN) to a friendly name of your car. This name is then used for naming all entities. See the configuration example. (by default, the VIN is used). VIN need to be entered lower case
 
-
+### Advanced configuration
 Additional optional configuration options, only add if needed!
 The resources option will limit what entities gets added to home assistant, only the specified resources will be added if they are supported.
 If not specified then the integration will add all supported entities:
@@ -286,3 +286,5 @@ logger:
 * **custom_components.skodaconnect:** Set debug level for the custom component. The communication between hass and library.
 
 * **custom_components.skodaconnect.XYZ** Sets debug level for individual entity types in the custom component.
+
+In addition to debug logs, the component has an option to enable logging of raw HTTP responses which is useful when debugging issues. See 'response_debug' [here](https://github.com)
