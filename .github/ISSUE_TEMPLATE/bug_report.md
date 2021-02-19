@@ -14,7 +14,7 @@ A clear and concise description of what the bug is.
 If the problem started after updating to a new release, please state latest working release.
 
 **Debug logs**
-If applicable, add debug logs. See README on how to enable debug logs with response debugging.
+If applicable, add debug logs. See [README](https://github.com/lendy007/homeassistant-skodaconnect#enable-debug-logging) on how to enable debug logs with response debugging.
 
 **Installation:**
  - Home Assistant variant: [e.g. Hass OS, Docker, Core, Supervised]
