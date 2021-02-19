@@ -287,4 +287,4 @@ logger:
 
 * **custom_components.skodaconnect.XYZ** Sets debug level for individual entity types in the custom component.
 
-In addition to debug logs, the component has an option to enable logging of raw HTTP responses which is useful when debugging issues. See 'response_debug' [here](https://github.com)
+In addition to debug logs, the component has an option to enable logging of raw HTTP responses which is useful when debugging issues. See 'response_debug' [here](https://github.com/lendy007/homeassistant-skodaconnect/blob/main/README.md#advanced-configuration)
