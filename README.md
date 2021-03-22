@@ -4,7 +4,7 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.37
+# v1.0.38
 **WARNING!**
 ***Version 1.0.30 and later has undergone major code changes since release 1.0.27.
 If you are updating, be sure to backup all your data***
