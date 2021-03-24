@@ -4,12 +4,9 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.40-RC1
+# v1.0.40-RC2
 **WARNING!**
-***Version 1.0.30 and later has undergone major code changes since release 1.0.27.
-If you are updating, be sure to backup all your data***
-Major changes are entity names and climate entities are removed.
-Supported features are automatically discovered through API calls, this hasn't been tested on all cars and might prove unreliable for some.
+This is a BETA pre-release. Only install if you are having issues with latest stable release. Read release notes for more details.
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
 This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
