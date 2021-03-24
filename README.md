@@ -4,7 +4,7 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.38
+# v1.0.40-RC1
 **WARNING!**
 ***Version 1.0.30 and later has undergone major code changes since release 1.0.27.
 If you are updating, be sure to backup all your data***
@@ -16,6 +16,11 @@ This integration for Home Assistant will fetch data from Skoda Connect servers r
 Skoda Connect never fetch data directly from car, the car sends updated data to VAG servers on specific events such as lock/unlock, charging events, climatisation events and when vehicle is parked. The integration will then fetch this data from the servers.
 When vehicle actions fails or return with no response, a force refresh might help. This will trigger a "wake up" call from VAG servers to the car.
 The scan_interval is how often the integration should fetch data from the servers, if there's no new data from the car then entities won't be updated-
+
+### Supported setups
+This integration will only work for your car if you have Skoda Connect/MyŠKODA functionality. Cars using other third party, semi-official, mobile apps such as the "MinSkoda" from ConnectedCars in Denmark won't work.
+
+The car privacy settings must be set to "Share my position" for full functionality of this integration. Without this setting, if set to "Use my position", the sensors for position (device tracker), requests remaining and parking time might not work reliably or at all. Set to even stricter privacy setting will limit functionality even further.
 
 ### What is working
 - odometer and service info
