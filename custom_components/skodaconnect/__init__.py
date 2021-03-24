@@ -213,7 +213,7 @@ async def async_setup(hass, config):
         try:
             # Try to login
             if not connection.logged_in:
-                await connection._login()
+                await connection.doLogin()
                 if not connection.logged_in:
                     _LOGGER.warning(
                         "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
