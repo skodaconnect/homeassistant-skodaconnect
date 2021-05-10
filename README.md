@@ -4,7 +4,7 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.40-RC2
+# v1.0.40-RC3
 **WARNING!**
 This is a BETA pre-release. Only install if you are having issues with latest stable release. Read release notes for more details.
 
@@ -35,9 +35,17 @@ The car privacy settings must be set to "Share my position" for full functionali
 - device tracker - entity is set to 'not_home' when car is moving
 - trigger data refresh - this will trigger a wake up call so the car sends new data
 
+This release adds beta functionality for newer EV's such as Enyaq iV. Supported sensors:
+- Electric range
+- Battery level
+- Plug connected
+- Plug locked
+- Charger connected (external power)
+
 ### What is NOT working / under development
 - climate entitites has been removed since they didn't map very well for requests to Skoda Connect API.
 - switches doesn't immediately update "request reulsts" and "request_in_progress". Long running requests will not show up until next scan interval.
+- Support for newer cars that seems to connect to Skoda native API (Skoda Enyaq iV).
 
 ### Breaking changes
 - Enabled API endpoints (functions) are discovered through fetching "operationlist". This has not been tested for all cars and might prove unreliable.
