@@ -4,7 +4,7 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.40-RC3
+# v1.0.40-RC4
 **WARNING!**
 This is a BETA pre-release. Only install if you are having issues with latest stable release. Read release notes for more details.
 

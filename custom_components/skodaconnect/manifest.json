@@ -8,6 +8,6 @@
         "@lendy007",
         "@Farfar"
     ],
-    "requirements": ["skodaconnect==1.0.40rc3"],
-    "version": "1.0.40-rc3"
+    "requirements": ["skodaconnect==1.0.40rc4"],
+    "version": "1.0.40-rc4"
 }
