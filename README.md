@@ -71,14 +71,14 @@ Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/cus
 Add a skodaconnect configuration block to your `<config dir>/configuration.yaml`:
 ```yaml
 skodaconnect:
-    username: <username for skoda connect>
-    password: <password for skoda connect>
-    spin: <S-PIN for skoda connect>
-    scandinavian_miles: false
-    scan_interval:
-        minutes: 1
-    name:
-        wvw1234567812356: 'Kodiaq'
+  username: <username for skoda connect>
+  password: <password for skoda connect>
+  spin: <S-PIN for skoda connect>
+  scandinavian_miles: false
+  scan_interval:
+    minutes: 1
+  name:
+    wvw1234567812356: 'Kodiaq'
 ```
 * **username:** (required) the username to your Skoda Connect account
 
@@ -97,71 +97,71 @@ Additional optional configuration options, only add if needed!
 The resources option will limit what entities gets added to home assistant, only the specified resources will be added if they are supported.
 If not specified then the integration will add all supported entities:
 ```yaml
-    response_debug: False
-    resources:
-       # Binary sensors
-        - charging_cable_connected
-        - charging_cable_locked
-        - door_closed_left_front
-        - door_closed_left_back
-        - door_closed_right_front
-        - door_closed_right_back
-        - doors_locked
-        - energy_flow
-        - external_power
-        - hood_closed
-        - parking_light
-        - request_in_progress
-        - sunroof_closed
-        - trunk_closed
-        - trunk_locked
-        - vehicle_moving
-        - window_closed_left_front
-        - window_closed_left_back
-        - window_closed_right_front
-        - window_closed_right_back
-        - windows_closed
-      # Device tracker
-        - position
-      # Locks
-        - door_locked
-        - trunk_locked
-      # Sensors
-        - adblue_level
-        - battery_level
-        - charger_max_ampere
-        - charging_time_left
-        - climatisation_target_temperature
-        - combined_range
-        - combustion_range
-        - electric_range
-        - fuel_level
-        - last_connected
-        - last_trip_average_electric_consumption
-        - last_trip_average_fuel_consumption
-        - last_trip_average_speed
-        - last_trip_duration
-        - last_trip_length
-        - odometer
-        - oil_inspection_days
-        - oil_inspection_distance
-        - outside_temperature
-        - parking_time
-        - pheater_status
-        - pheater_duration
-        - request_results
-        - requests_remaining
-        - service_inspection_days
-        - service_inspection_distance
-      # Switches
-        - auxiliary_climatisation
-        - charging
-        - climatisation_from_battery
-        - electric_climatisation
-        - force_data_refresh
-        - parking_heater_heating
-        - parking_heater_ventilation
-        - window_heater
+  response_debug: False
+  resources:
+   # Binary sensors
+    - charging_cable_connected
+    - charging_cable_locked
+    - door_closed_left_front
+    - door_closed_left_back
+    - door_closed_right_front
+    - door_closed_right_back
+    - doors_locked
+    - energy_flow
+    - external_power
+    - hood_closed
+    - parking_light
+    - request_in_progress
+    - sunroof_closed
+    - trunk_closed
+    - trunk_locked
+    - vehicle_moving
+    - window_closed_left_front
+    - window_closed_left_back
+    - window_closed_right_front
+    - window_closed_right_back
+    - windows_closed
+  # Device tracker
+    - position
+  # Locks
+    - door_locked
+    - trunk_locked
+  # Sensors
+    - adblue_level
+    - battery_level
+    - charger_max_ampere
+    - charging_time_left
+    - climatisation_target_temperature
+    - combined_range
+    - combustion_range
+    - electric_range
+    - fuel_level
+    - last_connected
+    - last_trip_average_electric_consumption
+    - last_trip_average_fuel_consumption
+    - last_trip_average_speed
+    - last_trip_duration
+    - last_trip_length
+    - odometer
+    - oil_inspection_days
+    - oil_inspection_distance
+    - outside_temperature
+    - parking_time
+    - pheater_status
+    - pheater_duration
+    - request_results
+    - requests_remaining
+    - service_inspection_days
+    - service_inspection_distance
+  # Switches
+    - auxiliary_climatisation
+    - charging
+    - climatisation_from_battery
+    - electric_climatisation
+    - force_data_refresh
+    - parking_heater_heating
+    - parking_heater_ventilation
+    - window_heater
 ```
 
 * **response_debug:** (optional) set to true to log raw HTTP data from Skoda Connect. This will flood the log, only enable if needed. (Default: false)
@@ -275,17 +275,17 @@ This might be broken since 1.0.30 when device_tracker changed behaviour.
 For comprehensive debug logging you can add this to your `<config dir>/configuration.yaml`:
 ```yaml
 logger:
-    default: info
-    logs:
-        skodaconnect.connection: debug
-        skodaconnect.vehicle: debug
-        custom_components.skodaconnect: debug
-        custom_components.skodaconnect.climate: debug
-        custom_components.skodaconnect.lock: debug
-        custom_components.skodaconnect.device_tracker: debug
-        custom_components.skodaconnect.switch: debug
-        custom_components.skodaconnect.binary_sensor: debug
-        custom_components.skodaconnect.sensor: debug
+  default: info
+  logs:
+    skodaconnect.connection: debug
+    skodaconnect.vehicle: debug
+    custom_components.skodaconnect: debug
+    custom_components.skodaconnect.climate: debug
+    custom_components.skodaconnect.lock: debug
+    custom_components.skodaconnect.device_tracker: debug
+    custom_components.skodaconnect.switch: debug
+    custom_components.skodaconnect.binary_sensor: debug
+    custom_components.skodaconnect.sensor: debug
  ```
 * **skodaconnect.connection:** Set the debug level for the Connection class of the Skoda Connect library. This handles the GET/SET requests towards the API
 
