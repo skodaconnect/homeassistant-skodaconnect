@@ -4,7 +4,7 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.40-RC4
+# v1.0.40-RC5
 **WARNING!**
 This is a BETA pre-release. Only install if you are having issues with latest stable release. Read release notes for more details.
 
@@ -16,6 +16,7 @@ The scan_interval is how often the integration should fetch data from the server
 
 ### Supported setups
 This integration will only work for your car if you have Skoda Connect/MyŠKODA functionality. Cars using other third party, semi-official, mobile apps such as the "MinSkoda" from ConnectedCars in Denmark won't work.
+Initial support has been added for SmartLink and newer style API cars, such as the Enyaq iV.
 
 The car privacy settings must be set to "Share my position" for full functionality of this integration. Without this setting, if set to "Use my position", the sensors for position (device tracker), requests remaining and parking time might not work reliably or at all. Set to even stricter privacy setting will limit functionality even further.
 
@@ -42,10 +43,18 @@ This release adds beta functionality for newer EV's such as Enyaq iV. Supported 
 - Plug locked
 - Charger connected (external power)
 
+This release adds beta functionality for SmartLink cars. Supported sensors:
+- Fuel level
+- Odometer
+- Service inspection distance
+- Service inspection time
+- Oil service distance
+- Oil service time
+
 ### What is NOT working / under development
-- climate entitites has been removed since they didn't map very well for requests to Skoda Connect API.
 - switches doesn't immediately update "request reulsts" and "request_in_progress". Long running requests will not show up until next scan interval.
 - Support for newer cars that seems to connect to Skoda native API (Skoda Enyaq iV).
+- SmartLink integration
 
 ### Breaking changes
 - Enabled API endpoints (functions) are discovered through fetching "operationlist". This has not been tested for all cars and might prove unreliable.
