@@ -73,7 +73,11 @@ HACS will keep track of updates and you can easly upgrade to the latest version 
 If you don't have it installed, check it out here: [HACS](https://community.home-assistant.io/t/custom-component-hacs)
 
 ### Manual installation
-Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/custom_component/skodaconnect' into '<config dir>/custom_components'
+Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/custom_component/skodaconnect' into '<config dir>/custom_components'.
+  Install required python library with (adjust to suit your environment):
+```
+pip install skodaconnect
+```
 
 ## Configuration
 
