@@ -24,7 +24,7 @@ from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.util.dt import utcnow
 from seatconnect import Connection
 
-__version__ = "1.0.31"
+__version__ = "1.0.32"
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "seatconnect"
