@@ -1,0 +1,71 @@
+{
+  "title": "Skoda Connect",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Skoda Connect Configuration",
+        "description": "Fill in Skoda Connect information\n\nS-PIN is required for some specific options such as lock/unlock and combustion engine heating start/stop",
+        "data": {
+          "username": "[%key:common::config_flow::data::email%]",
+          "password": "[%key:common::config_flow::data::password%]",
+          "mutable": "Uncheck to make the car 'read only'. Keep checked to interact with the car",
+          "region": "Region (The country where the car was sold)",
+          "spin": "S-PIN",
+          "name": "Name your car (defaults to VIN number)",
+          "debug": "Enable full debug logs from API (requires debug logging enabled in config)",
+          "convert": "Select if you wan to make any distance unit conversions"
+        }
+      },
+      "select_vehicle": {
+        "title": "Vehicle",
+        "description": "The following vehicles was found. Please select the vehicle you wish to monitor",
+        "data": {
+          "vehicle": "VIN Number"
+        }
+      },
+      "select_instruments": {
+        "title": "Instruments",
+        "description": "Select instruments to monitor",
+        "data": {
+          "resources": "Resources to monitor"
+        }
+      },
+      "reauth_confirm": {
+        "data": {
+          "description": "Re-authenticate with your Skoda Connect account. Make sure to accept any new EULA in the Connect portal (https://www.skoda-connect.com/) before proceeding. ",
+          "email": "[%key:common::config_flow::data::email%]",
+          "password": "[%key:common::config_flow::data::password%]"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_account%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
+    },
+    "error": {
+      "cannot_connect": "Could not login to Skoda Connect, please check your credentials and verify that the service is working",
+      "cannot_update": "Could not query update from Skoda Connect",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "progress": {
+      "task_login": "Logging in to Skoda Connect",
+      "task_update": "Fetching vehicles"
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Options for Skoda Connect",
+        "description": "Configure update intervals",
+        "data": {
+          "report_request": "Enable automatic report request",
+          "report_scan_interval": "Report request update interval (days)",
+          "scan_interval": "Sensors update interval (minutes)",
+          "region": "Region (The country where the car was sold)",
+          "debug": "Enable full debug logs from API (requires debug logging enabled in config)",
+          "convert": "Select if you wan to make any distance unit conversions"
+        }
+      }
+    }
+  }
+}
