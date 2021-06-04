@@ -19,8 +19,9 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers import config_validation as cv, entity_platform, service
+
 from skodaconnect import Connection, Vehicle
-#from vw_vehicle import Vehicle
 
 from .const import (
     COMPONENTS,
@@ -90,13 +91,52 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
 
-    hass.data[DOMAIN][entry.entry_id] = {
+   hass.data[DOMAIN][entry.entry_id] = {
         UPDATE_CALLBACK: update_callback,
         DATA: data,
         UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
     }
 
+    # Register entity service
+    platform = entity_platform.current_platform.get()
+
+    # Register entity services
+    platform.async_register_entity_service(
+        SERVICE_SET_SCHEDULE,
+        {
+            vol.Required("id", default=1): vol.In([1,2,3]),
+            vol.Required("enabled", default=True): cv.bool,
+            vol.Required("recurring", default=False): cv.bool,
+            vol.Required("time", default="08:00"): cv.time,
+            vol.Optional("date", default="2020-01-01"): cv.string,
+            vol.Optional("days", default='nnnnnnn'): cv.string,
+        },
+        "set_departure_schedule",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_CHARGE_LIMIT,
+        {
+            vol.Required("limit"): vol.In([0,10,20,30,40,50]),
+        },
+        "set_charge_limit",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_PHEATER_DURATION,
+        {
+            vol.Required("duration"): vol.In([10,20,30,40,50,60]),
+        },
+        "set_pheater_duration",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_CHARGER_CURRENT,
+        {
+            vol.Required("current"): vol.In(["maximum", "reduced"]),
+        },
+        "set_charger_current",
+    )
+
     return True
+
 
 
 def update_callback(hass, coordinator):
@@ -107,7 +147,7 @@ def update_callback(hass, coordinator):
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up the Plaato component."""
+    """Set up the component."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
@@ -341,6 +381,7 @@ class SkodaCoordinator(DataUpdateCoordinator):
         if not vehicle:
             raise UpdateFailed("Failed to update Connect. Need to accept EULA? Try logging in to the portal: https://www.skoda-connect.com/")
 
+        # Force data refresh if config option is enabled
         if self.entry.options.get(CONF_REPORT_REQUEST, False):
             await self.report_request(vehicle)
 
@@ -390,7 +431,7 @@ class SkodaCoordinator(DataUpdateCoordinator):
     async def update(self) -> Union[bool, Vehicle]:
         """Update status from Skoda Connect"""
 
-        # update vehicles
+        # Update vehicles
         if not await self.connection.update():
             _LOGGER.warning("Could not query update from Skoda Connect")
             return False
@@ -401,6 +442,35 @@ class SkodaCoordinator(DataUpdateCoordinator):
                 return vehicle
 
         return False
+
+    async def set_charge_limit(
+        self,
+        limit: int | None = None
+    ) -> None:
+        """Set minimum charge limit."""
+
+    async def set_departure_schedule(
+        self,
+        id: int | None = None,
+        enabled: bool | None = None,
+        recurring: bool | None = None,
+        time: str | None = None,
+        date: str | None = None,
+        days: str | None = None
+    ) -> None:
+        """Set departure schedule."""
+
+    async def set_pheater_duration(
+        self,
+        duration: int | None = None
+    ) -> None:
+        """Set duration for parking heater."""
+
+    async def set_charger_current(
+        self,
+        current: str | None = None
+    ) -> None:
+        """Set charger current."""
 
     async def report_request(self, vehicle: Vehicle):
         """Request car to report itself an update to Skoda Connect"""
