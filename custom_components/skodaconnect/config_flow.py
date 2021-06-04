@@ -74,7 +74,6 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 username=self._init_info[CONF_USERNAME],
                 password=self._init_info[CONF_PASSWORD],
                 fulldebug=self._init_info.get(CONF_DEBUG, DEFAULT_DEBUG),
-                country=self._init_info[CONF_REGION]
             )
 
             return await self.async_step_login()
@@ -186,7 +185,6 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 username=user_input[CONF_USERNAME],
                 password=user_input[CONF_PASSWORD],
                 fulldebug=self.entry.options.get(CONF_DEBUG, self.entry.data.get(CONF_DEBUG, DEFAULT_DEBUG)),
-                country=self.entry.options.get(CONF_REGION, self.entry.data[CONF_REGION]),
             )
 
             # noinspection PyBroadException

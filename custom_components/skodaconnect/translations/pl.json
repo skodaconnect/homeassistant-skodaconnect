@@ -9,7 +9,6 @@
           "username": "Email",
           "password": "Hasło",
           "mutable": "Usuń zaznaczenie, aby samochód był „tylko do odczytu”. Jeśli je zostawisz będziesz mógł wejść w interakcję z samochodem",
-          "region": "Kod kraju, w którym samochód został sprzedany (ISO 3155-1 / Alpha-2)",
           "spin": "S-PIN",
           "scandinavian_miles": "Włącz, jeśli chcesz zmienić z km na mil w sensorach",
           "name": "Nazwij swój samochód (domyślnie numer VIN)",
@@ -62,7 +61,6 @@
           "report_request": "Włącz automatyczne żądanie raportu",
           "report_scan_interval": "Częstotliwość aktualizacji żądania raportu (dni)",
           "scan_interval": "Częstotliwość aktualizacji czujników (minuty)",
-          "region": "Region (kraj, w którym samochód został sprzedany)",
           "debug": "Włącz pełne dzienniki debugowania z interfejsu API (wymaga włączenia rejestrowania debugowania w konfiguracji)",
           "scandinavian_miles": "Włącz, jeśli chcesz zmienić z km na mil w sensorach",
           "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości"

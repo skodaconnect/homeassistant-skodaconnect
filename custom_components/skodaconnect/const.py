@@ -3,10 +3,8 @@ from datetime import timedelta
 DOMAIN = "skodaconnect"
 DATA_KEY = DOMAIN
 
-DEFAULT_REGION = "CZ"
 DEFAULT_DEBUG = False
 
-CONF_REGION = "region"
 CONF_MUTABLE = "mutable"
 CONF_SPIN = "spin"
 CONF_SCANDINAVIAN_MILES = "scandinavian_miles"

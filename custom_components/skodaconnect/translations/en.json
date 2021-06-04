@@ -9,7 +9,6 @@
           "username": "Email",
           "password": "Password",
           "mutable": "Uncheck to make the car 'read only'. Keep checked to interact with the car",
-          "region": "Country code where the car was sold (ISO 3155-1 / Alpha-2)",
           "spin": "S-PIN",
           "scandinavian_miles": "Enable if you want to change from km to mil on sensors",
           "name": "Name your car (defaults to VIN number)",
@@ -62,7 +61,6 @@
           "report_request": "Enable automatic report request",
           "report_scan_interval": "Report request update interval (days)",
           "scan_interval": "Sensors update interval (minutes)",
-          "region": "Region (The country where the car was sold)",
           "debug": "Enable full debug logs from API (requires debug logging enabled in config)",
           "scandinavian_miles": "Enable if you want to change from km to mil on sensors",
           "convert": "Select if you wan to make any distance unit conversions"
