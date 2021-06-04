@@ -20,12 +20,10 @@ from .const import (
     CONF_DEBUG,
     CONVERT_DICT,
     CONF_MUTABLE,
-    CONF_REGION,
     CONF_REPORT_REQUEST,
     CONF_REPORT_SCAN_INTERVAL,
     CONF_SPIN,
     CONF_VEHICLE,
-    DEFAULT_REGION,
     DEFAULT_REPORT_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
@@ -39,7 +37,6 @@ DATA_SCHEMA = {
     vol.Required(CONF_USERNAME, default=""): str,
     vol.Required(CONF_PASSWORD, default=""): str,
     vol.Optional(CONF_SPIN, default=""): str,
-    vol.Optional(CONF_REGION, default=DEFAULT_REGION): str,
     vol.Optional(CONF_MUTABLE, default=True): cv.boolean,
     vol.Optional(CONF_CONVERT, default=None): vol.In(CONVERT_DICT),
     vol.Optional(CONF_DEBUG, default=DEFAULT_DEBUG): cv.boolean,
@@ -289,12 +286,6 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                             CONF_SCAN_INTERVAL, DEFAULT_UPDATE_INTERVAL
                         ),
                     ): cv.positive_int,
-                    vol.Optional(
-                        CONF_REGION,
-                        default=self._config_entry.options.get(
-                            CONF_REGION, self._config_entry.data[CONF_REGION]
-                        )
-                    ): str
                 }
             ),
         )
