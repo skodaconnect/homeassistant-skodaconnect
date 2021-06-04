@@ -445,30 +445,30 @@ class SkodaCoordinator(DataUpdateCoordinator):
 
     async def set_charge_limit(
         self,
-        limit: int | None = None
+        limit: int
     ) -> None:
         """Set minimum charge limit."""
 
     async def set_departure_schedule(
         self,
-        id: int | None = None,
-        enabled: bool | None = None,
-        recurring: bool | None = None,
-        time: str | None = None,
-        date: str | None = None,
-        days: str | None = None
+        id: int,
+        enabled: bool,
+        recurring: bool,
+        time: str,
+        date: str,
+        days: str
     ) -> None:
         """Set departure schedule."""
 
     async def set_pheater_duration(
         self,
-        duration: int | None = None
+        duration: int
     ) -> None:
         """Set duration for parking heater."""
 
     async def set_charger_current(
         self,
-        current: str | None = None
+        current: str
     ) -> None:
         """Set charger current."""
 
