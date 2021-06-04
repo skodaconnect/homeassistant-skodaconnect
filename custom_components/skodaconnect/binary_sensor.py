@@ -5,10 +5,7 @@ import logging
 
 from homeassistant.components.binary_sensor import DEVICE_CLASSES, BinarySensorEntity
 
-from . import DATA_KEY, SkodaEntity
-
-# from homeassistant.components.binary_sensor import DEVICE_CLASSES, BinarySensorDevice
-
+from . import UPDATE_CALLBACK, DATA, DATA_KEY, DOMAIN, SkodaEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,8 +17,25 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities([SkodaBinarySensor(hass.data[DATA_KEY], *discovery_info)])
 
 
+async def async_setup_entry(hass, entry, async_add_devices):
+    data = hass.data[DOMAIN][entry.entry_id][DATA]
+    coordinator = data.coordinator
+    if coordinator.data is not None:
+        async_add_devices(
+            SkodaBinarySensor(
+                data, coordinator.vin, instrument.component, instrument.attr, hass.data[DOMAIN][entry.entry_id][UPDATE_CALLBACK]
+            )
+            for instrument in (
+                instrument
+                for instrument in data.instruments
+                if instrument.component == "binary_sensor"
+            )
+        )
+
+    return True
+
+
 class SkodaBinarySensor(SkodaEntity, BinarySensorEntity):
-    # class SkodaBinarySensor(SkodaEntity, BinarySensorDevice):
     """Representation of a Skoda Binary Sensor """
 
     @property

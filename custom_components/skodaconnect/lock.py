@@ -5,24 +5,36 @@ import logging
 
 from homeassistant.components.lock import LockEntity
 
-from . import DATA_KEY, SkodaEntity
-
-# from homeassistant.components.lock import LockDevice
-
+from . import DATA, DATA_KEY, DOMAIN, SkodaEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """ Setup the skoda lock """
+    """ Setup the Skoda lock """
     if discovery_info is None:
         return
 
     async_add_entities([SkodaLock(hass.data[DATA_KEY], *discovery_info)])
 
 
+async def async_setup_entry(hass, entry, async_add_devices):
+    data = hass.data[DOMAIN][entry.entry_id][DATA]
+    coordinator = data.coordinator
+    if coordinator.data is not None:
+        async_add_devices(
+            SkodaLock(data, coordinator.vin, instrument.component, instrument.attr)
+            for instrument in (
+                instrument
+                for instrument in data.instruments
+                if instrument.component == "lock"
+            )
+        )
+
+    return True
+
+
 class SkodaLock(SkodaEntity, LockEntity):
-    # class SkodaLock(SkodaEntity, LockDevice):
     """Represents a Skoda Connect Lock."""
 
     @property
@@ -34,9 +46,7 @@ class SkodaLock(SkodaEntity, LockEntity):
     async def async_lock(self, **kwargs):
         """Lock the car."""
         await self.instrument.lock()
-        await super().update_hass()
 
     async def async_unlock(self, **kwargs):
         """Unlock the car."""
         await self.instrument.unlock()
-        await super().update_hass()

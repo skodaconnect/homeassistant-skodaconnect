@@ -1,319 +1,180 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
+from typing import Union
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
+from homeassistant.config_entries import ConfigEntry, SOURCE_REAUTH
 from homeassistant.const import (
     CONF_NAME,
     CONF_PASSWORD,
     CONF_RESOURCES,
     CONF_SCAN_INTERVAL,
-    CONF_USERNAME,
-    EVENT_HOMEASSISTANT_STOP,
+    CONF_USERNAME, EVENT_HOMEASSISTANT_STOP,
 )
-from homeassistant.helpers import discovery
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.dispatcher import (
-    async_dispatcher_connect,
-    async_dispatcher_send,
-)
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.icon import icon_for_battery_level
-from homeassistant.util.dt import utcnow
-from skodaconnect import Connection
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from skodaconnect import Connection, Vehicle
+#from vw_vehicle import Vehicle
 
-# from . import skoda
+from .const import (
+    COMPONENTS,
+    CONF_MUTABLE,
+    CONF_REGION,
+    CONF_REPORT_REQUEST,
+    CONF_REPORT_SCAN_INTERVAL,
+    CONF_SCANDINAVIAN_MILES,
+    CONF_SPIN,
+    CONF_VEHICLE,
+    DATA,
+    DATA_KEY,
+    DEFAULT_REGION,
+    DEFAULT_REPORT_UPDATE_INTERVAL,
+    DEFAULT_UPDATE_INTERVAL,
+    DOMAIN,
+    MIN_UPDATE_INTERVAL,
+    SIGNAL_STATE_UPDATED,
+    UNDO_UPDATE_LISTENER, UPDATE_CALLBACK, CONF_DEBUG, DEFAULT_DEBUG, CONF_CONVERT, CONF_NO_CONVERSION,
+    CONF_IMPERIAL_UNITS,
+)
 
-__version__ = "1.0.40-rc5"
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = "skodaconnect"
-DATA_KEY = DOMAIN
-CONF_MUTABLE = "mutable"
-CONF_SPIN = "spin"
-CONF_FULLDEBUG = "response_debug"
-CONF_PHEATER_DURATION = "climatisation_duration"
-CONF_MILES = "scandinavian_miles"
 
-SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Setup Skoda Connect component"""
 
-MIN_UPDATE_INTERVAL = timedelta(minutes=1)
-DEFAULT_UPDATE_INTERVAL = timedelta(minutes=5)
+    if entry.options.get(CONF_SCAN_INTERVAL):
+        update_interval = timedelta(minutes=entry.options[CONF_SCAN_INTERVAL])
+    else:
+        update_interval = timedelta(minutes=DEFAULT_UPDATE_INTERVAL)
 
-COMPONENTS = {
-    "sensor": "sensor",
-    "binary_sensor": "binary_sensor",
-    "lock": "lock",
-    "device_tracker": "device_tracker",
-    "switch": "switch",
-    "climate": "climate",
-}
+    coordinator = SkodaCoordinator(hass, entry, update_interval)
 
-RESOURCES = [
-		"adblue_level",
-		"auxiliary_climatisation",
-		"battery_level",
-		"charge_max_ampere",
-		"charger_action_status",
-		"charging",
-		"charging_cable_connected",
-		"charging_cable_locked",
-		"charging_time_left",
-		"climater_action_status",
-		"climatisation_target_temperature",
-		"climatisation_without_external_power",
-		"combined_range",
-		"combustion_range",
-		"distance",
-		"door_closed_left_back",
-		"door_closed_left_front",
-		"door_closed_right_back",
-		"door_closed_right_front",
-		"door_locked",
-		"electric_climatisation",
-		"electric_range",
-		"energy_flow",
-		"external_power",
-		"fuel_level",
-		"hood_closed",
-		"last_connected",
-		"lock_action_status",
-		"oil_inspection",
-		"oil_inspection_distance",
-		"outside_temperature",
-		"parking_light",
-		"parking_time",
-		"pheater_heating",
-		"pheater_status",
-		"pheater_ventilation",
-		"position",
-		"refresh_action_status",
-		"refresh_data",
-		"request_in_progress",
-		"request_results",
-		"requests_remaining",
-		"service_inspection",
-		"service_inspection_distance",
-		"sunroof_closed",
-		"trip_last_average_auxillary_consumption",
-		"trip_last_average_electric_consumption",
-		"trip_last_average_fuel_consumption",
-		"trip_last_average_speed",
-		"trip_last_duration",
-		"trip_last_entry",
-		"trip_last_length",
-		"trip_last_recuperation",
-		"trip_last_total_electric_consumption",
-		"trunk_closed",
-		"trunk_locked",
-		"vehicle_moving",
-		"window_closed_left_back",
-		"window_closed_left_front",
-		"window_closed_right_back",
-		"window_closed_right_front",
-		"window_heater",
-		"windows_closed"
-]
+    if not await coordinator.async_login():
+        await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": SOURCE_REAUTH},
+            data=entry,
+        )
+        return False
 
-CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Schema(
-            {
-                vol.Required(CONF_USERNAME): cv.string,
-                vol.Required(CONF_PASSWORD): cv.string,
-                vol.Optional(CONF_MUTABLE, default=True): cv.boolean,
-                vol.Optional(CONF_SPIN, default=""): cv.string,
-                vol.Optional(CONF_FULLDEBUG, default=False): cv.boolean,
-                vol.Optional(CONF_PHEATER_DURATION, default=20): vol.In(
-                    [10, 20, 30, 40, 50, 60]
-                ),
-                vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): (
-                    vol.All(cv.time_period, vol.Clamp(min=MIN_UPDATE_INTERVAL))
-                ),
-                vol.Optional(CONF_NAME, default={}): cv.schema_with_slug_keys(
-                    cv.string
-                ),
-                vol.Optional(CONF_RESOURCES): vol.All(
-                    cv.ensure_list, [vol.In(RESOURCES)]
-                ),
-                vol.Optional(CONF_MILES, default=False): cv.boolean,
-            }
-        ),
-    },
-    extra=vol.ALLOW_EXTRA,
-)
-SERVICE_SET_PHEATER_DURATION = "set_pheater_duration"
-SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
-    {
-        vol.Required("vin"): cv.string,
-        vol.Required("duration"): vol.In([10,20,30,40,50,60]),
-    }
-)
-SERVICE_SET_MAX_CURRENT = "set_charger_max_current"
-SERVICE_SET_MAX_CURRENT_SCHEMA = vol.Schema(
-    {
-        vol.Required("vin"): cv.string,
-        vol.Required("current"): vol.In(["maximum", "reduced"]),
-    }
-)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_logout)
 
+    await coordinator.async_refresh()
+    if not coordinator.last_update_success:
+        raise ConfigEntryNotReady
 
-async def async_setup(hass, config):
-    """Setup skoda connect component"""
-    session = async_get_clientsession(hass)
-
-    _LOGGER.info(f"Starting Skoda Connect, version {__version__}")
-    _LOGGER.debug("Creating connection to skoda connect")
-    connection = Connection(
-        session=session,
-        username=config[DOMAIN].get(CONF_USERNAME),
-        password=config[DOMAIN].get(CONF_PASSWORD),
-        fulldebug=config[DOMAIN].get(CONF_FULLDEBUG),
-        interval=config[DOMAIN].get(CONF_SCAN_INTERVAL),
-    )
-
-    interval = config[DOMAIN].get(CONF_SCAN_INTERVAL)
-    data = hass.data[DATA_KEY] = SkodaData(config)
+    data = SkodaData(entry.data, coordinator)
+    instruments = coordinator.data
 
     def is_enabled(attr):
         """Return true if the user has enabled the resource."""
-        return attr in config[DOMAIN].get(CONF_RESOURCES, [attr])
+        return attr in entry.data.get(CONF_RESOURCES, [attr])
 
-    def discover_vehicle(vehicle):
-        """Load relevant platforms."""
-        data.vehicles.add(vehicle.vin)
+    components = set()
+    for instrument in (
+        instrument
+        for instrument in instruments
+        if instrument.component in COMPONENTS and is_enabled(instrument.slug_attr)
+    ):
+        data.instruments.add(instrument)
+        components.add(COMPONENTS[instrument.component])
 
-        dashboard = vehicle.dashboard(
-            mutable=config[DOMAIN][CONF_MUTABLE],
-            spin=config[DOMAIN][CONF_SPIN],
-            miles=config[DOMAIN][CONF_MILES],
+    for component in components:
+        coordinator.platforms.append(component)
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, component)
         )
 
-        for instrument in (
-            instrument
-            for instrument in dashboard.instruments
-            if instrument.component in COMPONENTS and is_enabled(instrument.slug_attr)
-        ):
+    hass.data[DOMAIN][entry.entry_id] = {
+        UPDATE_CALLBACK: update_callback,
+        DATA: data,
+        UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
+    }
 
-            data.instruments.add(instrument)
-            hass.async_create_task(
-                discovery.async_load_platform(
-                    hass,
-                    COMPONENTS[instrument.component],
-                    DOMAIN,
-                    (vehicle.vin, instrument.component, instrument.attr),
-                    config,
-                )
-            )
+    return True
 
-    async def update(now):
-        """Update status from skoda connect"""
-        try:
-            # Try to login
-            if not connection.logged_in:
-                await connection.doLogin()
-                if not connection.logged_in:
-                    _LOGGER.warning(
-                        "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
-                    )
-                    return False
 
-            # Update vehicle information
-            if not await connection.update():
-                _LOGGER.warning("Could not query update from Skoda Connect")
-                return False
-
-            _LOGGER.debug("Updating data from Skoda Connect")
-            for vehicle in connection.vehicles:
-                if vehicle.vin not in data.vehicles:
-                    _LOGGER.info(f"Adding data for VIN: {vehicle.vin} from Skoda Connect")
-                    discover_vehicle(vehicle)
-
-            async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
-            return True
-        finally:
-            async_track_point_in_utc_time(hass, update, utcnow() + interval)
-
-    async def set_pheater_duration(call):
-        """Prepare data and modify parking heater duration."""
-        try:
-            _LOGGER.debug("Try to fetch object for VIN: %s" % call.data.get("vin", ""))
-            vin = call.data.get("vin")
-            car = connection.vehicle(vin)
-            _LOGGER.debug(f"Found car: {car.nickname}")
-            _LOGGER.debug(f"Set climatisation duration to {call.data.get('duration', 0)}")
-            car.pheater_duration = call.data.get("duration")
-            async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
-            return
-        except Exception as error:
-            _LOGGER.warning(f"Couldn't execute, error: {error}")
-            async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
-        raise Exception(f"Service call failed")
-
-    async def set_current(call):
-        """Prepare data and modify for data call."""
-        if call.data.get('current') in ("maximum", "reduced"):
-            try:
-                if call.data.get('current') == "maximum":
-                    current = 254
-                else:
-                    current = 252
-                _LOGGER.debug("Try to fetch object for VIN: %s" % call.data.get("vin", ""))
-                vin = call.data.get("vin")
-                car = connection.vehicle(vin)
-                _LOGGER.debug(f"Found car: {car.nickname}")
-                _LOGGER.debug(f"Set charger current to {call.data.get('current')} ({current})")
-                await car.set_charger_current(current)
-                async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
-                return
-            except Exception as error:
-                _LOGGER.warning(f"Couldn't execute, error: {error}")
-                async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
-            raise Exception(f"Service call failed")
-
-    async def cleanup(call):
-        """Terminate session and clean up."""
-        _LOGGER.info(f'Cleaning up')
-        await connection.terminate()
-
-    _LOGGER.info("Starting skodaconnect component")
-
-    # Register services and callbacks
-    hass.services.async_register(
-        DOMAIN,
-        SERVICE_SET_PHEATER_DURATION,
-        set_pheater_duration,
-        schema=SERVICE_SET_PHEATER_DURATION_SCHEMA
+def update_callback(hass, coordinator):
+    _LOGGER.debug("CALLBACK!")
+    hass.async_create_task(
+        coordinator.async_request_refresh()
     )
-    hass.services.async_register(
-        DOMAIN,
-        SERVICE_SET_MAX_CURRENT,
-        set_current,
-        schema=SERVICE_SET_MAX_CURRENT_SCHEMA
-    )
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, cleanup)
 
-    return await update(utcnow())
+
+async def async_setup(hass: HomeAssistant, config: dict):
+    """Set up the Plaato component."""
+    hass.data.setdefault(DOMAIN, {})
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Unload a config entry."""
+    hass.data[DOMAIN][entry.entry_id][UNDO_UPDATE_LISTENER]()
+
+    return await async_unload_coordinator(hass, entry)
+
+
+async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
+    """Unload auth token based entry."""
+    coordinator = hass.data[DOMAIN][entry.entry_id][DATA].coordinator
+    unloaded = all(
+        await asyncio.gather(
+            *[
+                hass.config_entries.async_forward_entry_unload(entry, platform)
+                for platform in COMPONENTS
+                if platform in coordinator.platforms
+            ]
+        )
+    )
+    if unloaded:
+        hass.data[DOMAIN].pop(entry.entry_id)
+
+    return unloaded
+
+
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
+    """Handle options update."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+def get_convert_conf(entry: ConfigEntry):
+    return CONF_SCANDINAVIAN_MILES if entry.options.get(
+        CONF_SCANDINAVIAN_MILES,
+        entry.data.get(
+            CONF_SCANDINAVIAN_MILES,
+            False
+        )
+    ) else CONF_NO_CONVERSION
 
 
 class SkodaData:
     """Hold component state."""
 
-    def __init__(self, config):
+    def __init__(self, config, coordinator=None):
         """Initialize the component state."""
         self.vehicles = set()
         self.instruments = set()
-        self.config = config[DOMAIN]
-        self.names = self.config.get(CONF_NAME)
+        self.config = config.get(DOMAIN, config)
+        self.names = self.config.get(CONF_NAME, None)
+        self.coordinator = coordinator
 
     def instrument(self, vin, component, attr):
         """Return corresponding instrument."""
         return next(
             (
                 instrument
-                for instrument in self.instruments
+                for instrument in (
+                    self.coordinator.data
+                    if self.coordinator is not None
+                    else self.instruments
+                )
                 if instrument.vehicle.vin == vin
                 and instrument.component == component
                 and instrument.attr == attr
@@ -323,10 +184,11 @@ class SkodaData:
 
     def vehicle_name(self, vehicle):
         """Provide a friendly name for a vehicle."""
+        if isinstance(self.names, str):
+            return self.names
+
         if vehicle.vin and vehicle.vin.lower() in self.names:
             return self.names[vehicle.vin.lower()]
-        elif vehicle.is_nickname_supported:
-            return vehicle.nickname
         elif vehicle.vin:
             return vehicle.vin
         else:
@@ -336,24 +198,45 @@ class SkodaData:
 class SkodaEntity(Entity):
     """Base class for all Skoda entities."""
 
-    def __init__(self, data, vin, component, attribute):
+    def __init__(self, data, vin, component, attribute, callback=None):
         """Initialize the entity."""
+
+        def update_callbacks():
+            if callback is not None:
+                callback(self.hass, data.coordinator)
+
         self.data = data
         self.vin = vin
         self.component = component
         self.attribute = attribute
+        self.coordinator = data.coordinator
+        self.instrument.callback = update_callbacks
+        self.callback = callback
+
+    async def async_update(self) -> None:
+        """Update the entity.
+
+        Only used by the generic entity update service.
+        """
+
+        # Ignore manual update requests if the entity is disabled
+        if not self.enabled:
+            return
+
+        await self.coordinator.async_request_refresh()
 
     async def async_added_to_hass(self):
         """Register update dispatcher."""
-        self.async_on_remove(
-            async_dispatcher_connect(
-                self.hass, SIGNAL_STATE_UPDATED, self.async_write_ha_state
+        if self.coordinator is not None:
+            self.async_on_remove(
+                self.coordinator.async_add_listener(self.async_write_ha_state)
             )
-        )
-
-    async def update_hass(self):
-        """Send signal to home assistant to update states."""
-        async_dispatcher_send(self.hass, SIGNAL_STATE_UPDATED)
+        else:
+            self.async_on_remove(
+                async_dispatcher_connect(
+                    self.hass, SIGNAL_STATE_UPDATED, self.async_write_ha_state
+                )
+            )
 
     @property
     def instrument(self):
@@ -401,10 +284,16 @@ class SkodaEntity(Entity):
     @property
     def device_state_attributes(self):
         """Return device specific state attributes."""
-        return dict(
+        attributes = dict(
             self.instrument.attributes,
             model=f"{self.vehicle.model}/{self.vehicle.model_year}",
         )
+
+        if not self.vehicle.is_model_image_supported:
+            return attributes
+
+        attributes["image_url"] = self.vehicle.model_image
+        return attributes
 
     @property
     def device_info(self):
@@ -418,6 +307,134 @@ class SkodaEntity(Entity):
         }
 
     @property
+    def available(self):
+        """Return if sensor is available."""
+        if self.data.coordinator is not None:
+            return self.data.coordinator.last_update_success
+        return True
+
+    @property
     def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self.vin}-{self.component}-{self.attribute}"
+
+
+class SkodaCoordinator(DataUpdateCoordinator):
+    """Class to manage fetching data from the API."""
+
+    def __init__(self, hass: HomeAssistant, entry, update_interval: timedelta):
+        self.vin = entry.data[CONF_VEHICLE].upper()
+        self.entry = entry
+        self.platforms = []
+        self.report_last_updated = None
+        self.connection = Connection(
+            session=async_get_clientsession(hass),
+            username=self.entry.data[CONF_USERNAME],
+            password=self.entry.data[CONF_PASSWORD],
+            fulldebug=self.entry.options.get(CONF_DEBUG, self.entry.data.get(CONF_DEBUG, DEFAULT_DEBUG)),
+            country=self.entry.options.get(CONF_REGION, self.entry.data[CONF_REGION]),
+        )
+
+        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=update_interval)
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        vehicle = await self.update()
+
+        if not vehicle:
+            raise UpdateFailed("Failed to update Connect. Need to accept EULA? Try logging in to the portal: https://www.skoda-connect.com/")
+
+        if self.entry.options.get(CONF_REPORT_REQUEST, False):
+            await self.report_request(vehicle)
+
+        # Backward compatibility
+        default_convert_conf = get_convert_conf(self.entry)
+
+        convert_conf = self.entry.options.get(
+            CONF_CONVERT,
+            self.entry.data.get(
+                CONF_CONVERT,
+                default_convert_conf
+            )
+        )
+
+        dashboard = vehicle.dashboard(
+            mutable=self.entry.data.get(CONF_MUTABLE),
+            spin=self.entry.data.get(CONF_SPIN),
+            miles=convert_conf == CONF_IMPERIAL_UNITS,
+            scandinavian_miles=convert_conf == CONF_SCANDINAVIAN_MILES,
+        )
+
+        return dashboard.instruments
+
+    async def async_logout(self):
+        """Logout from Skoda Connect"""
+        try:
+            if self.connection.logged_in:
+                await self.connection.logout()
+        except Exception as ex:
+            _LOGGER.error("Could not log out from Skoda Connect, %s", ex)
+            return False
+        return True
+
+    async def async_login(self):
+        """Login to Skoda Connect"""
+        # check if we can login
+        if not self.connection.logged_in:
+            await self.connection.doLogin()
+            if not self.connection.logged_in:
+                _LOGGER.warning(
+                    "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
+                )
+                return False
+
+        return True
+
+    async def update(self) -> Union[bool, Vehicle]:
+        """Update status from Skoda Connect"""
+
+        # update vehicles
+        if not await self.connection.update():
+            _LOGGER.warning("Could not query update from Skoda Connect")
+            return False
+
+        _LOGGER.debug("Updating data from Skoda Connect")
+        for vehicle in self.connection.vehicles:
+            if vehicle.vin.upper() == self.vin:
+                return vehicle
+
+        return False
+
+    async def report_request(self, vehicle: Vehicle):
+        """Request car to report itself an update to Skoda Connect"""
+        report_interval = self.entry.options.get(
+            CONF_REPORT_SCAN_INTERVAL, DEFAULT_REPORT_UPDATE_INTERVAL
+        )
+
+        if not self.report_last_updated:
+            days_since_last_update = 1
+        else:
+            days_since_last_update = (datetime.now() - self.report_last_updated).days
+
+        if days_since_last_update < report_interval:
+            return
+
+        try:
+            # check if we can login
+            if not self.connection.logged_in:
+                await self.connection._login()
+                if not self.connection.logged_in:
+                    _LOGGER.warning(
+                        "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
+                    )
+                    return
+
+            # request report
+            if not await vehicle.request_report():
+                _LOGGER.warning("Could not request report from Skoda Connect")
+                return
+
+            self.report_last_updated = datetime.now()
+        except:
+            # This is actually not critical so...
+            pass
