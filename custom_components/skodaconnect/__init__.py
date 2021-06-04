@@ -91,7 +91,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
 
-   hass.data[DOMAIN][entry.entry_id] = {
+    hass.data[DOMAIN][entry.entry_id] = {
         UPDATE_CALLBACK: update_callback,
         DATA: data,
         UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
