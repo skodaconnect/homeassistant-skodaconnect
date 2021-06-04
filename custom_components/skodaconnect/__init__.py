@@ -25,7 +25,6 @@ from skodaconnect import Connection, Vehicle
 from .const import (
     COMPONENTS,
     CONF_MUTABLE,
-    CONF_REGION,
     CONF_REPORT_REQUEST,
     CONF_REPORT_SCAN_INTERVAL,
     CONF_SCANDINAVIAN_MILES,
@@ -33,7 +32,6 @@ from .const import (
     CONF_VEHICLE,
     DATA,
     DATA_KEY,
-    DEFAULT_REGION,
     DEFAULT_REPORT_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
@@ -332,7 +330,6 @@ class SkodaCoordinator(DataUpdateCoordinator):
             username=self.entry.data[CONF_USERNAME],
             password=self.entry.data[CONF_PASSWORD],
             fulldebug=self.entry.options.get(CONF_DEBUG, self.entry.data.get(CONF_DEBUG, DEFAULT_DEBUG)),
-#            country=self.entry.options.get(CONF_REGION, self.entry.data[CONF_REGION]),
         )
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=update_interval)
