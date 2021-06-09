@@ -99,7 +99,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     }
 
     # Register entity service
-    platform = entity_platform.async_get_current_platform()
+    for pform in coordinator.platforms:
+        _LOGGER.info(f'Found platform {pform}')
+    platform = coordinator.entity_platform.async_get_current_platform()
+    platform2 = coordinator.async_get_current_platform()
 
     # Register entity services
     platform.async_register_entity_service(
