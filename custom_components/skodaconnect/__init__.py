@@ -91,7 +91,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
 
-    comptest = hass.data[DOMAIN][entry.entry_id] = {
+    hass.data[DOMAIN][entry.entry_id] = {
         UPDATE_CALLBACK: update_callback,
         DATA: data,
         UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
@@ -101,7 +101,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     platform = entity_platform.current_platform.get()
 
     # Register entity services
-    comptest.async_register_entity_service(
+    platform.async_register_entity_service(
         SERVICE_SET_SCHEDULE,
         {
             vol.Required("id", default=1): vol.In([1,2,3]),
