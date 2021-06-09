@@ -14,12 +14,12 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv, entity_platform, service
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.helpers import config_validation as cv, entity_platform, service
 
 from skodaconnect import Connection, Vehicle
 
@@ -47,6 +47,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Setup Skoda Connect component"""
+    hass.data.setdefault(DOMAIN, {})
 
     if entry.options.get(CONF_SCAN_INTERVAL):
         update_interval = timedelta(minutes=entry.options[CONF_SCAN_INTERVAL])
@@ -96,6 +97,44 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         DATA: data,
         UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
     }
+
+    # Register entity service
+    platform = entity_platform.async_get_current_platform()
+
+    # Register entity services
+    platform.async_register_entity_service(
+        SERVICE_SET_SCHEDULE,
+        {
+            vol.Required("id", default=1): vol.In([1,2,3]),
+            vol.Required("enabled", default=True): cv.bool,
+            vol.Required("recurring", default=False): cv.bool,
+            vol.Required("time", default="08:00"): cv.time,
+            vol.Optional("date", default="2020-01-01"): cv.string,
+            vol.Optional("days", default='nnnnnnn'): cv.string,
+        },
+        "set_departure_schedule",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_CHARGE_LIMIT,
+        {
+            vol.Required("limit"): vol.In([0,10,20,30,40,50]),
+        },
+        "set_charge_limit",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_PHEATER_DURATION,
+        {
+            vol.Required("duration"): vol.In([10,20,30,40,50,60]),
+        },
+        "set_pheater_duration",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_CHARGER_CURRENT,
+        {
+            vol.Required("current"): vol.In(["maximum", "reduced"]),
+        },
+        "set_charger_current",
+    )
 
     return True
 
@@ -164,44 +203,6 @@ class SkodaData:
         self.config = config.get(DOMAIN, config)
         self.names = self.config.get(CONF_NAME, None)
         self.coordinator = coordinator
-
-        # Register entity service
-        platform = entity_platform.async_get_current_platform()
-
-        # Register entity services
-        platform.async_register_entity_service(
-            SERVICE_SET_SCHEDULE,
-            {
-                vol.Required("id", default=1): vol.In([1,2,3]),
-                vol.Required("enabled", default=True): cv.bool,
-                vol.Required("recurring", default=False): cv.bool,
-                vol.Required("time", default="08:00"): cv.time,
-                vol.Optional("date", default="2020-01-01"): cv.string,
-                vol.Optional("days", default='nnnnnnn'): cv.string,
-            },
-            "set_departure_schedule",
-        )
-        platform.async_register_entity_service(
-            SERVICE_SET_CHARGE_LIMIT,
-            {
-                vol.Required("limit"): vol.In([0,10,20,30,40,50]),
-            },
-            "set_charge_limit",
-        )
-        platform.async_register_entity_service(
-            SERVICE_SET_PHEATER_DURATION,
-            {
-                vol.Required("duration"): vol.In([10,20,30,40,50,60]),
-            },
-            "set_pheater_duration",
-        )
-        platform.async_register_entity_service(
-            SERVICE_SET_CHARGER_CURRENT,
-            {
-                vol.Required("current"): vol.In(["maximum", "reduced"]),
-            },
-            "set_charger_current",
-        )
 
     def instrument(self, vin, component, attr):
         """Return corresponding instrument."""
