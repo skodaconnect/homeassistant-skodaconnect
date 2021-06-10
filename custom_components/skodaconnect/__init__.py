@@ -105,46 +105,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
     }
 
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
-
-    # Register entity service
-    platform = entity_platform.async_get_current_platform()
-
-    # Register entity services
-    platform.async_register_entity_service(
-        SERVICE_SET_SCHEDULE,
-        {
-            vol.Required("id", default=1): vol.In([1,2,3]),
-            vol.Required("enabled", default=True): cv.bool,
-            vol.Required("recurring", default=False): cv.bool,
-            vol.Required("time", default="08:00"): cv.time,
-            vol.Optional("date", default="2020-01-01"): cv.string,
-            vol.Optional("days", default='nnnnnnn'): cv.string,
-        },
-        "set_departure_schedule",
-    )
-    platform.async_register_entity_service(
-        SERVICE_SET_CHARGE_LIMIT,
-        {
-            vol.Required("limit"): vol.In([0,10,20,30,40,50]),
-        },
-        "set_charge_limit",
-    )
-    platform.async_register_entity_service(
-        SERVICE_SET_PHEATER_DURATION,
-        {
-            vol.Required("duration"): vol.In([10,20,30,40,50,60]),
-        },
-        "set_pheater_duration",
-    )
-    platform.async_register_entity_service(
-        SERVICE_SET_CHARGER_CURRENT,
-        {
-            vol.Required("current"): vol.In(["maximum", "reduced"]),
-        },
-        "set_charger_current",
-    )
-
     return True
 
 
@@ -452,35 +412,6 @@ class SkodaCoordinator(DataUpdateCoordinator):
                 return vehicle
 
         return False
-
-    async def set_charge_limit(
-        self,
-        limit: int
-    ) -> None:
-        """Set minimum charge limit."""
-
-    async def set_departure_schedule(
-        self,
-        id: int,
-        enabled: bool,
-        recurring: bool,
-        time: str,
-        date: str,
-        days: str
-    ) -> None:
-        """Set departure schedule."""
-
-    async def set_pheater_duration(
-        self,
-        duration: int
-    ) -> None:
-        """Set duration for parking heater."""
-
-    async def set_charger_current(
-        self,
-        current: str
-    ) -> None:
-        """Set charger current."""
 
     async def report_request(self, vehicle: Vehicle):
         """Request car to report itself an update to Skoda Connect"""
