@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
+"""
+Skoda Connect integration
+
+Read more at https://github.com/lendy007/homeassistant-skodaconnect/
+"""
 import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Union
+
 
 from homeassistant.config_entries import ConfigEntry, SOURCE_REAUTH
 from homeassistant.const import (
@@ -92,17 +98,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
 
+    hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {
         UPDATE_CALLBACK: update_callback,
         DATA: data,
         UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
     }
 
+    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+
     # Register entity service
-    for pform in coordinator.platforms:
-        _LOGGER.info(f'Found platform {pform}')
-    platform = coordinator.entity_platform.async_get_current_platform()
-    platform2 = coordinator.async_get_current_platform()
+    platform = entity_platform.async_get_current_platform()
 
     # Register entity services
     platform.async_register_entity_service(
