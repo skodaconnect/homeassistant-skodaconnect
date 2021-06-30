@@ -23,7 +23,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     if coordinator.data is not None:
         async_add_devices(
             SkodaBinarySensor(
-                data, coordinator.vin, instrument.component, instrument.attr, hass.data[DOMAIN][entry.entry_id][UPDATE_CALLBACK]
+                data, instrument.vehicle_name, instrument.component, instrument.attr, hass.data[DOMAIN][entry.entry_id][UPDATE_CALLBACK]
             )
             for instrument in (
                 instrument
@@ -41,7 +41,9 @@ class SkodaBinarySensor(SkodaEntity, BinarySensorEntity):
     @property
     def is_on(self):
         """Return True if the binary sensor is on."""
-        _LOGGER.debug("Getting state of %s" % self.instrument.attr)
+        # Invert state for lock/window/door to get HA to display correctly
+        if self.instrument.device_class in ['lock', 'door', 'window']:
+            return not self.instrument.is_on
         return self.instrument.is_on
 
     @property

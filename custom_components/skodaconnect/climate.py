@@ -37,7 +37,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     if coordinator.data is not None:
         async_add_devices(
             SkodaClimate(
-                data, coordinator.vin, instrument.component, instrument.attr
+                data, instrument.vehicle_name, instrument.component, instrument.attr
             )
             for instrument in (
                 instrument
@@ -93,14 +93,12 @@ class SkodaClimate(SkodaEntity, ClimateEntity):
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperatures."""
-        _LOGGER.debug("Setting temperature for: %s", self.instrument.attr)
         temperature = kwargs.get(ATTR_TEMPERATURE)
         if temperature:
             await self.instrument.set_temperature(temperature)
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""
-        _LOGGER.debug("Setting mode for: %s", self.instrument.attr)
         if hvac_mode == HVAC_MODE_OFF:
             await self.instrument.set_hvac_mode(False)
         elif hvac_mode == HVAC_MODE_HEAT:

@@ -23,7 +23,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     coordinator = data.coordinator
     if coordinator.data is not None:
         async_add_devices(
-            SkodaLock(data, coordinator.vin, instrument.component, instrument.attr)
+            SkodaLock(data, instrument.vehicle_name, instrument.component, instrument.attr)
             for instrument in (
                 instrument
                 for instrument in data.instruments
@@ -40,7 +40,6 @@ class SkodaLock(SkodaEntity, LockEntity):
     @property
     def is_locked(self):
         """Return true if lock is locked."""
-        _LOGGER.debug("Getting state of %s" % self.instrument.attr)
         return self.instrument.is_locked
 
     async def async_lock(self, **kwargs):

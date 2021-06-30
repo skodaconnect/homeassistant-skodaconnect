@@ -1,0 +1,133 @@
+# Describes the format for available Skoda Connect service calls
+
+set_charge_limit:
+  name: Set charge limit
+  description: >
+    Set the limit that the charger will charge directly to when
+    a departure timer is active.
+  fields:
+    device_id:
+      name: Vehicle
+      description: The vehicle to set charge limit for
+      required: true
+      selector:
+        device:
+          integration: skodaconnect
+    limit:
+      name: Limit
+      description: The charging upper limit
+      advanced: true
+      example: 50
+      selector:
+        number:
+          min: 0
+          max: 50
+          step: 10
+          unit_of_measurement: percent
+set_charger_max_current:
+  name: Set charger max current
+  description: >
+    Set the maximum current used for charger. Overrides the current setting in departure timers.
+  fields:
+    device_id:
+      name: Vehicle
+      description: The vehicle to set maximum current for
+      required: true
+      selector:
+        device:
+          integration: skodaconnect
+    current:
+      name: Current
+      description: Maximum current for charger
+      advanced: true
+      selector:
+        select:
+          options:
+            - maximum
+            - reduced
+set_pheater_duration:
+  name: Set parking heater runtime
+  description: >
+    Set the runtime of the parking heater.
+  fields:
+    device_id:
+      name: Vehicle
+      description: The vehicle to set parking heater duration for
+      required: true
+      selector:
+        device:
+          integration: skodaconnect
+    duration:
+      name: Runtime
+      description: Runtime for heating or ventilation of the parking heater.
+      advanced: true
+      selector:
+        number:
+          min: 10
+          max: 60
+          step: 10
+          unit_of_measurement: min
+set_departure_schedule:
+  name: Set departure schedule
+  description: >
+    Set the departure for one of the departure schedules.
+  fields:
+    device_id:
+      name: Vehicle
+      description: The vehicle to set departure schedule for
+      required: true
+      selector:
+        device:
+          integration: skodaconnect
+    id:
+      name: ID
+      description: Which departure schedule to change.
+      advanced: true
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 3
+          mode: box
+    enabled:
+      name: Activated
+      description:
+        If the departure schedule should be activated.
+      advanced: true
+      example: true
+      default: true
+      selector:
+        boolean:
+    recurring:
+      name: Recurring schedule
+      description:
+        Wether the schedule should be recurring or one off.
+      advanced: true
+      example: false
+      default: false
+      selector:
+        boolean:
+    time:
+      name: Time
+      description:
+        The time for departure.
+      advanced: true
+      example: "17:00"
+      selector:
+        time:
+    date:
+      name: Date
+      description:
+        The date for departure.
+      advanced: true
+      example: "2021-06-31"
+      selector:
+        text:
+    days:
+      name: Days
+      description:
+        Weekday mask for recurring schedule.
+      advanced: true
+      example: "yyynnnn"
+      selector:
+        text:

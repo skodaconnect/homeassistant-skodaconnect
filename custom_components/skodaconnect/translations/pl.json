@@ -9,11 +9,15 @@
           "username": "Email",
           "password": "Hasło",
           "mutable": "Usuń zaznaczenie, aby samochód był „tylko do odczytu”. Jeśli je zostawisz będziesz mógł wejść w interakcję z samochodem",
-          "spin": "S-PIN",
-          "scandinavian_miles": "Włącz, jeśli chcesz zmienić z km na mil w sensorach",
-          "name": "Nazwij swój samochód (domyślnie numer VIN)",
-          "debug": "Włącz pełne dzienniki debugowania z interfejsu API (wymaga włączenia rejestrowania debugowania w konfiguracji)",
+          "update_interval": "Poll frequency (minutes)",
           "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości"
+        }
+      },
+      "set_spin": {
+        "title": "Konfiguracja S-PIN",
+        "description": "Fill in your S-PIN.\nThe S-PIN is only required for some specific operations such as lock/unlock and operations that activates the combustion engine heating.\nYou can leave this blank.",
+        "data": {
+          "spin": "S-PIN"
         }
       },
       "select_vehicle": {
@@ -58,11 +62,9 @@
         "title": "Opcje Skoda Connect",
         "description": "Skonfiguruj częstotliwość aktualizacji",
         "data": {
-          "report_request": "Włącz automatyczne żądanie raportu",
-          "report_scan_interval": "Częstotliwość aktualizacji żądania raportu (dni)",
-          "scan_interval": "Częstotliwość aktualizacji czujników (minuty)",
+          "update_interval": "Częstotliwość aktualizacji czujników (minuty)",
+          "spin": "S-PIN",
           "debug": "Włącz pełne dzienniki debugowania z interfejsu API (wymaga włączenia rejestrowania debugowania w konfiguracji)",
-          "scandinavian_miles": "Włącz, jeśli chcesz zmienić z km na mil w sensorach",
           "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości"
         }
       }

@@ -4,10 +4,8 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONF_NAME,
     CONF_PASSWORD,
     CONF_RESOURCES,
-    CONF_SCAN_INTERVAL,
     CONF_USERNAME,
 )
 from homeassistant.core import callback
@@ -20,11 +18,9 @@ from .const import (
     CONF_DEBUG,
     CONVERT_DICT,
     CONF_MUTABLE,
-    CONF_REPORT_REQUEST,
-    CONF_REPORT_SCAN_INTERVAL,
+    CONF_UPDATE_INTERVAL,
     CONF_SPIN,
     CONF_VEHICLE,
-    DEFAULT_REPORT_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     DEFAULT_DEBUG
@@ -33,13 +29,11 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 DATA_SCHEMA = {
-    vol.Optional(CONF_NAME, default=""): str,
     vol.Required(CONF_USERNAME, default=""): str,
     vol.Required(CONF_PASSWORD, default=""): str,
-    vol.Optional(CONF_SPIN, default=""): str,
+    vol.Optional(CONF_UPDATE_INTERVAL, default=1): cv.positive_int,
     vol.Optional(CONF_MUTABLE, default=True): cv.boolean,
     vol.Optional(CONF_CONVERT, default=None): vol.In(CONVERT_DICT),
-    vol.Optional(CONF_DEBUG, default=DEFAULT_DEBUG): cv.boolean,
 }
 
 
@@ -98,7 +92,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._init_info[CONF_VEHICLE] = user_input[CONF_VEHICLE]
 
-            return await self.async_step_select_instruments()
+            return await self.async_step_set_spin()
 
         vin_numbers = self._init_info["CONF_VEHICLES"].keys()
         return self.async_show_form(
@@ -107,19 +101,33 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({vol.Required(CONF_VEHICLE): vol.In(vin_numbers)}),
         )
 
+    async def async_step_set_spin(self, user_input=None):
+        if user_input is not None:
+            self._init_info[CONF_SPIN] = user_input[CONF_SPIN]
+            #del self._init_info["CONF_SPIN"]
+
+            return await self.async_step_select_instruments()
+
+        return self.async_show_form(
+            step_id="set_spin",
+            errors=self._errors,
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_SPIN, default=""): cv.string
+                }
+            ),
+        )
+
     async def async_step_select_instruments(self, user_input=None):
         if user_input is not None:
             self._init_info[CONF_RESOURCES] = user_input[CONF_RESOURCES]
             del self._init_info["CONF_VEHICLES"]
 
-            if self._init_info[CONF_NAME] is None:
-                self._init_info[CONF_NAME] = self._init_info[CONF_VEHICLE]
-
             await self.async_set_unique_id(self._init_info[CONF_VEHICLE])
             self._abort_if_unique_id_configured()
 
             return self.async_create_entry(
-                title=self._init_info[CONF_NAME], data=self._init_info
+                title=self._init_info[CONF_VEHICLE], data=self._init_info
             )
 
         instruments = self._init_info["CONF_VEHICLES"][self._init_info[CONF_VEHICLE]]
@@ -248,17 +256,24 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
 
         # Backward compatibility
         default_convert_conf = get_convert_conf(self._config_entry)
-
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
                 {
                     vol.Optional(
-                        CONF_REPORT_REQUEST,
+                        CONF_UPDATE_INTERVAL,
                         default=self._config_entry.options.get(
-                            CONF_REPORT_REQUEST, False
-                        ),
-                    ): cv.boolean,
+                            CONF_UPDATE_INTERVAL, self._config_entry.data.get(
+                                CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
+                        )
+                    ): cv.positive_int,
+                    vol.Optional(
+                        CONF_SPIN,
+                        self._config_entry.options.get(
+                            CONF_SPIN, self._config_entry.data.get(
+                                CONF_SPIN, "")
+                        )
+                    ): cv.string,
                     vol.Optional(
                         CONF_DEBUG,
                         default=self._config_entry.options.get(
@@ -274,18 +289,6 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                                 CONF_CONVERT, default_convert_conf)
                         )
                     ): vol.In(CONVERT_DICT),
-                    vol.Optional(
-                        CONF_REPORT_SCAN_INTERVAL,
-                        default=self._config_entry.options.get(
-                            CONF_REPORT_SCAN_INTERVAL, DEFAULT_REPORT_UPDATE_INTERVAL
-                        ),
-                    ): cv.positive_int,
-                    vol.Optional(
-                        CONF_SCAN_INTERVAL,
-                        default=self._config_entry.options.get(
-                            CONF_SCAN_INTERVAL, DEFAULT_UPDATE_INTERVAL
-                        ),
-                    ): cv.positive_int,
                 }
             ),
         )

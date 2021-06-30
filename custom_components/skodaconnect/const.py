@@ -12,9 +12,14 @@ CONF_IMPERIAL_UNITS = "imperial_units"
 CONF_NO_CONVERSION = None
 CONF_CONVERT = "convert"
 CONF_VEHICLE = "vehicle"
-CONF_REPORT_REQUEST = "report_request"
-CONF_REPORT_SCAN_INTERVAL = "report_scan_interval"
+CONF_UPDATE_INTERVAL = "update_interval"
 CONF_DEBUG = "debug"
+
+# Service definitions
+SERVICE_SET_SCHEDULE = "set_departure_schedule"
+SERVICE_SET_MAX_CURRENT = "set_charger_max_current"
+SERVICE_SET_CHARGE_LIMIT = "set_charge_limit"
+SERVICE_SET_PHEATER_DURATION = "set_pheater_duration"
 
 UPDATE_CALLBACK = "update_callback"
 DATA = "data"
@@ -24,7 +29,6 @@ SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
 
 MIN_UPDATE_INTERVAL = timedelta(minutes=1)
 DEFAULT_UPDATE_INTERVAL = 5
-DEFAULT_REPORT_UPDATE_INTERVAL = 1
 
 CONVERT_DICT = {
     CONF_NO_CONVERSION: "No conversion",
@@ -32,7 +36,7 @@ CONVERT_DICT = {
     CONF_SCANDINAVIAN_MILES: "km to mil",
 }
 
-COMPONENTS = {
+PLATFORMS = {
     "sensor": "sensor",
     "binary_sensor": "binary_sensor",
     "lock": "lock",

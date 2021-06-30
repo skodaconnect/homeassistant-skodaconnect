@@ -8,45 +8,78 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Union
-
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, SOURCE_REAUTH
 from homeassistant.const import (
     CONF_NAME,
     CONF_PASSWORD,
     CONF_RESOURCES,
-    CONF_SCAN_INTERVAL,
     CONF_USERNAME, EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import config_validation as cv, entity_platform, service
+from homeassistant.helpers import config_validation as cv, device_registry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from skodaconnect import Connection, Vehicle
+from skodaconnect import Connection
+from skodaconnect.vehicle import Vehicle
 
 from .const import (
-    COMPONENTS,
+    PLATFORMS,
     CONF_MUTABLE,
-    CONF_REPORT_REQUEST,
-    CONF_REPORT_SCAN_INTERVAL,
     CONF_SCANDINAVIAN_MILES,
     CONF_SPIN,
     CONF_VEHICLE,
+    CONF_UPDATE_INTERVAL,
     DATA,
     DATA_KEY,
-    DEFAULT_REPORT_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     MIN_UPDATE_INTERVAL,
     SIGNAL_STATE_UPDATED,
     UNDO_UPDATE_LISTENER, UPDATE_CALLBACK, CONF_DEBUG, DEFAULT_DEBUG, CONF_CONVERT, CONF_NO_CONVERSION,
     CONF_IMPERIAL_UNITS,
+    SERVICE_SET_SCHEDULE,
+    SERVICE_SET_MAX_CURRENT,
+    SERVICE_SET_CHARGE_LIMIT,
+    SERVICE_SET_PHEATER_DURATION,
 )
+SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("id", default=1): vol.In([1,2,3]),
+        vol.Required("enabled", default=True): cv.boolean,
+        vol.Required("recurring", default=False): cv.boolean,
+        vol.Required("time", default="08:00"): cv.time,
+        vol.Optional("date", default="2020-01-01"): cv.string,
+        vol.Optional("days", default='nnnnnnn'): cv.string,
+    }
+)
+SERVICE_SET_MAX_CURRENT_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("current"): vol.In(["maximum", "reduced"]),
+    }
+)
+SERVICE_SET_CHARGE_LIMIT_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("limit"): vol.In([0, 10, 20, 30, 40, 50]),
+    }
+)
+SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("duration"): vol.In([10, 20, 30, 40, 50, 60]),
+    }
+)
+
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,8 +88,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Setup Skoda Connect component"""
     hass.data.setdefault(DOMAIN, {})
 
-    if entry.options.get(CONF_SCAN_INTERVAL):
-        update_interval = timedelta(minutes=entry.options[CONF_SCAN_INTERVAL])
+    if entry.options.get(CONF_UPDATE_INTERVAL):
+        update_interval = timedelta(minutes=entry.options[CONF_UPDATE_INTERVAL])
     else:
         update_interval = timedelta(minutes=DEFAULT_UPDATE_INTERVAL)
 
@@ -87,10 +120,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     for instrument in (
         instrument
         for instrument in instruments
-        if instrument.component in COMPONENTS and is_enabled(instrument.slug_attr)
+        if instrument.component in PLATFORMS and is_enabled(instrument.slug_attr)
     ):
         data.instruments.add(instrument)
-        components.add(COMPONENTS[instrument.component])
+        components.add(PLATFORMS[instrument.component])
 
     for component in components:
         coordinator.platforms.append(component)
@@ -98,15 +131,127 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
 
-    hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {
         UPDATE_CALLBACK: update_callback,
         DATA: data,
         UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
     }
 
-    return True
+    # Service functions
+    async def get_car(service_call):
+        dev_id = service_call.data.get("device_id")
+        dev_reg = device_registry.async_get(hass)
+        dev_entry = dev_reg.async_get(dev_id)
 
+        # Get vehicle VIN from device identifiers
+        skoda_identifiers = [
+            identifier
+            for identifier in dev_entry.identifiers
+            if identifier[0] == DOMAIN
+        ]
+        vin_identifier = next(iter(skoda_identifiers))
+        vin = vin_identifier[1]
+
+        # Get the class object from the connection
+        car = coordinator.connection.vehicle(vin)
+        return car
+
+    async def set_schedule(service_call=None):
+        """Set departure schedule."""
+        try:
+            # Prepare data
+            id = service_call.data.get("id", 0)
+            try:
+                time = service_call.data.get("time").strftime("%H:%M")
+            except:
+                time = "08:00"
+            schedule = {
+                "enabled": service_call.data.get("enabled"),
+                "recurring": service_call.data.get("recurring"),
+                "date": service_call.data.get("date"),
+                "time": time,
+                "days": service_call.data.get("days", "nnnnnnn")
+            }
+
+            # Find the correct car and execute service call
+            car = await get_car(service_call)
+            _LOGGER.info(f'Set departure schedule {id} with data {schedule} for car {car.vin}')
+            if await car.set_timer_schedule(id, schedule):
+                _LOGGER.info(f"Service call 'set_schedule' returned success!")
+                await coordinator.async_request_refresh()
+            else:
+                _LOGGER.info(f"Failed to execute service call 'set_schedule' with data '{service_call}'")
+        except Exception as e:
+            raise
+
+    async def set_charge_limit(service_call=None):
+        """Set minimum charge limit."""
+        try:
+            car = await get_car(service_call)
+
+            # Get charge limit and execute service call
+            limit = service_call.data.get("limit", 50)
+            if await car.set_charge_limit(limit):
+                _LOGGER.info(f"Service call 'set_charge_limit' returned success!")
+                await coordinator.async_request_refresh()
+            else:
+                _LOGGER.info(f"Failed to execute service call 'set_charge_limit' with data '{service_call}'")
+        except Exception as e:
+            raise
+
+    async def set_current(service_call=None):
+        """Set departure schedule."""
+        try:
+            # Find car from device id
+            car = await get_car(service_call)
+
+            # Get charge current and execute service call
+            current = 254 if "maximum" in service_call.data.get("current", "") else 252
+            if await car.set_charger_current(current):
+                _LOGGER.info(f"Service call 'set_current' returned success!")
+                await coordinator.async_request_refresh()
+            else:
+                _LOGGER.info(f"Failed to execute service call 'set_current' with data '{service_call}'")
+        except Exception as e:
+            raise
+
+    async def set_pheater_duration(service_call=None):
+        """Set duration for parking heater."""
+        try:
+            car = await get_car(service_call)
+            car.pheater_duration = service_call.data.get("duration", car.pheater_duration)
+            _LOGGER.info(f"Service call 'set_pheater_duration' succeeded!")
+            await coordinator.async_request_refresh()
+        except Exception as e:
+            raise
+
+    # Register entity service
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_SCHEDULE,
+        set_schedule,
+        schema = SERVICE_SET_SCHEDULE_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_MAX_CURRENT,
+        set_current,
+        schema = SERVICE_SET_MAX_CURRENT_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_CHARGE_LIMIT,
+        set_charge_limit,
+        schema = SERVICE_SET_CHARGE_LIMIT_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_PHEATER_DURATION,
+        set_pheater_duration,
+        schema = SERVICE_SET_PHEATER_DURATION_SCHEMA
+    )
+
+     return True
 
 
 def update_callback(hass, coordinator):
@@ -136,7 +281,7 @@ async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
         await asyncio.gather(
             *[
                 hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in COMPONENTS
+                for platform in PLATFORMS
                 if platform in coordinator.platforms
             ]
         )
@@ -192,14 +337,26 @@ class SkodaData:
 
     def vehicle_name(self, vehicle):
         """Provide a friendly name for a vehicle."""
-        if isinstance(self.names, str):
-            return self.names
+        try:
+            # Return name if already configured
+            if isinstance(self.names, str):
+                if len(self.names) > 0:
+                    return self.names
 
-        if vehicle.vin and vehicle.vin.lower() in self.names:
-            return self.names[vehicle.vin.lower()]
-        elif vehicle.vin:
-            return vehicle.vin
-        else:
+            # Check if name already exists for VIN
+            if vehicle.vin and vehicle.vin.lower() in self.names:
+                return self.names[vehicle.vin.lower()]
+        except:
+            pass
+
+        # Default name to nickname if supported, else vin number
+        try:
+            if vehicle.is_nickname_supported:
+                return vehicle.nickname
+            elif vehicle.vin:
+                return vehicle.vin
+        except:
+            _LOGGER.info(f"Name set to blank")
             return ""
 
 
@@ -351,10 +508,6 @@ class SkodaCoordinator(DataUpdateCoordinator):
         if not vehicle:
             raise UpdateFailed("Failed to update Connect. Need to accept EULA? Try logging in to the portal: https://www.skoda-connect.com/")
 
-        # Force data refresh if config option is enabled
-        if self.entry.options.get(CONF_REPORT_REQUEST, False):
-            await self.report_request(vehicle)
-
         # Backward compatibility
         default_convert_conf = get_convert_conf(self.entry)
 
@@ -412,37 +565,3 @@ class SkodaCoordinator(DataUpdateCoordinator):
                 return vehicle
 
         return False
-
-    async def report_request(self, vehicle: Vehicle):
-        """Request car to report itself an update to Skoda Connect"""
-        report_interval = self.entry.options.get(
-            CONF_REPORT_SCAN_INTERVAL, DEFAULT_REPORT_UPDATE_INTERVAL
-        )
-
-        if not self.report_last_updated:
-            days_since_last_update = 1
-        else:
-            days_since_last_update = (datetime.now() - self.report_last_updated).days
-
-        if days_since_last_update < report_interval:
-            return
-
-        try:
-            # check if we can login
-            if not self.connection.logged_in:
-                await self.connection._login()
-                if not self.connection.logged_in:
-                    _LOGGER.warning(
-                        "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
-                    )
-                    return
-
-            # request report
-            if not await vehicle.request_report():
-                _LOGGER.warning("Could not request report from Skoda Connect")
-                return
-
-            self.report_last_updated = datetime.now()
-        except:
-            # This is actually not critical so...
-            pass

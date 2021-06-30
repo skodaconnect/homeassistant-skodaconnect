@@ -19,7 +19,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     if coordinator.data is not None:
         async_add_devices(
             SkodaDeviceTracker(
-                data, coordinator.vin, instrument.component, instrument.attr
+                data, instrument.vehicle_name, instrument.component, instrument.attr
             )
             for instrument in (
                 instrument

@@ -4,16 +4,20 @@
     "step": {
       "user": {
         "title": "Skoda Connect Configuration",
-        "description": "Fill in Connect information\n\nS-PIN is required for some specific options such as lock/unlock and combustion engine heating start/stop",
+        "description": "Fill in Skoda Connect account information",
         "data": {
           "username": "Email",
           "password": "Password",
-          "mutable": "Uncheck to make the car 'read only'. Keep checked to interact with the car",
-          "spin": "S-PIN",
-          "scandinavian_miles": "Enable if you want to change from km to mil on sensors",
-          "name": "Name your car (defaults to VIN number)",
-          "debug": "Enable full debug logs from API (requires debug logging enabled in config)",
-          "convert": "Select if you wan to make any distance unit conversions"
+          "mutable": "Allow interactions with car (actions). Uncheck to make the car 'read only'.",
+          "update_interval": "Poll frequency (minutes)",
+          "convert": "Select if you want any unit conversions"
+        }
+      },
+      "set_spin": {
+        "title": "S-PIN Configuration",
+        "description": "Fill in your S-PIN.\nThe S-PIN is only required for some specific operations such as lock/unlock and operations that activates the combustion engine heating.\nYou can leave this blank.",
+        "data": {
+          "spin": "S-PIN"
         }
       },
       "select_vehicle": {
@@ -32,7 +36,7 @@
       },
       "reauth_confirm": {
         "data": {
-          "description": "Re-authenticate with your Skoda Connect account. Make sure to accept any new EULA in the Skoda Connect portal (https://www.skoda-connect.com/) before proceeding. ",
+          "description": "Re-authenticate with your Skoda Connect account.\nMake sure to accept any new EULA in the Skoda Connect portal (https://www.skoda-connect.com/) before proceeding. ",
           "username": "Email",
           "password": "Password"
         }
@@ -56,13 +60,11 @@
     "step": {
       "user": {
         "title": "Options for Skoda Connect",
-        "description": "Configure update intervals",
         "data": {
-          "report_request": "Enable automatic report request",
-          "report_scan_interval": "Report request update interval (days)",
-          "scan_interval": "Sensors update interval (minutes)",
+          "description": "Configure settings",
+          "update_interval": "Poll frequency (minutes)",
+          "spin": "S-PIN",
           "debug": "Enable full debug logs from API (requires debug logging enabled in config)",
-          "scandinavian_miles": "Enable if you want to change from km to mil on sensors",
           "convert": "Select if you wan to make any distance unit conversions"
         }
       }
