@@ -251,7 +251,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         schema = SERVICE_SET_PHEATER_DURATION_SCHEMA
     )
 
-     return True
+    return True
 
 
 def update_callback(hass, coordinator):
