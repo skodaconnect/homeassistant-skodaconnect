@@ -4,9 +4,10 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.40-RC5
+# v1.0.42-RC1
 **WARNING!**
 This is a BETA pre-release. Only install if you are having issues with latest stable release. Read release notes for more details.
+Starting from this release the configuration changed from yaml to config flow. Because of how the data is stored and handled there will be one integration per vehicle.
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
 This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
@@ -36,6 +37,12 @@ The car privacy settings must be set to "Share my position" for full functionali
 - device tracker - entity is set to 'not_home' when car is moving
 - trigger data refresh - this will trigger a wake up call so the car sends new data
 
+This release adds beta functionality for the following functions:
+- Config flow
+- Departure timers (switch and service call)
+- Set charge minimum limit
+- Set departure timer schedule
+
 This release adds beta functionality for newer EV's such as Enyaq iV. Supported sensors:
 - Electric range
 - Battery level
@@ -51,13 +58,15 @@ This release adds beta functionality for SmartLink cars. Supported sensors:
 - Oil service distance
 - Oil service time
 
-### What is NOT working / under development
-- switches doesn't immediately update "request reulsts" and "request_in_progress". Long running requests will not show up until next scan interval.
-- Support for newer cars that seems to connect to Skoda native API (Skoda Enyaq iV).
-- SmartLink integration
+### What is NOT working
+- Switches doesn't immediately update "request results" and "request_in_progress". Long running requests will not show up until next scan interval.
+
+### under development
+- Automatic discovery of enabled functions.
+- Functionality for setting departure timers
+- Charging functions for newer cars (Enyaq iV)
 
 ### Breaking changes
-- Enabled API endpoints (functions) are discovered through fetching "operationlist". This has not been tested for all cars and might prove unreliable.
 - Combustion heater/ventilation is now named parking heater so it's not mixed up with aux heater for PHEV
 - Many resources have changed names to avoid confusion in the code, some have changed from sensor to switch and vice versa. Sensors with trailing "_km" in the name has been renamed to "_distance" for better compability between imperial and non-imperial units.
 - Major code changes has been made for requests handling.

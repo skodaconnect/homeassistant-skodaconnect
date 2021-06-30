@@ -1,0 +1,73 @@
+{
+  "title": "Skoda Connect",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Konfiguracja Skoda Connect",
+        "description": "Wypełnij informacje dla Skoda Connect\n\nS-PIN jest wymagany w przypadku niektórych opcji, takich jak blokowanie/odblokowywanie auta i włączanie/wyłączanie silnika",
+        "data": {
+          "username": "Email",
+          "password": "Hasło",
+          "mutable": "Usuń zaznaczenie, aby samochód był „tylko do odczytu”. Jeśli je zostawisz będziesz mógł wejść w interakcję z samochodem",
+          "update_interval": "Poll frequency (minutes)",
+          "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości"
+        }
+      },
+      "set_spin": {
+        "title": "Konfiguracja S-PIN",
+        "description": "Fill in your S-PIN.\nThe S-PIN is only required for some specific operations such as lock/unlock and operations that activates the combustion engine heating.\nYou can leave this blank.",
+        "data": {
+          "spin": "S-PIN"
+        }
+      },
+      "select_vehicle": {
+        "title": "Samochód",
+        "description": "Znaleziono następujące pojazdy. Wybierz pojazd, który chcesz monitorować",
+        "data": {
+          "vehicle": "Numer VIN"
+        }
+      },
+      "select_instruments": {
+        "title": "Sensory",
+        "description": "Wybierz sensory które chcesz dodać do Home Assistant",
+        "data": {
+          "resources": "Zasoby do dodania"
+        }
+      },
+      "reauth_confirm": {
+        "data": {
+          "description": "Ponownie uwierzytelnij się do swojego konta Skoda Connect. Przed kontynuowaniem należy zaakceptować każdą nową umowę EULA w portalu Skoda Connect (https://www.skoda-connect.com/).",
+          "username": "Email",
+          "password": "Hasło"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Samochód z tym VIN jest już skonfigurowany",
+      "reauth_successful": "Ponowne uwierzytelnienie powiodło się"
+    },
+    "error": {
+      "cannot_connect": "Nie można zalogować się do Skoda Connect, sprawdź wpisane dane logowania i sprawdź, czy usługa działa",
+      "cannot_update": "Nie można zaktualizować danych Skoda Connect",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "progress": {
+      "task_login": "Logowanie do Skoda Connect",
+      "task_update": "Pobieranie listy pojazdów"
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Opcje Skoda Connect",
+        "description": "Skonfiguruj częstotliwość aktualizacji",
+        "data": {
+          "update_interval": "Częstotliwość aktualizacji czujników (minuty)",
+          "spin": "S-PIN",
+          "debug": "Włącz pełne dzienniki debugowania z interfejsu API (wymaga włączenia rejestrowania debugowania w konfiguracji)",
+          "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości"
+        }
+      }
+    }
+  }
+}

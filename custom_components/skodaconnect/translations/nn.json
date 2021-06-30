@@ -1,0 +1,15 @@
+{
+    "title": "Skoda Connect",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Skoda Connect-konfigurasjon",
+                "description": "Fyll ut Skoda Connect-informasjon",
+                "data": {
+                    "username": "Brukarnamn",
+                    "password": "Passord"
+                }
+            }
+        }
+    }
+}

@@ -2,10 +2,13 @@
 Support for Skoda Connect Platform
 """
 import logging
+from typing import Any, Dict, Optional
+import voluptuous as vol
 
 from homeassistant.helpers.entity import ToggleEntity
+from homeassistant.helpers import config_validation as cv, entity_platform, service
 
-from . import DATA_KEY, SkodaEntity
+from . import DATA, DATA_KEY, DOMAIN, SkodaEntity, UPDATE_CALLBACK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,27 +20,46 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities([SkodaSwitch(hass.data[DATA_KEY], *discovery_info)])
 
 
+async def async_setup_entry(hass, entry, async_add_devices):
+    data = hass.data[DOMAIN][entry.entry_id][DATA]
+    coordinator = data.coordinator
+    if coordinator.data is not None:
+        async_add_devices(
+            SkodaSwitch(
+                data, instrument.vehicle_name, instrument.component, instrument.attr, hass.data[DOMAIN][entry.entry_id][UPDATE_CALLBACK]
+            )
+            for instrument in (
+                instrument
+                for instrument in data.instruments
+                if instrument.component == "switch"
+            )
+        )
+
+    return True
+
+
 class SkodaSwitch(SkodaEntity, ToggleEntity):
     """Representation of a Skoda Connect Switch."""
 
     @property
     def is_on(self):
         """Return true if switch is on."""
-        _LOGGER.debug("Getting state of %s" % self.instrument.attr)
         return self.instrument.state
 
     async def async_turn_on(self, **kwargs):
         """Turn the switch on."""
-        _LOGGER.debug("Turning ON %s." % self.instrument.attr)
         await self.instrument.turn_on()
-        await super().update_hass()
+        self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
         """Turn the switch off."""
-        _LOGGER.debug("Turning OFF %s." % self.instrument.attr)
         await self.instrument.turn_off()
-        await super().update_hass()
+        self.async_write_ha_state()
 
     @property
     def assumed_state(self):
         return self.instrument.assumed_state
+
+    @property
+    def state_attributes(self) -> Optional[Dict[str, Any]]:
+        return self.instrument.attributes
