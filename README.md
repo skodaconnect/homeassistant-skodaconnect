@@ -4,9 +4,10 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.40-RC6
+# v1.0.42-RC1
 **WARNING!**
 This is a BETA pre-release. Only install if you are having issues with latest stable release. Read release notes for more details.
+Starting from this release the configuration changed from yaml to config flow. Because of how the data is stored and handled there will be one integration per vehicle.
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
 This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
@@ -37,7 +38,8 @@ The car privacy settings must be set to "Share my position" for full functionali
 - trigger data refresh - this will trigger a wake up call so the car sends new data
 
 This release adds beta functionality for the following functions:
-- Departure timers (switch)
+- Config flow
+- Departure timers (switch and service call)
 - Set charge minimum limit
 - Set departure timer schedule
 
