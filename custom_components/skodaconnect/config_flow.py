@@ -256,6 +256,7 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
 
         # Backward compatibility
         default_convert_conf = get_convert_conf(self._config_entry)
+        _LOGGER.debug(f"Default convert config: {default_convert_conf}")
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(

@@ -202,11 +202,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     async def set_current(service_call=None):
         """Set departure schedule."""
         try:
-            # Find car from device id
             car = await get_car(service_call)
 
             # Get charge current and execute service call
-            current = 254 if "maximum" in service_call.data.get("current", "") else 252
             if await car.set_charger_current(current):
                 _LOGGER.info(f"Service call 'set_current' returned success!")
                 await coordinator.async_request_refresh()
