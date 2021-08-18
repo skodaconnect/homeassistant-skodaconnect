@@ -33,7 +33,7 @@ DATA_SCHEMA = {
     vol.Required(CONF_PASSWORD, default=""): str,
     vol.Optional(CONF_UPDATE_INTERVAL, default=1): cv.positive_int,
     vol.Optional(CONF_MUTABLE, default=True): cv.boolean,
-    vol.Optional(CONF_CONVERT, default=None): vol.In(CONVERT_DICT),
+    vol.Optional(CONF_CONVERT, default="No conversion"): vol.In(CONVERT_DICT),
 }
 
 
@@ -256,7 +256,6 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
 
         # Backward compatibility
         default_convert_conf = get_convert_conf(self._config_entry)
-        _LOGGER.debug(f"Default convert config: {default_convert_conf}")
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
