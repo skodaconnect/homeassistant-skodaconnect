@@ -274,11 +274,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         try:
             car = await get_car(service_call)
 
-            if service_call.get('enabled'):
-                action = 'auxiliary' if service_call.get('aux_heater', False) else 'electric'
-                temp = service_call.get('temp', None)
-                hvpower = service_call.get('battery_power', None)
-                spin = service_call.get('spin', None)
+            if service_call.data.get('enabled'):
+                action = 'auxiliary' if service_call.data.get('aux_heater', False) else 'electric'
+                temp = service_call.data.get('temp', None)
+                hvpower = service_call.data.get('battery_power', None)
+                spin = service_call.data.get('spin', None)
             else:
                 action = 'stop'
                 temp = hvpower = spin = None
