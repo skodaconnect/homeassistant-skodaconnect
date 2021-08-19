@@ -4,7 +4,7 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.42-RC2
+# v1.0.42-RC3
 **WARNING!**
 This is a BETA pre-release. Only install if you are having issues with latest stable release. Read release notes for more details.
 Starting from this release the configuration changed from yaml to config flow. Because of how the data is stored and handled there will be one integration per vehicle.
@@ -13,7 +13,7 @@ Starting from this release the configuration changed from yaml to config flow. B
 This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
 Skoda Connect never fetch data directly from car, the car sends updated data to VAG servers on specific events such as lock/unlock, charging events, climatisation events and when vehicle is parked. The integration will then fetch this data from the servers.
 When vehicle actions fails or return with no response, a force refresh might help. This will trigger a "wake up" call from VAG servers to the car.
-The scan_interval is how often the integration should fetch data from the servers, if there's no new data from the car then entities won't be updated-
+The scan_interval is how often the integration should fetch data from the servers, if there's no new data from the car then entities won't be updated.
 
 ### Supported setups
 This integration will only work for your car if you have Skoda Connect/MyŠKODA functionality. Cars using other third party, semi-official, mobile apps such as the "MinSkoda" from ConnectedCars in Denmark won't work.
@@ -21,7 +21,7 @@ Initial support has been added for SmartLink and newer style API cars, such as t
 
 The car privacy settings must be set to "Share my position" for full functionality of this integration. Without this setting, if set to "Use my position", the sensors for position (device tracker), requests remaining and parking time might not work reliably or at all. Set to even stricter privacy setting will limit functionality even further.
 
-### What is working
+### What is working, VW-Group API ("All" Skodas except Enyaq iV so far)
 - odometer and service info
 - fuel level, range, adblue level
 - lock, windows, trunk, hood, sunroof and door status
@@ -37,34 +37,37 @@ The car privacy settings must be set to "Share my position" for full functionali
 - device tracker - entity is set to 'not_home' when car is moving
 - trigger data refresh - this will trigger a wake up call so the car sends new data
 
-This release adds beta functionality for the following functions:
-- Config flow
-- Departure timers (switch and service call)
-- Set charge minimum limit
-- Set departure timer schedule
-
-This release adds beta functionality for newer EV's such as Enyaq iV. Supported sensors:
-- Electric range
-- Battery level
-- Plug connected
-- Plug locked
+### What is working, Skoda native API (Enyaq iV so far)
+- Charging plug connected
+- Charging plug locked
 - Charger connected (external power)
+- Battery level
+- Charging power (Watts)
+- Charging rate (km per hour)
+- Charging time left (hours:minute)
+- Electric range
+- Charging (switch with status)
+- Charger maximum current (1-16 tested OK for Superb iV, instead of being limited to max/reduced)
 
-This release adds beta functionality for SmartLink cars. Supported sensors:
-- Fuel level
-- Odometer
-- Service inspection distance
-- Service inspection time
-- Oil service distance
-- Oil service time
+### Under development and BETA functionality (may be buggy)
+- Config flow (import yaml config not working yet)
+- Automatic discovery of enabled functions.
+- Departure timers (switch on/off and service call to set parameters)
+- SmartLink:
+	- Fuel level
+	- Odometer
+	- Service inspection distance
+	- Service inspection time
+	- Oil service distance
+	- Oil service time
+- Skoda Enyaq iV:
+	- Start/stop charging (switch)
+	- Set charger max current (service call)
+	- Set charge limit (service call)
 
 ### What is NOT working
-- Switches doesn't immediately update "request results" and "request_in_progress". Long running requests will not show up until next scan interval.
-
-### under development
-- Automatic discovery of enabled functions.
-- Functionality for setting departure timers
-- Charging functions for newer cars (Enyaq iV)
+- Switches doesn't immediately update "request results" and "request_in_progress". Long running requests will not show up until completed which might take up to 3-5 minutes.
+- Config flow convert from yaml config
 
 ### Breaking changes
 - Combustion heater/ventilation is now named parking heater so it's not mixed up with aux heater for PHEV
