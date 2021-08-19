@@ -47,6 +47,7 @@ from .const import (
     SERVICE_SET_SCHEDULE,
     SERVICE_SET_MAX_CURRENT,
     SERVICE_SET_CHARGE_LIMIT,
+    SERVICE_SET_CLIMATER,
     SERVICE_SET_PHEATER_DURATION,
 )
 SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
@@ -79,6 +80,16 @@ SERVICE_SET_CHARGE_LIMIT_SCHEMA = vol.Schema(
     {
         vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
         vol.Required("limit"): vol.In([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]),
+    }
+)
+SERVICE_SET_CLIMATER_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("enabled", default=True): cv.boolean,
+        vol.Optional("temp", default=20): vol.All(vol.Coerce(int), vol.Range(min=16, max=30)),
+        vol.Optional("battery_power", default=True): cv.boolean,
+        vol.Optional("aux_heater", default=False): cv.boolean,
+        vol.Optional("spin", default=None): vol.All(vol.Coerce(int), vol.Range(min=0, max=9999))
     }
 )
 SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
@@ -258,6 +269,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         except Exception as e:
             raise
 
+    async def set_climater(service_call=None):
+        """Start or stop climatisation with options."""
+        try:
+            car = await get_car(service_call)
+
+            if service_call.get('enabled'):
+                action = 'auxiliary' if service_call.get('aux_heater', False) else 'electric'
+                temp = service_call.get('temp', None)
+                hvpower = service_call.get('battery_power', None)
+                spin = service_call.get('spin', None)
+            else:
+                action = 'stop'
+                temp = hvpower = spin = None
+            # Execute service call
+            if await car.set_climatisation(action, temp, hvpower, spin):
+                _LOGGER.info(f"Service call 'set_current' returned success!")
+                await coordinator.async_request_refresh()
+            else:
+                _LOGGER.info(f"Failed to execute service call 'set_current' with data '{service_call}'")
+        except Exception as e:
+            raise
+
     # Register entity service
     hass.services.async_register(
         DOMAIN,
@@ -276,6 +309,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         SERVICE_SET_CHARGE_LIMIT,
         set_charge_limit,
         schema = SERVICE_SET_CHARGE_LIMIT_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_CLIMATER,
+        set_climater,
+        schema = SERVICE_SET_CLIMATER_SCHEMA
     )
     hass.services.async_register(
         DOMAIN,

@@ -70,6 +70,62 @@ set_pheater_duration:
           max: 60
           step: 10
           unit_of_measurement: min
+set_climater:
+  name: Set climatisation
+  description: Start/stop climatisation with optional parameters
+  fields:
+    device_id:
+      name: Vehicle
+      description: The vehicle to set climatisation settings for
+      required: true
+      selector:
+        device:
+          integration: skodaconnect
+    enabled:
+      name: Activate
+      description: Start or stop the climatisation
+      advanced: true
+      example: true
+      default: true
+      selector:
+        boolean:
+    temp:
+      name: Target temperature
+      description: The target temperature for climatisation (unselect to use vehicles stored setting)
+      advanced: true
+      example: 20
+      selector:
+        number:
+          min: 16
+          max: 30
+          step: 1
+          unit_of_measurement: °C
+    battery_power:
+      name: Battery power
+      description: >
+        Allow the use of battery power to run electric climatisation (unselect to use vehicles stored setting)
+      advanced: true
+      example: true
+      default: true
+      selector:
+        boolean:
+    aux_heater:
+      name: Auxiliary heater
+      description: >
+        Use the auxiliary heater for climatisation (disable to use electric), requires S-PIN
+      advanced: true
+      example: false
+      default: false
+      selector:
+        boolean:
+    spin:
+      name: S-PIN
+      description: >
+        The S-PIN for the vehicle
+      advanced: true
+      example: 1234
+      selector:
+        text:
 set_departure_schedule:
   name: Set departure schedule
   description: >
