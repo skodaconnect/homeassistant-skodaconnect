@@ -58,18 +58,27 @@ SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
         vol.Required("time", default="08:00"): cv.time,
         vol.Optional("date", default="2020-01-01"): cv.string,
         vol.Optional("days", default='nnnnnnn'): cv.string,
+        vol.Optional("climatisation", default=True): cv.boolean,
+        vol.Optional("charging", default=True): cv.boolean,
+        vol.Optional("charge_current", default=254): vol.All(vol.Coerce(int), vol.Range(min=1, max=254)),
+        vol.Optional("charge_target", default=100): vol.In([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]),
+        vol.Optional("off_peak_start", default="00:00"): cv.time,
+        vol.Optional("off_peak_end", default="06:00"): cv.time,
     }
 )
 SERVICE_SET_MAX_CURRENT_SCHEMA = vol.Schema(
     {
         vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
-        vol.Required("current"): vol.In(["maximum", "reduced"]),
+        vol.Required("current"): vol.Any(
+            vol.Range(min=1, max=255),
+            vol.In(['Maximum', 'maximum', 'Max', 'max', 'Minimum', 'minimum', 'Min', 'min', 'Reduced', 'reduced'])
+        ),
     }
 )
 SERVICE_SET_CHARGE_LIMIT_SCHEMA = vol.Schema(
     {
         vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
-        vol.Required("limit"): vol.In([0, 10, 20, 30, 40, 50]),
+        vol.Required("limit"): vol.In([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]),
     }
 )
 SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
@@ -161,17 +170,43 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         try:
             # Prepare data
             id = service_call.data.get("id", 0)
+            # Convert datetime objects to simple strings
             try:
                 time = service_call.data.get("time").strftime("%H:%M")
             except:
                 time = "08:00"
+            try:
+                if service_call.data.get("off_peak_start", False):
+                    if service_call.data.get("off_peak_end", False):
+                        peakstart = service_call.data.get("off_peak_start").strftime("%H:%M")
+                        peakend = service_call.data.get("off_peak_end").strftime("%H:%M")
+                        peakactive = True
+                if not service_call.data.get("off_peak_end", False):
+                    raise SkodaInvalidRequestException("Missing parameter for off-peak hours")
+            except:
+                peakstart = "00:00"
+                peakend = "00:00"
+
+            # Convert to parseable data
             schedule = {
                 "enabled": service_call.data.get("enabled"),
                 "recurring": service_call.data.get("recurring"),
                 "date": service_call.data.get("date"),
                 "time": time,
-                "days": service_call.data.get("days", "nnnnnnn")
+                "days": service_call.data.get("days", "nnnnnnn"),
+                "nightRateTimeStart": peakstart,
+                "nightRateTimeEnd": peakend,
             }
+            if peakactive:
+                schedule["nightRateActive"] = True
+            if service_call.data.get("climatisation", None) is not None:
+                schedule["operationClimatisation"] = service_call.data.get("climatisation")
+            if service_call.data.get("charging", None) is not None:
+                schedule["operationCharging"] = service_call.data.get("charging")
+            if service_call.data.get("charge_target", None) is not None:
+                schedule["targetChargeLevel"] = service_call.data.get("charge_target")
+            if service_call.data.get("charge_current", None) is not None:
+                schedule["chargeMaxCurrent"] = service_call.data.get("charge_current")
 
             # Find the correct car and execute service call
             car = await get_car(service_call)

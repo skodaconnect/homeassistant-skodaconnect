@@ -38,7 +38,8 @@ set_charger_max_current:
           integration: skodaconnect
     current:
       name: Current
-      description: Maximum current for charger, global setting.
+      description: >
+        Maximum current. String (Maximum or Reduced/Minimum) or int 1-255 (1-32 = Amps, 252 = Reduced, 254 = Maximum).
       advanced: true
       example: 16
       selector:
@@ -133,3 +134,58 @@ set_departure_schedule:
       example: "yyynnnn"
       selector:
         text:
+    climatisation:
+      name: Climatisation
+      description:
+        Wether or not to enable climatisation for this departure.
+      advanced: true
+      example: true
+      selector:
+        boolean:
+    charging:
+      name: Charging
+      description:
+        Wether or not to enable charging for this departure.
+      advanced: true
+      example: true
+      selector:
+        boolean:
+    charge_current:
+      name: Current
+      description:
+        Maximum charging current for this departure.
+      advanced: true
+      example: 16
+      selector:
+        number:
+          min: 1
+          max: 254
+          unit_of_measurement: Ampere
+    charge_target:
+      name: Charge Target
+      description:
+        The target charge level for departure
+      advanced: true
+      example: 100
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 10
+          unit_of_measurement: percent
+    off_peak_start:
+      name: Off-peak Start
+      description:
+        The time when off-peak hours for electric price start.
+      advanced: true
+      example: "00:00:00"
+      selector:
+        time:
+    off_peak_end:
+      name: Off-peak End
+      description:
+        The time when off-peak hours for electric price end.
+      advanced: true
+      example: "06:00:00"
+      selector:
+        time:
