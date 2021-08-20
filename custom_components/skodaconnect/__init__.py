@@ -99,7 +99,8 @@ SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
     }
 )
 
-
+# Set max parallel updates to 2 simultaneous (1 poll and 1 request waiting)
+PARALLEL_UPDATES = 2
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -159,6 +160,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     # Service functions
     async def get_car(service_call):
+        """Get VIN associated with HomeAssistant device ID."""
+        # Get device entry
         dev_id = service_call.data.get("device_id")
         dev_reg = device_registry.async_get(hass)
         dev_entry = dev_reg.async_get(dev_id)
@@ -172,9 +175,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         vin_identifier = next(iter(skoda_identifiers))
         vin = vin_identifier[1]
 
-        # Get the class object from the connection
-        car = coordinator.connection.vehicle(vin)
-        return car
+        # Get coordinator handling the device entry
+        conf_entry = next(iter(dev_entry.config_entries))
+        dev_coordinator = hass.data[DOMAIN][conf_entry]['data'].coordinator
+
+        # Return with associated Vehicle class object
+        return dev_coordinator.connection.vehicle(vin)
 
     async def set_schedule(service_call=None):
         """Set departure schedule."""
@@ -280,7 +286,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 hvpower = service_call.data.get('battery_power', None)
                 spin = service_call.data.get('spin', None)
             else:
-                action = 'stop'
+                action = 'off'
                 temp = hvpower = spin = None
             # Execute service call
             if await car.set_climatisation(action, temp, hvpower, spin):
@@ -341,6 +347,11 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""
+    hass.services.async_remove(DOMAIN, SERVICE_SET_SCHEDULE)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_MAX_CURRENT)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_CHARGE_LIMIT)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_CLIMATER)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_PHEATER_DURATION)
     hass.data[DOMAIN][entry.entry_id][UNDO_UPDATE_LISTENER]()
 
     return await async_unload_coordinator(hass, entry)
