@@ -7,6 +7,7 @@ import voluptuous as vol
 
 from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.helpers import config_validation as cv, entity_platform, service
+from homeassistant.const import CONF_RESOURCES
 
 from . import DATA, DATA_KEY, DOMAIN, SkodaEntity, UPDATE_CALLBACK
 
@@ -24,6 +25,11 @@ async def async_setup_entry(hass, entry, async_add_devices):
     data = hass.data[DOMAIN][entry.entry_id][DATA]
     coordinator = data.coordinator
     if coordinator.data is not None:
+        if CONF_RESOURCES in entry.options:
+            resources = entry.options[CONF_RESOURCES]
+        else:
+            resources = entry.data[CONF_RESOURCES]
+
         async_add_devices(
             SkodaSwitch(
                 data, instrument.vehicle_name, instrument.component, instrument.attr, hass.data[DOMAIN][entry.entry_id][UPDATE_CALLBACK]
@@ -31,7 +37,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
             for instrument in (
                 instrument
                 for instrument in data.instruments
-                if instrument.component == "switch"
+                if instrument.component == "switch" and instrument.attr in resources
             )
         )
 

@@ -89,7 +89,7 @@ SERVICE_SET_CLIMATER_SCHEMA = vol.Schema(
         vol.Optional("temp", default=20): vol.All(vol.Coerce(int), vol.Range(min=16, max=30)),
         vol.Optional("battery_power", default=True): cv.boolean,
         vol.Optional("aux_heater", default=False): cv.boolean,
-        vol.Optional("spin"): vol.All(cv.string, vol.Match(r"[0-9]{4}"))
+        vol.Optional("spin"): vol.All(cv.string, vol.Match(r"^[0-9]{4}$"))
     }
 )
 SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(

@@ -7,6 +7,7 @@ from homeassistant.components.device_tracker import SOURCE_TYPE_GPS
 from homeassistant.components.device_tracker.config_entry import TrackerEntity
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.util import slugify
+from homeassistant.const import CONF_RESOURCES
 
 from . import DATA, DATA_KEY, DOMAIN, SIGNAL_STATE_UPDATED, SkodaEntity
 
@@ -17,6 +18,11 @@ async def async_setup_entry(hass, entry, async_add_devices):
     data = hass.data[DOMAIN][entry.entry_id][DATA]
     coordinator = data.coordinator
     if coordinator.data is not None:
+        if CONF_RESOURCES in entry.options:
+            resources = entry.options[CONF_RESOURCES]
+        else:
+            resources = entry.data[CONF_RESOURCES]
+
         async_add_devices(
             SkodaDeviceTracker(
                 data, instrument.vehicle_name, instrument.component, instrument.attr
@@ -24,7 +30,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
             for instrument in (
                 instrument
                 for instrument in data.instruments
-                if instrument.component == "device_tracker"
+                if instrument.component == "device_tracker" and instrument.attr in resources
             )
         )
 

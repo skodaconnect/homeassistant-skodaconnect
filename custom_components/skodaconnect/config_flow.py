@@ -134,14 +134,16 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         instruments_dict = {
             instrument.attr: instrument.name for instrument in instruments
         }
+        instruments_sorted = dict(sorted(instruments_dict.items(), key=lambda item: item[1]))
+
         return self.async_show_form(
             step_id="select_instruments",
             errors=self._errors,
             data_schema=vol.Schema(
                 {
                     vol.Optional(
-                        CONF_RESOURCES, default=list(instruments_dict.keys())
-                    ): cv.multi_select(instruments_dict)
+                        CONF_RESOURCES, default=list(instruments_sorted.keys())
+                    ): cv.multi_select(instruments_sorted)
                 }
             ),
         )
@@ -237,7 +239,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle Plaato options."""
+    """Handle SkodaConnect options."""
 
     def __init__(self, config_entry: ConfigEntry):
         """Initialize domain options flow."""
@@ -251,11 +253,19 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_user(self, user_input=None):
         """Manage the options."""
+        vehicle_data = self.hass.data[DOMAIN][self._config_entry.entry_id]["data"]
+        instruments = vehicle_data.instruments
+        instruments_dict = {
+            instrument.attr: instrument.name for instrument in instruments
+        }
+        instruments_sorted = dict(sorted(instruments_dict.items(), key=lambda item: item[1]))
+
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
         # Backward compatibility
         default_convert_conf = get_convert_conf(self._config_entry)
+
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
@@ -282,6 +292,14 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                             )
                         )
                     ): cv.boolean,
+                    vol.Optional(
+                        CONF_RESOURCES,
+                        default=self._config_entry.options.get(
+                            CONF_RESOURCES, self._config_entry.data.get(
+                                CONF_RESOURCES, {})
+                            )
+                        )
+                    ): cv.multi_select(instruments_dict),
                     vol.Optional(
                         CONF_CONVERT,
                         default=self._config_entry.options.get(

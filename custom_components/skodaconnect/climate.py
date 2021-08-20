@@ -15,6 +15,7 @@ from homeassistant.const import (
     STATE_UNKNOWN,
     TEMP_CELSIUS,
     TEMP_FAHRENHEIT,
+    CONF_RESOURCES
 )
 
 SUPPORT_HVAC = [HVAC_MODE_COOL, HVAC_MODE_HEAT, HVAC_MODE_OFF]
@@ -35,6 +36,11 @@ async def async_setup_entry(hass, entry, async_add_devices):
     data = hass.data[DOMAIN][entry.entry_id][DATA]
     coordinator = data.coordinator
     if coordinator.data is not None:
+        if CONF_RESOURCES in entry.options:
+            resources = entry.options[CONF_RESOURCES]
+        else:
+            resources = entry.data[CONF_RESOURCES]
+
         async_add_devices(
             SkodaClimate(
                 data, instrument.vehicle_name, instrument.component, instrument.attr
@@ -42,7 +48,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
             for instrument in (
                 instrument
                 for instrument in data.instruments
-                if instrument.component == "climate"
+                if instrument.component == "climate" and instrument.attr in resources
             )
         )
 
