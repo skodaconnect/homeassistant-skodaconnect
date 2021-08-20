@@ -247,7 +247,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             # Get charge limit and execute service call
             limit = service_call.data.get("limit", 50)
             if await car.set_charge_limit(limit) is True:
-                _LOGGER.debug(f"Service call 'set_charge_limit' returned success!")
+                _LOGGER.debug(f"Service call 'set_charge_limit' executed without error")
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_charge_limit' with data '{service_call}'")
@@ -261,7 +261,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # Get charge current and execute service call
             if await car.set_charger_current(current) is True:
-                _LOGGER.debug(f"Service call 'set_current' returned success!")
+                _LOGGER.debug(f"Service call 'set_current' executed without error")
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
@@ -273,7 +273,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         try:
             car = await get_car(service_call)
             car.pheater_duration = service_call.data.get("duration", car.pheater_duration)
-            _LOGGER.debug(f"Service call 'set_pheater_duration' succeeded!")
+            _LOGGER.debug(f"Service call 'set_pheater_duration' executed without error")
             await coordinator.async_request_refresh()
         except Exception as e:
             raise
@@ -293,7 +293,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 temp = hvpower = spin = None
             # Execute service call
             if await car.set_climatisation(action, temp, hvpower, spin) is True:
-                _LOGGER.debug(f"Service call 'set_climater' returned success!")
+                _LOGGER.debug(f"Service call 'set_climater' executed without error")
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
