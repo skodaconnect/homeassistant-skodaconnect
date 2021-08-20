@@ -89,7 +89,7 @@ SERVICE_SET_CLIMATER_SCHEMA = vol.Schema(
         vol.Optional("temp", default=20): vol.All(vol.Coerce(int), vol.Range(min=16, max=30)),
         vol.Optional("battery_power", default=True): cv.boolean,
         vol.Optional("aux_heater", default=False): cv.boolean,
-        vol.Optional("spin", default=None): vol.All(vol.Coerce(int), vol.Range(min=0, max=9999))
+        vol.Optional("spin"): vol.All(cv.string, vol.Match(r"[0-9]{4}"))
     }
 )
 SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
@@ -177,7 +177,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
         # Get coordinator handling the device entry
         conf_entry = next(iter(dev_entry.config_entries))
-        dev_coordinator = hass.data[DOMAIN][conf_entry]['data'].coordinator
+        try:
+            dev_coordinator = hass.data[DOMAIN][conf_entry]['data'].coordinator
+        except:
+            raise SkodaConfigException('Could not find associated coordinator for given vehicle')
 
         # Return with associated Vehicle class object
         return dev_coordinator.connection.vehicle(vin)
@@ -228,11 +231,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             # Find the correct car and execute service call
             car = await get_car(service_call)
             _LOGGER.info(f'Set departure schedule {id} with data {schedule} for car {car.vin}')
-            if await car.set_timer_schedule(id, schedule):
-                _LOGGER.info(f"Service call 'set_schedule' returned success!")
+            if await car.set_timer_schedule(id, schedule) is True:
+                _LOGGER.debug(f"Service call 'set_schedule' returned success!")
                 await coordinator.async_request_refresh()
             else:
-                _LOGGER.info(f"Failed to execute service call 'set_schedule' with data '{service_call}'")
+                _LOGGER.warning(f"Failed to execute service call 'set_schedule' with data '{service_call}'")
         except Exception as e:
             raise
 
@@ -243,11 +246,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # Get charge limit and execute service call
             limit = service_call.data.get("limit", 50)
-            if await car.set_charge_limit(limit):
-                _LOGGER.info(f"Service call 'set_charge_limit' returned success!")
+            if await car.set_charge_limit(limit) is True:
+                _LOGGER.debug(f"Service call 'set_charge_limit' returned success!")
                 await coordinator.async_request_refresh()
             else:
-                _LOGGER.info(f"Failed to execute service call 'set_charge_limit' with data '{service_call}'")
+                _LOGGER.warning(f"Failed to execute service call 'set_charge_limit' with data '{service_call}'")
         except Exception as e:
             raise
 
@@ -257,11 +260,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             car = await get_car(service_call)
 
             # Get charge current and execute service call
-            if await car.set_charger_current(current):
-                _LOGGER.info(f"Service call 'set_current' returned success!")
+            if await car.set_charger_current(current) is True:
+                _LOGGER.debug(f"Service call 'set_current' returned success!")
                 await coordinator.async_request_refresh()
             else:
-                _LOGGER.info(f"Failed to execute service call 'set_current' with data '{service_call}'")
+                _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
         except Exception as e:
             raise
 
@@ -270,7 +273,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         try:
             car = await get_car(service_call)
             car.pheater_duration = service_call.data.get("duration", car.pheater_duration)
-            _LOGGER.info(f"Service call 'set_pheater_duration' succeeded!")
+            _LOGGER.debug(f"Service call 'set_pheater_duration' succeeded!")
             await coordinator.async_request_refresh()
         except Exception as e:
             raise
@@ -289,11 +292,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 action = 'off'
                 temp = hvpower = spin = None
             # Execute service call
-            if await car.set_climatisation(action, temp, hvpower, spin):
-                _LOGGER.info(f"Service call 'set_current' returned success!")
+            if await car.set_climatisation(action, temp, hvpower, spin) is True:
+                _LOGGER.debug(f"Service call 'set_climater' returned success!")
                 await coordinator.async_request_refresh()
             else:
-                _LOGGER.info(f"Failed to execute service call 'set_current' with data '{service_call}'")
+                _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
         except Exception as e:
             raise
 
