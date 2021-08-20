@@ -253,15 +253,15 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_user(self, user_input=None):
         """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
         vehicle_data = self.hass.data[DOMAIN][self._config_entry.entry_id]["data"]
         instruments = vehicle_data.instruments
         instruments_dict = {
             instrument.attr: instrument.name for instrument in instruments
         }
         instruments_sorted = dict(sorted(instruments_dict.items(), key=lambda item: item[1]))
-
-        if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
 
         # Backward compatibility
         default_convert_conf = get_convert_conf(self._config_entry)
@@ -296,10 +296,10 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_RESOURCES,
                         default=self._config_entry.options.get(
                             CONF_RESOURCES, self._config_entry.data.get(
-                                CONF_RESOURCES, {})
+                                CONF_RESOURCES, {}
                             )
                         )
-                    ): cv.multi_select(instruments_dict),
+                    ): cv.multi_select(instruments_sorted),
                     vol.Optional(
                         CONF_CONVERT,
                         default=self._config_entry.options.get(
