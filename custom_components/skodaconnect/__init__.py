@@ -28,6 +28,18 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from skodaconnect import Connection
 from skodaconnect.vehicle import Vehicle
+from skodaconnect.exceptions import (
+    SkodaConfigException,
+    SkodaAuthenticationException,
+    SkodaAccountLockedException,
+    SkodaTokenExpiredException,
+    SkodaException,
+    SkodaEULAException,
+    SkodaThrottledException,
+    SkodaLoginFailedException,
+    SkodaInvalidRequestException,
+    SkodaRequestInProgressException
+)
 
 from .const import (
     PLATFORMS,
@@ -56,15 +68,15 @@ SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
         vol.Required("id", default=1): vol.In([1,2,3]),
         vol.Required("enabled", default=True): cv.boolean,
         vol.Required("recurring", default=False): cv.boolean,
-        vol.Required("time", default="08:00"): cv.time,
+        vol.Required("time", default="08:00"): cv.string,
         vol.Optional("date", default="2020-01-01"): cv.string,
         vol.Optional("days", default='nnnnnnn'): cv.string,
         vol.Optional("climatisation", default=True): cv.boolean,
         vol.Optional("charging", default=True): cv.boolean,
         vol.Optional("charge_current", default=254): vol.All(vol.Coerce(int), vol.Range(min=1, max=254)),
         vol.Optional("charge_target", default=100): vol.In([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]),
-        vol.Optional("off_peak_start", default="00:00"): cv.time,
-        vol.Optional("off_peak_end", default="06:00"): cv.time,
+        vol.Optional("off_peak_start", default="00:00"): cv.string,
+        vol.Optional("off_peak_end", default="06:00"): cv.string,
     }
 )
 SERVICE_SET_MAX_CURRENT_SCHEMA = vol.Schema(
@@ -100,7 +112,7 @@ SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
 )
 
 # Set max parallel updates to 2 simultaneous (1 poll and 1 request waiting)
-PARALLEL_UPDATES = 2
+#PARALLEL_UPDATES = 2
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -236,6 +248,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_schedule' with data '{service_call}'")
+        except (SkodaInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
         except Exception as e:
             raise
 
@@ -251,6 +265,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_charge_limit' with data '{service_call}'")
+        except (SkodaInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
         except Exception as e:
             raise
 
@@ -260,11 +276,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             car = await get_car(service_call)
 
             # Get charge current and execute service call
+            current = service_call.data.get('current', None)
             if await car.set_charger_current(current) is True:
                 _LOGGER.debug(f"Service call 'set_current' executed without error")
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
+        except (SkodaInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
         except Exception as e:
             raise
 
@@ -275,6 +294,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             car.pheater_duration = service_call.data.get("duration", car.pheater_duration)
             _LOGGER.debug(f"Service call 'set_pheater_duration' executed without error")
             await coordinator.async_request_refresh()
+        except (SkodaInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
         except Exception as e:
             raise
 
@@ -297,6 +318,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
+        except (SkodaInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
         except Exception as e:
             raise
 
