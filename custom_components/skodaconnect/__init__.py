@@ -72,7 +72,6 @@ SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
         vol.Optional("date"): cv.string,
         vol.Optional("days"): cv.string,
         vol.Optional("temp"): vol.All(vol.Coerce(int), vol.Range(min=16, max=30)),
-        vol.Optional("aux_heater"): cv.boolean,
         vol.Optional("climatisation"): cv.boolean,
         vol.Optional("charging"): cv.boolean,
         vol.Optional("charge_current"): vol.Any(
@@ -80,7 +79,6 @@ SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
             vol.In(['Maximum', 'maximum', 'Max', 'max', 'Minimum', 'minimum', 'Min', 'min', 'Reduced', 'reduced'])
         ),
         vol.Optional("charge_target"): vol.In([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]),
-        vol.Optional("spin"): vol.All(cv.string, vol.Match(r"^[0-9]{4}$"))
         vol.Optional("off_peak_active"): cv.boolean,
         vol.Optional("off_peak_start"): cv.string,
         vol.Optional("off_peak_end"): cv.string,
