@@ -4,6 +4,7 @@ Skoda Connect integration
 
 Read more at https://github.com/lendy007/homeassistant-skodaconnect/
 """
+import re
 import asyncio
 import logging
 from datetime import datetime, timedelta

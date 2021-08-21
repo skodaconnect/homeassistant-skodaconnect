@@ -161,7 +161,8 @@ set_departure_schedule:
         text:
     enabled:
       name: Activated
-      description: "[Optional] If the departure schedule should be activated."
+      description: "[Required] If the departure schedule should be activated."
+      required: true
       advanced: true
       example: true
       default: true
@@ -169,7 +170,8 @@ set_departure_schedule:
         boolean:
     recurring:
       name: Recurring schedule
-      description: "[Optional] Wether the schedule should be recurring or one off."
+      description: "[Required] Wether the schedule should be recurring or one off."
+      required: true
       advanced: true
       example: false
       default: false
@@ -200,7 +202,7 @@ set_departure_schedule:
         number:
           min: 16
           max: 30
-          mode: box
+          mode: slider
     climatisation:
       name: Climatisation
       description: "[Optional] Wether or not to enable climatisation for this departure."
