@@ -267,7 +267,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             car = await get_car(service_call)
             _LOGGER.info(f'Set departure schedule {id} with data {schedule} for car {car.vin}')
             if await car.set_timer_schedule(id, schedule) is True:
-                _LOGGER.debug(f"Service call 'set_schedule' executed without error)
+                _LOGGER.debug(f"Service call 'set_schedule' executed without error")
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_schedule' with data '{service_call}'")
