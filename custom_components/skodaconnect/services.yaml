@@ -133,14 +133,14 @@ set_departure_schedule:
   fields:
     device_id:
       name: Vehicle
-      description: [Required] The vehicle to set departure schedule for.
+      description: "[Required] The vehicle to set departure schedule for."
       required: true
       selector:
         device:
           integration: skodaconnect
     id:
       name: ID
-      description: [Required] Which departure schedule to change.
+      description: "[Required] Which departure schedule to change."
       required: true
       advanced: true
       example: 1
@@ -150,9 +150,18 @@ set_departure_schedule:
           min: 1
           max: 3
           mode: box
+    time:
+      name: Time
+      description: "[Required] The time for departure, 24h HH:MM."
+      required: true
+      advanced: true
+      example: "17:00"
+      default: "08:00"
+      selector:
+        text:
     enabled:
       name: Activated
-      description: [Optional] If the departure schedule should be activated.
+      description: "[Optional] If the departure schedule should be activated."
       advanced: true
       example: true
       default: true
@@ -160,82 +169,95 @@ set_departure_schedule:
         boolean:
     recurring:
       name: Recurring schedule
-      description: [Optional] Wether the schedule should be recurring or one off.
+      description: "[Optional] Wether the schedule should be recurring or one off."
       advanced: true
       example: false
       default: false
       selector:
         boolean:
-    time:
-      name: Time
-      description: [Required] The time for departure, 24h HH:MM.
-      required: true
-      advanced: true
-      example: "17:00"
-      default: "08:00"
-      selector:
-        time:
     date:
       name: Date
-      description: The date for departure (required for single schedule, not recurring).
+      description: "The date for departure (required for single schedule, not recurring)."
       advanced: true
       example: "2021-06-31"
       selector:
         text:
     days:
       name: Days
-      description: Weekday mask for recurring schedule, mon-sun - (required for recurring schedule, not single).
+      description: "Weekday mask for recurring schedule, mon-sun - (required for recurring schedule, not single)."
       advanced: true
       example: "yyynnnn"
       default: "yyyyynn"
       selector:
         text:
+    temp:
+      name: Target temperature
+      description: "[Optional] Target temperature for climatisation. Global setting and affects all climatisation actions and schedules."
+      advanced: true
+      example: 20
+      default: 20
+      selector:
+        number:
+          min: 16
+          max: 30
+          mode: box
     climatisation:
       name: Climatisation
-      description: [Optional] Wether or not to enable climatisation for this departure.
+      description: "[Optional] Wether or not to enable climatisation for this departure."
       advanced: true
       example: true
+      default: true
       selector:
         boolean:
     charging:
       name: Charging
-      description: [Optional] Wether or not to enable charging for this departure.
+      description: "[Optional] Wether or not to enable charging for this departure."
       advanced: true
       example: true
+      default: true
       selector:
         boolean:
     charge_current:
       name: Current
-      description: [Optional] Maximum charging current for this departure.
+      description: "[Optional] Maximum charging current for this departure. (1-254 or maximum/reduced)"
       advanced: true
-      example: 16
+      example: "Maximum"
+      default: "Maximum"
       selector:
-        number:
-          min: 1
-          max: 254
-          unit_of_measurement: Ampere
+        text:
     charge_target:
       name: Charge Target
-      description: [Optional] The target charge level for departure.
+      description: "[Optional] The target charge level for departure."
       advanced: true
       example: 100
+      default: 100
       selector:
         number:
           min: 0
           max: 100
           step: 10
           unit_of_measurement: percent
+    off_peak_active:
+      name: Off-peak active
+      description: "[Optional] Enable off-peak hours"
+      advanced: true
+      example: false
+      default: false
+      selector:
+        boolean:
     off_peak_start:
       name: Off-peak Start
-      description: The time when off-peak hours for electric price start, 24h HH:MM.
+      description: "[Optional] The time when off-peak hours for electric price start, 24h HH:MM."
       advanced: true
       example: "00:00"
+      default: "00:00"
       selector:
-        time:
+        text:
     off_peak_end:
       name: Off-peak End
-      description: [Optional] The time when off-peak hours for electric price end, 24h HH:MM.
+      description: "[Optional] The time when off-peak hours for electric price end, 24h HH:MM."
       advanced: true
       example: "06:00"
+      default: "06:00"
       selector:
-        time:
+        text:
