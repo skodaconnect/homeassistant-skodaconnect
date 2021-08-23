@@ -687,14 +687,16 @@ class SkodaCoordinator(DataUpdateCoordinator):
     async def update(self) -> Union[bool, Vehicle]:
         """Update status from Skoda Connect"""
 
-        # Update vehicles
-        if not await self.connection.update():
-            _LOGGER.warning("Could not query update from Skoda Connect")
-            return False
-
+        # Update vehicle data
         _LOGGER.debug("Updating data from Skoda Connect")
-        for vehicle in self.connection.vehicles:
-            if vehicle.vin.upper() == self.vin:
+        try:
+            # Get Vehicle object matching VIN number
+            vehicle = self.connection.vehicle(self.vin)
+            if not await vehicle.update():
+                _LOGGER.warning("Could not query update from Skoda Connect")
+                return False
+            else:
                 return vehicle
-
-        return False
+        except Exception as error:
+            _LOGGER.warning(f"An error occured while requesting update from Skoda Connect: {error}")
+            return False
