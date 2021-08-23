@@ -9,7 +9,7 @@
         "@lendik007",
         "@Farfar"
     ],
-    "requirements": ["skodaconnect==1.0.42"],
-    "version": "v1.0.42-rc2",
+    "requirements": ["skodaconnect==1.0.45"],
+    "version": "v1.0.45-rc1",
     "iot_class": "cloud_polling"
 }
