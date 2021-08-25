@@ -28,19 +28,19 @@ from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from skodaconnect import Connection
-from skodaconnect.vehicle import Vehicle
-from skodaconnect.exceptions import (
-    SkodaConfigException,
-    SkodaAuthenticationException,
-    SkodaAccountLockedException,
-    SkodaTokenExpiredException,
-    SkodaException,
-    SkodaEULAException,
-    SkodaThrottledException,
-    SkodaLoginFailedException,
-    SkodaInvalidRequestException,
-    SkodaRequestInProgressException
-)
+#from skodaconnect.vehicle import Vehicle
+#from skodaconnect.exceptions import (
+#    SkodaConfigException,
+#    SkodaAuthenticationException,
+#    SkodaAccountLockedException,
+#    SkodaTokenExpiredException,
+#    SkodaException,
+#    SkodaEULAException,
+#    SkodaThrottledException,
+#    SkodaLoginFailedException,
+#    SkodaInvalidRequestException,
+#    SkodaRequestInProgressException
+#)
 
 from .const import (
     PLATFORMS,
