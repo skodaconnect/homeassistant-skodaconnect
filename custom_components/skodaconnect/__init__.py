@@ -28,19 +28,19 @@ from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from skodaconnect import Connection
-#from skodaconnect.vehicle import Vehicle
-#from skodaconnect.exceptions import (
-#    SkodaConfigException,
-#    SkodaAuthenticationException,
-#    SkodaAccountLockedException,
-#    SkodaTokenExpiredException,
-#    SkodaException,
-#    SkodaEULAException,
-#    SkodaThrottledException,
-#    SkodaLoginFailedException,
-#    SkodaInvalidRequestException,
-#    SkodaRequestInProgressException
-#)
+from skodaconnect.vehicle import Vehicle
+from skodaconnect.exceptions import (
+    SkodaConfigException,
+    SkodaAuthenticationException,
+    SkodaAccountLockedException,
+    SkodaTokenExpiredException,
+    SkodaException,
+    SkodaEULAException,
+    SkodaThrottledException,
+    SkodaLoginFailedException,
+    SkodaInvalidRequestException,
+    SkodaRequestInProgressException
+)
 
 from .const import (
     PLATFORMS,
@@ -63,6 +63,7 @@ from .const import (
     SERVICE_SET_CLIMATER,
     SERVICE_SET_PHEATER_DURATION,
 )
+
 SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
     {
         vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
