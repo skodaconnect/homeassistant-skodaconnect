@@ -154,8 +154,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     instruments = coordinator.data
 
     conf_instruments = entry.data.get(CONF_INSTRUMENTS, {}).copy()
-    _LOGGER.debug(f"Configured resources are: {entry.options.get(CONF_RESOURCES, [])}")
-    _LOGGER.debug(f"All instruments: {conf_instruments}")
+    if entry.options.get(CONF_DEBUG, False):
+        _LOGGER.debug(f"Configured resources are: {entry.options.get(CONF_RESOURCES, [])}")
+        _LOGGER.debug(f"All instruments: {conf_instruments}")
     new_instruments = {}
 
     def is_enabled(attr):
@@ -306,8 +307,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # Find the correct car and execute service call
             car = await get_car(service_call)
-            _LOGGER.info(f'Set departure schedule {id} with data {schedule} for car {car.vin}')
-            if await car.set_timer_schedule(id, schedule) is True:
+            _LOGGER.info(f'Set departure schedule {schedule.get("id")} with data {schedule} for car {car.vin}')
+            if await car.set_timer_schedule(schedule.get("id"), schedule) is True:
                 _LOGGER.debug(f"Service call 'set_schedule' executed without error")
                 await coordinator.async_request_refresh()
             else:
