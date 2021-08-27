@@ -3,8 +3,8 @@ from datetime import timedelta
 DOMAIN = "skodaconnect"
 DATA_KEY = DOMAIN
 
+# Configuration definitions
 DEFAULT_DEBUG = False
-
 CONF_MUTABLE = "mutable"
 CONF_SPIN = "spin"
 CONF_SCANDINAVIAN_MILES = "scandinavian_miles"
@@ -12,6 +12,7 @@ CONF_IMPERIAL_UNITS = "imperial_units"
 CONF_NO_CONVERSION = "no_conversion"
 CONF_CONVERT = "convert"
 CONF_VEHICLE = "vehicle"
+CONF_INSTRUMENTS = "instruments"
 CONF_UPDATE_INTERVAL = "update_interval"
 CONF_DEBUG = "debug"
 

@@ -4,10 +4,10 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.46-RC1
-**WARNING!**
-This is a BETA pre-release. Only install if you are having issues with latest stable release. Read release notes for more details.
+# v1.0.47
 Starting from this release the configuration changed from yaml to config flow. Because of how the data is stored and handled there will be one integration per vehicle.
+Import data from configuration.yaml is also limited to one vehicle.
+Setup multiple vehicles by adding the integration multiple times.
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
 This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
@@ -50,7 +50,7 @@ The car privacy settings must be set to "Share my position" for full functionali
 - Charger maximum current (1-16 tested OK for Superb iV, instead of being limited to max/reduced)
 
 ### Under development and BETA functionality (may be buggy)
-- Config flow (import yaml config not working yet)
+- Config flow multiple vehicles from same account
 - Automatic discovery of enabled functions.
 - Departure timers (switch on/off and service call to set parameters)
 - SmartLink:

@@ -7,31 +7,26 @@
         "description": "Wypełnij informacje dla Skoda Connect\n\nS-PIN jest wymagany w przypadku niektórych opcji, takich jak blokowanie/odblokowywanie auta i włączanie/wyłączanie silnika",
         "data": {
           "username": "Email",
-          "password": "Hasło",
-          "mutable": "Usuń zaznaczenie, aby samochód był „tylko do odczytu”. Jeśli je zostawisz będziesz mógł wejść w interakcję z samochodem",
-          "update_interval": "Poll frequency (minutes)",
-          "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości"
+          "password": "Hasło"
         }
       },
-      "set_spin": {
-        "title": "Konfiguracja S-PIN",
-        "description": "Fill in your S-PIN.\nThe S-PIN is only required for some specific operations such as lock/unlock and operations that activates the combustion engine heating.\nYou can leave this blank.",
-        "data": {
-          "spin": "S-PIN"
-        }
-      },
-      "select_vehicle": {
+      "vehicle": {
         "title": "Samochód",
-        "description": "Znaleziono następujące pojazdy. Wybierz pojazd, który chcesz monitorować",
+        "description": "Znaleziono następujące pojazdy. Wybierz pojazd, który chcesz monitorować i jego ustawienia.\n\nKod S-PIN jest wymagany tylko do niektórych określonych operacji, takich jak blokowanie/odblokowywanie i operacje, które aktywują ogrzewanie silnika spalinowego.\nMożesz pozostawić to pole puste.",
         "data": {
-          "vehicle": "Numer VIN"
+          "vehicle": "Numer VIN",
+          "spin": "S-PIN",
+          "mutable": "Usuń zaznaczenie, aby samochód był „tylko do odczytu”. Jeśli je zostawisz będziesz mógł wejść w interakcję z samochodem"
         }
       },
-      "select_instruments": {
-        "title": "Sensory",
-        "description": "Wybierz sensory które chcesz dodać do Home Assistant",
+      "monitoring": {
+        "title": "Ustawienia monitorowania",
+        "description": "Określ dodatkowe ustawienia monitorowania.",
         "data": {
-          "resources": "Zasoby do dodania"
+          "resources": "Zasoby do dodania",
+          "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości",
+          "update_interval": "Częstotliwość sondowania (minuty).",
+          "debug": "Pełne rejestrowanie debugowania interfejsu API (wymaga włączenia rejestrowania debugowania w pliku configuration.yaml)"
         }
       },
       "reauth_confirm": {
@@ -60,14 +55,18 @@
     "step": {
       "user": {
         "title": "Opcje Skoda Connect",
-        "description": "Skonfiguruj częstotliwość aktualizacji",
+        "description": "Skonfiguruj opcje monitorowania pojazdu Skoda Connect.",
         "data": {
           "update_interval": "Częstotliwość aktualizacji czujników (minuty)",
           "spin": "S-PIN",
-          "debug": "Włącz pełne dzienniki debugowania z interfejsu API (wymaga włączenia rejestrowania debugowania w konfiguracji)",
-          "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości"
+          "mutable": "Usuń zaznaczenie, aby samochód był „tylko do odczytu”. Jeśli je zostawisz będziesz mógł wejść w interakcję z samochodem",
+          "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości",
+          "resources": "Zasoby do dodania",
+          "debug": "Włącz pełne dzienniki debugowania z interfejsu API (wymaga włączenia rejestrowania debugowania w konfiguracji)"
         }
       }
     }
   }
 }
+
+

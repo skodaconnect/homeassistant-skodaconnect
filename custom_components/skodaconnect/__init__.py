@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Union
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigEntry, SOURCE_REAUTH
+from homeassistant.config_entries import ConfigEntry, SOURCE_REAUTH, SOURCE_IMPORT
 from homeassistant.const import (
     CONF_NAME,
     CONF_PASSWORD,
@@ -49,6 +49,7 @@ from .const import (
     CONF_SPIN,
     CONF_VEHICLE,
     CONF_UPDATE_INTERVAL,
+    CONF_INSTRUMENTS,
     DATA,
     DATA_KEY,
     DEFAULT_UPDATE_INTERVAL,
@@ -125,7 +126,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Setup Skoda Connect component"""
+    """Setup Skoda Connect component from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
     if entry.options.get(CONF_UPDATE_INTERVAL):
@@ -152,11 +153,47 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     data = SkodaData(entry.data, coordinator)
     instruments = coordinator.data
 
+    conf_resources = entry.options.get(CONF_RESOURCES, []).copy()
+    conf_instruments = entry.data.get(CONF_INSTRUMENTS, {}).copy()
+    new_instruments = {}
+
     def is_enabled(attr):
         """Return true if the user has enabled the resource."""
         return attr in entry.data.get(CONF_RESOURCES, [attr])
 
     components = set()
+
+    # Check if new instruments
+    for instrument in (
+        instrument
+        for instrument in instruments
+        if not instrument.attr in conf_instruments
+    ):
+            _LOGGER.info(f"Discovered new instrument {instrument.name}")
+            new_instruments[instrument.attr] = instrument.name
+
+    # Update config entry with new instruments
+    if len(new_instruments) > 0:
+        update = {CONF_INSTRUMENTS: {}, CONF_RESOURCES: []}
+        conf_instruments.update(new_instruments)
+        #updates[CONF_INSTRUMENTS] = conf_instruments.sort
+        updates[CONF_INSTRUMENTS] = dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
+
+        # Enable instruments if "disable new entities" is false
+        if not entry.pref_disable_new_entities:
+            _LOGGER.debug(f"Enabling new instruments {new_instruments}")
+            for item in new_instruments:
+                update[CONF_RESOURCES].append(new_instruments[item])
+            #_LOGGER.debug(f"Saving list {enabled_instruments}")
+            #updates[CONF_RESOURCES] = enabled_instruments #.sort()
+
+        _LOGGER.debug("Updating config entry with new instruments")
+        hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, **update[CONF_INSTRUMENTS]},
+            options={**entry.options, **update[CONF_RESOURCES]}
+        )
+
     for instrument in (
         instrument
         for instrument in instruments
@@ -391,8 +428,22 @@ def update_callback(hass, coordinator):
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up the component."""
+    """Set up the component from configuration.yaml."""
     hass.data.setdefault(DOMAIN, {})
+
+    if hass.config_entries.async_entries(DOMAIN):
+        return True
+
+    if DOMAIN in config:
+        _LOGGER.info("Found Skoda Connect config in configuration.yaml.")
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": SOURCE_IMPORT},
+                data=config[DOMAIN],
+            )
+        )
+
     return True
 
 
