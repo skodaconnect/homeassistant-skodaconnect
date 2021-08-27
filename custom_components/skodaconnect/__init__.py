@@ -276,7 +276,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # Convert to parseable data
             schedule = {
-                "id": service_call.data.get("id", 0)
+                "id": service_call.data.get("id", 0),
                 "enabled": service_call.data.get("enabled"),
                 "recurring": service_call.data.get("recurring"),
                 "date": service_call.data.get("date"),
