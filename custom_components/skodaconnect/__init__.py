@@ -153,8 +153,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     data = SkodaData(entry.data, coordinator)
     instruments = coordinator.data
 
-    conf_resources = entry.options.get(CONF_RESOURCES, []).copy()
     conf_instruments = entry.data.get(CONF_INSTRUMENTS, {}).copy()
+    _LOGGER.debug(f"Configured resources are: {entry.options.get(CONF_RESOURCES, [])}")
+    _LOGGER.debug(f"All instruments: {conf_instruments}")
     new_instruments = {}
 
     def is_enabled(attr):
@@ -174,17 +175,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     # Update config entry with new instruments
     if len(new_instruments) > 0:
-        update = {CONF_INSTRUMENTS: {}, CONF_RESOURCES: []}
         conf_instruments.update(new_instruments)
-        update[CONF_INSTRUMENTS] = dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
+        # Prepare data to update config entry with
+        update = {
+            CONF_INSTRUMENTS: dict(sorted(conf_instruments.items(), key=lambda item: item[1])),
+            CONF_RESOURCES: entry.options.get(CONF_RESOURCES, entry.data.get(CONF_RESOURCES, []))
+        }
 
-        # Enable instruments if "disable new entities" is false
-        if not entry.pref_disable_new_entities:
-            _LOGGER.debug(f"Enabling new instruments {new_instruments}")
-            for item in new_instruments:
-                update[CONF_RESOURCES].append(new_instruments[item])
+        # Enable new instruments if "activate newly enable entitys" is active
+        if hasattr(entry, "pref_disable_new_entities"):
+            if not entry.pref_disable_new_entities:
+                _LOGGER.debug(f"Enabling new instruments {new_instruments}")
+                for item in new_instruments:
+                    update[CONF_RESOURCES].append(new_instruments[item])
 
-        _LOGGER.debug("Updating config entry with new instruments")
+        _LOGGER.debug("Updating config entry with new instruments: {update[CONF_INSTRUMENTS}")
         hass.config_entries.async_update_entry(
             entry,
             data={**entry.data, **update[CONF_INSTRUMENTS]},
@@ -242,7 +247,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         """Set departure schedule."""
         try:
             # Prepare data
-            id = service_call.data.get("id", 0)
             temp = None
 
             # Convert datetime objects to simple strings or check that strings are correctly formatted
@@ -272,6 +276,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # Convert to parseable data
             schedule = {
+                "id": service_call.data.get("id", 0)
                 "enabled": service_call.data.get("enabled"),
                 "recurring": service_call.data.get("recurring"),
                 "date": service_call.data.get("date"),
