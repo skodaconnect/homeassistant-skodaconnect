@@ -176,16 +176,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if len(new_instruments) > 0:
         update = {CONF_INSTRUMENTS: {}, CONF_RESOURCES: []}
         conf_instruments.update(new_instruments)
-        #updates[CONF_INSTRUMENTS] = conf_instruments.sort
-        updates[CONF_INSTRUMENTS] = dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
+        update[CONF_INSTRUMENTS] = dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
 
         # Enable instruments if "disable new entities" is false
         if not entry.pref_disable_new_entities:
             _LOGGER.debug(f"Enabling new instruments {new_instruments}")
             for item in new_instruments:
                 update[CONF_RESOURCES].append(new_instruments[item])
-            #_LOGGER.debug(f"Saving list {enabled_instruments}")
-            #updates[CONF_RESOURCES] = enabled_instruments #.sort()
 
         _LOGGER.debug("Updating config entry with new instruments")
         hass.config_entries.async_update_entry(
