@@ -382,19 +382,27 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Optional(
                         CONF_UPDATE_INTERVAL,
-                        default=self._config_entry.options.get(CONF_UPDATE_INTERVAL, 5)
+                        default=self._config_entry.options.get(CONF_UPDATE_INTERVAL,
+                            self._config_entry.data.get(CONF_UPDATE_INTERVAL, 5)
+                        )
                     ): cv.positive_int,
                     vol.Optional(
                         CONF_SPIN,
-                        default=self._config_entry.options.get(CONF_SPIN, "")
+                        default=self._config_entry.options.get(CONF_SPIN,
+                            self._config_entry.data.get(CONF_SPIN, "")
+                        )
                     ): cv.string,
                     vol.Optional(
                         CONF_DEBUG,
-                        default=self._config_entry.options.get(CONF_DEBUG, False)
+                        default=self._config_entry.options.get(CONF_DEBUG,
+                            self._config_entry.data.get(CONF_DEBUG, False)
+                        )
                     ): cv.boolean,
                     vol.Optional(
                         CONF_RESOURCES,
-                        default=self._config_entry.options.get(CONF_RESOURCES, [])
+                        default=self._config_entry.options.get(CONF_RESOURCES,
+                            self._config_entry.data.get(CONF_RESOURCES, [])
+                        )
                     ): cv.multi_select(
                         self._config_entry.data.get(
                             CONF_INSTRUMENTS,
@@ -403,7 +411,9 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                     ),
                     vol.Optional(
                         CONF_CONVERT,
-                        default=self._config_entry.options.get(CONF_CONVERT, "no_conversion")
+                        default=self._config_entry.options.get(CONF_CONVERT,
+                            self._config_entry.data.get(CONF_CONVERT, "no_conversion")
+                        )
                     ): vol.In(CONVERT_DICT),
                 }
             ),
