@@ -9,7 +9,7 @@
         "@lendik007",
         "@Farfar"
     ],
-    "requirements": ["skodaconnect==1.0.50", "homeassistant>=2021.06.0"],
-    "version": "v1.0.50",
+    "requirements": ["skodaconnect==1.0.52", "homeassistant>=2021.06.0"],
+    "version": "v1.0.52",
     "iot_class": "cloud_polling"
 }

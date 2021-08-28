@@ -4,7 +4,7 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.50
+# v1.0.52
 Starting from this release the configuration changed from yaml to config flow. Because of how the data is stored and handled there will be one integration per vehicle.
 Import data from configuration.yaml is also limited to one vehicle.
 Setup multiple vehicles by adding the integration multiple times.
