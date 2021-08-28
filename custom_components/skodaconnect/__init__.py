@@ -155,8 +155,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     conf_instruments = entry.data.get(CONF_INSTRUMENTS, {}).copy()
     if entry.options.get(CONF_DEBUG, False):
-        _LOGGER.debug(f"Configured resources are: {entry.options.get(CONF_RESOURCES, [])}")
-        _LOGGER.debug(f"All instruments: {conf_instruments}")
+        _LOGGER.debug(f"Configured data: {entry.data}")
+        _LOGGER.debug(f"Configured options: {entry.options}")
+        _LOGGER.debug(f"Resources from options are: {entry.options.get(CONF_RESOURCES, [])}")
+        _LOGGER.debug(f"All instruments (data): {conf_instruments}")
     new_instruments = {}
 
     def is_enabled(attr):
@@ -179,8 +181,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         conf_instruments.update(new_instruments)
         # Prepare data to update config entry with
         update = {
-            CONF_INSTRUMENTS: dict(sorted(conf_instruments.items(), key=lambda item: item[1])),
-            CONF_RESOURCES: entry.options.get(CONF_RESOURCES, entry.data.get(CONF_RESOURCES, []))
+            data: {
+                CONF_INSTRUMENTS: dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
+            },
+            options: {
+                CONF_RESOURCES: entry.options.get(
+                    CONF_RESOURCES,
+                    entry.data.get(CONF_RESOURCES, ['none']))
+            }
         }
 
         # Enable new instruments if "activate newly enable entitys" is active
@@ -190,11 +198,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 for item in new_instruments:
                     update[CONF_RESOURCES].append(new_instruments[item])
 
-        _LOGGER.debug("Updating config entry with new instruments: {update[CONF_INSTRUMENTS}")
+        _LOGGER.debug(f"Updating config entry data: {update.get(data)}")
+        _LOGGER.debug(f"Updating config entry options: {update.get(options)}")
         hass.config_entries.async_update_entry(
             entry,
-            data={**entry.data, **update[CONF_INSTRUMENTS]},
-            options={**entry.options, **update[CONF_RESOURCES]}
+            data={**entry.data, **update['data']},
+            options={**entry.options, **update['options']}
         )
 
     for instrument in (
@@ -248,6 +257,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         """Set departure schedule."""
         try:
             # Prepare data
+            id = servic.data.get("id", 0)
             temp = None
 
             # Convert datetime objects to simple strings or check that strings are correctly formatted
@@ -277,7 +287,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # Convert to parseable data
             schedule = {
-                "id": service_call.data.get("id", 0),
+                "id": service_call.data.get("id", 1),
                 "enabled": service_call.data.get("enabled"),
                 "recurring": service_call.data.get("recurring"),
                 "date": service_call.data.get("date"),
@@ -307,8 +317,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # Find the correct car and execute service call
             car = await get_car(service_call)
-            _LOGGER.info(f'Set departure schedule {schedule.get("id")} with data {schedule} for car {car.vin}')
-            if await car.set_timer_schedule(schedule.get("id"), schedule) is True:
+            _LOGGER.info(f'Set departure schedule {id} with data {schedule} for car {car.vin}')
+            if await car.set_timer_schedule(id, schedule) is True:
                 _LOGGER.debug(f"Service call 'set_schedule' executed without error")
                 await coordinator.async_request_refresh()
             else:
@@ -452,11 +462,13 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""
+    _LOGGER.debug("Unloading services")
     hass.services.async_remove(DOMAIN, SERVICE_SET_SCHEDULE)
     hass.services.async_remove(DOMAIN, SERVICE_SET_MAX_CURRENT)
     hass.services.async_remove(DOMAIN, SERVICE_SET_CHARGE_LIMIT)
     hass.services.async_remove(DOMAIN, SERVICE_SET_CLIMATER)
     hass.services.async_remove(DOMAIN, SERVICE_SET_PHEATER_DURATION)
+    _LOGGER.debug("Unloading update listener")
     hass.data[DOMAIN][entry.entry_id][UNDO_UPDATE_LISTENER]()
 
     return await async_unload_coordinator(hass, entry)
@@ -464,6 +476,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
     """Unload auth token based entry."""
+    _LOGGER.debug("Unloading coordinator")
     coordinator = hass.data[DOMAIN][entry.entry_id][DATA].coordinator
     unloaded = all(
         await asyncio.gather(
@@ -718,6 +731,7 @@ class SkodaCoordinator(DataUpdateCoordinator):
 
     async def async_logout(self):
         """Logout from Skoda Connect"""
+        _LOGGER.debug("Initiating logout from Skoda Connect")
         try:
             if self.connection.logged_in:
                 await self.connection.logout()
