@@ -181,10 +181,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         conf_instruments.update(new_instruments)
         # Prepare data to update config entry with
         update = {
-            data: {
+            'data': {
                 CONF_INSTRUMENTS: dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
             },
-            options: {
+            'options': {
                 CONF_RESOURCES: entry.options.get(
                     CONF_RESOURCES,
                     entry.data.get(CONF_RESOURCES, ['none']))
@@ -196,10 +196,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             if not entry.pref_disable_new_entities:
                 _LOGGER.debug(f"Enabling new instruments {new_instruments}")
                 for item in new_instruments:
-                    update[CONF_RESOURCES].append(new_instruments[item])
+                    update['options'][CONF_RESOURCES].append(new_instruments[item])
 
-        _LOGGER.debug(f"Updating config entry data: {update.get(data)}")
-        _LOGGER.debug(f"Updating config entry options: {update.get(options)}")
+        _LOGGER.debug(f"Updating config entry data: {update.get('data')}")
+        _LOGGER.debug(f"Updating config entry options: {update.get('options')}")
         hass.config_entries.async_update_entry(
             entry,
             data={**entry.data, **update['data']},
