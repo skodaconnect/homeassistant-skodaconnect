@@ -9,6 +9,7 @@ CONF_MUTABLE = "mutable"
 CONF_SPIN = "spin"
 CONF_SCANDINAVIAN_MILES = "scandinavian_miles"
 CONF_IMPERIAL_UNITS = "imperial_units"
+CONF_NONE = None
 CONF_NO_CONVERSION = "no_conversion"
 CONF_CONVERT = "convert"
 CONF_VEHICLE = "vehicle"
@@ -33,7 +34,8 @@ MIN_UPDATE_INTERVAL = timedelta(minutes=1)
 DEFAULT_UPDATE_INTERVAL = 5
 
 CONVERT_DICT = {
-    CONF_NO_CONVERSION: "No conversion",
+#    CONF_NO_CONVERSION: "No conversion",
+    CONF_NONE: "No conversion",
     CONF_IMPERIAL_UNITS: "Imperial units",
     CONF_SCANDINAVIAN_MILES: "km to mil",
 }

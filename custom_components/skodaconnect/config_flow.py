@@ -412,9 +412,9 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Optional(
                         CONF_CONVERT,
                         default=self._config_entry.options.get(CONF_CONVERT,
-                            self._config_entry.data.get(CONF_CONVERT, "no_conversion")
+                            self._config_entry.data.get(CONF_CONVERT, CONF_NONE)
                         )
-                    ): vol.In(CONVERT_DICT),
+                    ): vol.Any(vol.In(CONVERT_DICT), vol.In(CONF_NO_CONVERSION))
                 }
             ),
         )
