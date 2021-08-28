@@ -375,6 +375,10 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
             )
 
         instruments = self._config_entry.data.get(CONF_INSTRUMENTS, {})
+        # Backwards compability
+        convert = self._config_entry.options.get(CONF_CONVERT, self._config_entry.data.get(CONF_CONVERT, None))
+        if convert == None:
+            convert = "no_coversion"
 
         return self.async_show_form(
             step_id="user",
@@ -411,10 +415,8 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                     ),
                     vol.Optional(
                         CONF_CONVERT,
-                        default=self._config_entry.options.get(CONF_CONVERT,
-                            self._config_entry.data.get(CONF_CONVERT, CONF_NONE)
-                        )
-                    ): vol.Any(vol.In(CONVERT_DICT), vol.In(CONF_NO_CONVERSION))
+                        default=convert
+                    ): vol.In(CONVERT_DICT)
                 }
             ),
         )

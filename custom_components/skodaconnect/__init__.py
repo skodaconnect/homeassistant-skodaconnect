@@ -120,7 +120,7 @@ SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
 )
 
 # Set max parallel updates to 2 simultaneous (1 poll and 1 request waiting)
-#PARALLEL_UPDATES = 2
+PARALLEL_UPDATES = 2
 
 _LOGGER = logging.getLogger(__name__)
 
