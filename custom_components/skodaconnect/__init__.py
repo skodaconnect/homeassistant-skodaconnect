@@ -732,7 +732,8 @@ class SkodaCoordinator(DataUpdateCoordinator):
     async def async_logout(self):
         """Logout from Skoda Connect"""
         _LOGGER.debug("Initiating logout from Skoda Connect")
-        await self.connection.logout()
+        try:
+            await self.connection.logout()
         except Exception as ex:
             _LOGGER.error("Could not log out from Skoda Connect, %s", ex)
             return False
