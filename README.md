@@ -4,10 +4,7 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.52
-Starting from this release the configuration changed from yaml to config flow. Because of how the data is stored and handled there will be one integration per vehicle.
-Import data from configuration.yaml is also limited to one vehicle.
-Setup multiple vehicles by adding the integration multiple times.
+# v1.0.53
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
 This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
@@ -93,105 +90,26 @@ pip install skodaconnect
 
 ## Configuration
 
-Add a skodaconnect configuration block to your `<config dir>/configuration.yaml`:
-```yaml
-skodaconnect:
-  username: <username for skoda connect>
-  password: <password for skoda connect>
-  spin: <S-PIN for skoda connect>
-  scandinavian_miles: false
-  scan_interval:
-    minutes: 1
-  name:
-    wvw1234567812356: 'Kodiaq'
-```
-* **username:** (required) the username to your Skoda Connect account
+Configuration in configuration.yaml is now deprecated and can interfere with setup of the integration.
+To configure the integration, go to Configuration in the side panel of Home Assistant and then select Integrations.
+Click on the "ADD INTEGRATION" button in the bottom right corner and search/select skodaconnect.
+Follow the steps and enter the required information. Because of how the data is stored and handled in Home Assistant, there will be one integration per vehicle.
+Setup multiple vehicles by adding the integration multiple times.
 
-* **password:** (required) the password to your Skoda Connect account
+### Configuration options
+The integration options can be changed after setup by clicking on the "CONFIGURE" text on the integration.
+The options available are:
 
-* **spin:** (optional) required for supporting combustion engine heating start/stop.
+* **Poll frequency** The interval (in minutes) that the servers are polled for updated data.
 
-* **scandinavian_miles:** (optional) set to true if you want to change from km to mi on sensors. Conversion between fahrenheit and celcius is taken care of by Home Assistant. (Default: false)
+* **S-PIN** The S-PIN for the vehicle. This is optional and is only needed for certain vehicle requests/actions (auxiliary heater, lock etc).
 
-* **scan_interval:** (optional) specify in minutes how often to fetch status data from Skoda Connect. (Default: 5 min, minimum 1 min)
+* **Full API debug loggin** Enable full debug logging. This will print the full respones from API to homeassistant.log. Only enable for troubleshooting since it will generate a lot of logs.
 
-* **name:** (optional) map the vehicle identification number (VIN) to a friendly name of your car. This name is then used for naming all entities. See the configuration example. (by default, the VIN is used). VIN need to be entered lower case
+* **Resources to monitor** Select which resources you wish to monitor for the vehicle.
 
-### Advanced configuration
-Additional optional configuration options, only add if needed!
-The resources option will limit what entities gets added to home assistant, only the specified resources will be added if they are supported.
-If not specified then the integration will add all supported entities:
-```yaml
-  response_debug: False
-  resources:
-   # Binary sensors
-    - charging_cable_connected
-    - charging_cable_locked
-    - door_closed_left_front
-    - door_closed_left_back
-    - door_closed_right_front
-    - door_closed_right_back
-    - doors_locked
-    - energy_flow
-    - external_power
-    - hood_closed
-    - parking_light
-    - request_in_progress
-    - sunroof_closed
-    - trunk_closed
-    - trunk_locked
-    - vehicle_moving
-    - window_closed_left_front
-    - window_closed_left_back
-    - window_closed_right_front
-    - window_closed_right_back
-    - windows_closed
-  # Device tracker
-    - position
-  # Locks
-    - door_locked
-    - trunk_locked
-  # Sensors
-    - adblue_level
-    - battery_level
-    - charger_max_ampere
-    - charging_time_left
-    - climatisation_target_temperature
-    - combined_range
-    - combustion_range
-    - electric_range
-    - fuel_level
-    - last_connected
-    - last_trip_average_electric_consumption
-    - last_trip_average_fuel_consumption
-    - last_trip_average_speed
-    - last_trip_duration
-    - last_trip_length
-    - odometer
-    - oil_inspection_days
-    - oil_inspection_distance
-    - outside_temperature
-    - parking_time
-    - pheater_status
-    - pheater_duration
-    - request_results
-    - requests_remaining
-    - service_inspection_days
-    - service_inspection_distance
-  # Switches
-    - auxiliary_climatisation
-    - charging
-    - climatisation_from_battery
-    - electric_climatisation
-    - force_data_refresh
-    - parking_heater_heating
-    - parking_heater_ventilation
-    - window_heater
-```
+* **Distance/unit conversions** Select if you want to convert distance/units.
 
-* **response_debug:** (optional) set to true to log raw HTTP data from Skoda Connect. This will flood the log, only enable if needed. (Default: false)
-
-* **resources:** (optional) use to enable/disable entities. If specified, only the listed entities will be created. If not specified all supported entities will be created.
 
 ## Automations
 
@@ -321,8 +239,6 @@ logger:
 * **custom_components.skodaconnect:** Set debug level for the custom component. The communication between hass and library.
 
 * **custom_components.skodaconnect.XYZ** Sets debug level for individual entity types in the custom component.
-
-In addition to debug logs, the component has an option to enable logging of raw HTTP responses which is useful when debugging issues. See 'response_debug' [here](https://github.com/lendy007/homeassistant-skodaconnect/blob/main/README.md#advanced-configuration)
 
 ## Further help or contributions
 For questions, further help or contributions you can join the Discord server at https://discord.gg/826X9jEtCh

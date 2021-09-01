@@ -257,7 +257,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         """Set departure schedule."""
         try:
             # Prepare data
-            id = servic.data.get("id", 0)
+            id = service_call.data.get("id", 0)
             temp = None
 
             # Convert datetime objects to simple strings or check that strings are correctly formatted
@@ -732,9 +732,7 @@ class SkodaCoordinator(DataUpdateCoordinator):
     async def async_logout(self):
         """Logout from Skoda Connect"""
         _LOGGER.debug("Initiating logout from Skoda Connect")
-        try:
-            if self.connection.logged_in:
-                await self.connection.logout()
+        await self.connection.logout()
         except Exception as ex:
             _LOGGER.error("Could not log out from Skoda Connect, %s", ex)
             return False
@@ -742,15 +740,14 @@ class SkodaCoordinator(DataUpdateCoordinator):
 
     async def async_login(self):
         """Login to Skoda Connect"""
-        # check if we can login
-        if not self.connection.logged_in:
-            await self.connection.doLogin()
-            if not self.connection.logged_in:
-                _LOGGER.warning(
-                    "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
-                )
-                return False
-
+        # Check if we can login
+        if await self.connection.doLogin() is False:
+            _LOGGER.warning(
+                "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
+            )
+            return False
+        # Get associated vehicles before we continue
+        await self.connection.get_vehicles()
         return True
 
     async def update(self) -> Union[bool, Vehicle]:
