@@ -428,6 +428,17 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
         if convert == None:
             convert = "no_conversion"
 
+        instruments_dict = dict(sorted(
+            self._config_entry.data.get(
+                CONF_INSTRUMENTS,
+                self._config_entry.options.get(CONF_RESOURCES, {})).items(),
+            key=lambda item: item[1]))
+
+        self._config_entry.data.get(
+                            CONF_INSTRUMENTS,
+                            self._config_entry.options.get(CONF_RESOURCES, {})
+                        )
+
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
@@ -461,12 +472,12 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                         default=self._config_entry.options.get(CONF_RESOURCES,
                             self._config_entry.data.get(CONF_RESOURCES, [])
                         )
-                    ): cv.multi_select(
-                        self._config_entry.data.get(
-                            CONF_INSTRUMENTS,
-                            self._config_entry.options.get(CONF_RESOURCES, {})
-                        )
-                    ),
+                    ): cv.multi_select(instruments_dict),
+                    #    self._config_entry.data.get(
+                    #        CONF_INSTRUMENTS,
+                    #        self._config_entry.options.get(CONF_RESOURCES, {})
+                    #    )
+                    #),
                     vol.Required(
                         CONF_CONVERT,
                         default=convert
