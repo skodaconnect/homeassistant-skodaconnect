@@ -45,10 +45,10 @@ The car privacy settings must be set to "Share my position" for full functionali
 - Electric range
 - Charging (switch with status)
 - Charger maximum current (1-16 tested OK for Superb iV, instead of being limited to max/reduced)
+- Automatic discovery of enabled functions (API endpoints).
 
 ### Under development and BETA functionality (may be buggy)
 - Config flow multiple vehicles from same account
-- Automatic discovery of enabled functions.
 - Departure timers (switch on/off and service call to set parameters)
 - SmartLink:
 	- Fuel level

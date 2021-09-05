@@ -120,7 +120,7 @@ SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
 )
 
 # Set max parallel updates to 2 simultaneous (1 poll and 1 request waiting)
-PARALLEL_UPDATES = 2
+#PARALLEL_UPDATES = 2
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -150,11 +150,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
 
-    data = SkodaData(entry.data, coordinator)
+    # Get parent device
+    try:
+        identifiers={(DOMAIN, entry.unique_id)}
+        registry = device_registry.async_get(hass)
+        device = registry.async_get_device(identifiers)
+        # Get user configured name for device
+        name = device.name_by_user if not device.name_by_user is None else None
+    except:
+        name = None
+
+    data = SkodaData(entry.data, name, coordinator)
     instruments = coordinator.data
 
     conf_instruments = entry.data.get(CONF_INSTRUMENTS, {}).copy()
-    if entry.options.get(CONF_DEBUG, False):
+    if entry.options.get(CONF_DEBUG, False) is True:
         _LOGGER.debug(f"Configured data: {entry.data}")
         _LOGGER.debug(f"Configured options: {entry.options}")
         _LOGGER.debug(f"Resources from options are: {entry.options.get(CONF_RESOURCES, [])}")
@@ -196,7 +206,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             if not entry.pref_disable_new_entities:
                 _LOGGER.debug(f"Enabling new instruments {new_instruments}")
                 for item in new_instruments:
-                    update['options'][CONF_RESOURCES].append(new_instruments[item])
+                    update['options'][CONF_RESOURCES].append(item)
 
         _LOGGER.debug(f"Updating config entry data: {update.get('data')}")
         _LOGGER.debug(f"Updating config entry options: {update.get('options')}")
@@ -398,7 +408,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         except Exception as e:
             raise
 
-    # Register entity service
+    # Register services
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_SCHEDULE,
@@ -448,7 +458,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
         return True
 
     if DOMAIN in config:
-        _LOGGER.info("Found Skoda Connect config in configuration.yaml.")
+        _LOGGER.info("Found existing Skoda Connect configuration.")
         hass.async_create_task(
             hass.config_entries.flow.async_init(
                 DOMAIN,
@@ -478,6 +488,8 @@ async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
     """Unload auth token based entry."""
     _LOGGER.debug("Unloading coordinator")
     coordinator = hass.data[DOMAIN][entry.entry_id][DATA].coordinator
+    _LOGGER.debug("Log out from Skoda Connect")
+    await coordinator.async_logout()
     unloaded = all(
         await asyncio.gather(
             *[
@@ -511,12 +523,12 @@ def get_convert_conf(entry: ConfigEntry):
 class SkodaData:
     """Hold component state."""
 
-    def __init__(self, config, coordinator=None):
+    def __init__(self, config, name=None, coordinator=None):
         """Initialize the component state."""
         self.vehicles = set()
         self.instruments = set()
         self.config = config.get(DOMAIN, config)
-        self.names = self.config.get(CONF_NAME, None)
+        self.name = name
         self.coordinator = coordinator
 
     def instrument(self, vin, component, attr):
@@ -539,14 +551,10 @@ class SkodaData:
     def vehicle_name(self, vehicle):
         """Provide a friendly name for a vehicle."""
         try:
-            # Return name if already configured
-            if isinstance(self.names, str):
-                if len(self.names) > 0:
-                    return self.names
-
-            # Check if name already exists for VIN
-            if vehicle.vin and vehicle.vin.lower() in self.names:
-                return self.names[vehicle.vin.lower()]
+            # Return name if configured by user
+            if isinstance(self.name, str):
+                if len(self.name) > 0:
+                    return self.name
         except:
             pass
 
@@ -707,7 +715,7 @@ class SkodaCoordinator(DataUpdateCoordinator):
         vehicle = await self.update()
 
         if not vehicle:
-            raise UpdateFailed("Failed to update Connect. Need to accept EULA? Try logging in to the portal: https://www.skoda-connect.com/")
+            raise UpdateFailed("No vehicles found.")
 
         # Backward compatibility
         default_convert_conf = get_convert_conf(self.entry)
@@ -729,13 +737,12 @@ class SkodaCoordinator(DataUpdateCoordinator):
 
         return dashboard.instruments
 
-    async def async_logout(self):
+    async def async_logout(self, event=None):
         """Logout from Skoda Connect"""
-        _LOGGER.debug("Initiating logout from Skoda Connect")
         try:
-            await self.connection.logout()
+            await self.connection.terminate()
         except Exception as ex:
-            _LOGGER.error("Could not log out from Skoda Connect, %s", ex)
+            _LOGGER.error("Failed to log out and revoke tokens for Skoda Connect. Some tokens might still be valid.")
             return False
         return True
 
