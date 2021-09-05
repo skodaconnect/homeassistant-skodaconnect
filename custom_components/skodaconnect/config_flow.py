@@ -93,12 +93,12 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     # noinspection PyBroadException
     async def _async_task_login(self):
         try:
-            await self._connection.doLogin()
+            result = await self._connection.doLogin()
         except Exception as e:
             _LOGGER.error(f"Login failed with error: {e}")
             self._errors["base"] = "cannot_connect"
 
-        if not self._connection.logged_in:
+        if result is False:
             self._errors["base"] = "cannot_connect"
 
         self.hass.async_create_task(
@@ -107,12 +107,12 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _async_task_get_vehicles(self):
         try:
-            await self._connection.get_vehicles()
+            result = await self._connection.get_vehicles()
         except Exception as e:
             _LOGGER.error(f"Fetch vehicles failed with error: {e}")
             self._errors["base"] = "cannot_connect"
 
-        if not self._connection.logged_in:
+        if result is False:
             self._errors["base"] = "cannot_connect"
 
         self.hass.async_create_task(
