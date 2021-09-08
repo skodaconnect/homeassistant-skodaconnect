@@ -18,38 +18,40 @@ Initial support has been added for SmartLink and newer style API cars, such as t
 
 The car privacy settings must be set to "Share my position" for full functionality of this integration. Without this setting, if set to "Use my position", the sensors for position (device tracker), requests remaining and parking time might not work reliably or at all. Set to even stricter privacy setting will limit functionality even further.
 
-### What is working, VW-Group API ("All" Skodas except Enyaq iV so far)
-- odometer and service info
-- fuel level, range, adblue level
-- lock, windows, trunk, hood, sunroof and door status
-- last trip info
-- position - gps coordinates, if vehicle is moving, time parked
-- electric engine related information - charging, battery level, plug connected and more
-- electric climatisation and window_heater information
-- start/stop auxiliary climatisation for PHEV cars
-- start/stop electric climatisation and window_heater
-- lock/unlock car
-- parking heater heating/ventilation (for non-PHEV cars)
-- requests information - latest status, requests remaining until throttled
-- device tracker - entity is set to 'not_home' when car is moving
-- trigger data refresh - this will trigger a wake up call so the car sends new data
-
-### What is working, Skoda native API (Enyaq iV so far)
+### What is working, all cars
+- Automatic discovery of enabled functions (API endpoints).
 - Charging plug connected
 - Charging plug locked
 - Charger connected (external power)
 - Battery level
+- Electric range
+- Model image, URL in 1080 resolution
+- Start/stop charging
+- Start/stop Electric climatisation, window_heater and information
+- Charger maximum current (1-16 tested OK for Superb iV, instead of being limited to max/reduced)
+- Set departure timers (switch on/off and service call to set parameters)
+
+### Additional information/functions VW-Group API ("All" Skodas except Enyaq iV so far)
+- Odometer and service info
+- Fuel level, range, adblue level
+- Lock, windows, trunk, hood, sunroof and door status
+- Last trip info
+- Position - gps coordinates, if vehicle is moving, time parked
+- start/stop auxiliary climatisation for PHEV cars
+- Lock and unlock car
+- Parking heater heating/ventilation (for non-electric cars)
+- Requests information - latest status, requests remaining until throttled
+- Device tracker - entity is set to 'not_home' when car is moving
+- Trigger data refresh - this will trigger a wake up call so the car sends new data
+
+### Additional information/functions Skoda native API (Enyaq iV so far)
 - Charging power (Watts)
 - Charging rate (km per hour)
 - Charging time left (hours:minute)
-- Electric range
-- Charging (switch with status)
-- Charger maximum current (1-16 tested OK for Superb iV, instead of being limited to max/reduced)
-- Automatic discovery of enabled functions (API endpoints).
+- Seat heating (???)
 
 ### Under development and BETA functionality (may be buggy)
 - Config flow multiple vehicles from same account
-- Departure timers (switch on/off and service call to set parameters)
 - SmartLink:
 	- Fuel level
 	- Odometer
