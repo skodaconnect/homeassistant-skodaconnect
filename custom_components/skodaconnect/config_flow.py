@@ -412,6 +412,7 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
             options = self._config_entry.options.copy()
             options[CONF_UPDATE_INTERVAL] = user_input.get(CONF_UPDATE_INTERVAL, 1)
             options[CONF_SPIN] = user_input.get(CONF_SPIN, None)
+            options[CONF_MUTABLE] = user_input.get(CONF_MUTABLE, True)
             options[CONF_DEBUG] = user_input.get(CONF_DEBUG, False)
             options[CONF_RESOURCES] = user_input.get(CONF_RESOURCES, [])
             options[CONF_CONVERT] = user_input.get(CONF_CONVERT, CONF_NO_CONVERSION)
@@ -473,11 +474,6 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                             self._config_entry.data.get(CONF_RESOURCES, [])
                         )
                     ): cv.multi_select(instruments_dict),
-                    #    self._config_entry.data.get(
-                    #        CONF_INSTRUMENTS,
-                    #        self._config_entry.options.get(CONF_RESOURCES, {})
-                    #    )
-                    #),
                     vol.Required(
                         CONF_CONVERT,
                         default=convert

@@ -4,7 +4,7 @@
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-# v1.0.54
+# v1.0.55
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
 This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
@@ -104,7 +104,9 @@ The options available are:
 
 * **S-PIN** The S-PIN for the vehicle. This is optional and is only needed for certain vehicle requests/actions (auxiliary heater, lock etc).
 
-* **Full API debug loggin** Enable full debug logging. This will print the full respones from API to homeassistant.log. Only enable for troubleshooting since it will generate a lot of logs.
+* **Mutable** Select to allow interactions with vehicle, start climatisation etc.
+
+* **Full API debug logging** Enable full debug logging. This will print the full respones from API to homeassistant.log. Only enable for troubleshooting since it will generate a lot of logs.
 
 * **Resources to monitor** Select which resources you wish to monitor for the vehicle.
 
@@ -156,6 +158,9 @@ This might be broken since 1.0.30 when device_tracker changed behaviour.
   trigger:
     - platform: state
       entity_id: device_tracker.kodiaq
+  condition: template
+    condition: template
+    value_template: "{{ trigger.to_state.state != trigger.from_state.state }}"
   action:
     - service: notify.ios_my_ios_device
       data_template:

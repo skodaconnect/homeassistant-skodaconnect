@@ -127,6 +127,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Setup Skoda Connect component from a config entry."""
+    _LOGGER.debug(f'Init async_setup_entry')
     hass.data.setdefault(DOMAIN, {})
 
     if entry.options.get(CONF_UPDATE_INTERVAL):
@@ -144,7 +145,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         )
         return False
 
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_logout)
+    entry.async_on_unload(
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_logout)
+    )
 
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
@@ -478,6 +481,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.services.async_remove(DOMAIN, SERVICE_SET_CHARGE_LIMIT)
     hass.services.async_remove(DOMAIN, SERVICE_SET_CLIMATER)
     hass.services.async_remove(DOMAIN, SERVICE_SET_PHEATER_DURATION)
+
     _LOGGER.debug("Unloading update listener")
     hass.data[DOMAIN][entry.entry_id][UNDO_UPDATE_LISTENER]()
 
@@ -488,6 +492,7 @@ async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
     """Unload auth token based entry."""
     _LOGGER.debug("Unloading coordinator")
     coordinator = hass.data[DOMAIN][entry.entry_id][DATA].coordinator
+
     _LOGGER.debug("Log out from Skoda Connect")
     await coordinator.async_logout()
     unloaded = all(
@@ -500,7 +505,12 @@ async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
         )
     )
     if unloaded:
-        hass.data[DOMAIN].pop(entry.entry_id)
+        _LOGGER.debug("Unloading entry")
+        del hass.data[DOMAIN][entry.entry_id]
+
+    if not hass.data[DOMAIN]:
+        _LOGGER.debug("Unloading data")
+        del hass.data[DOMAIN]
 
     return unloaded
 
@@ -663,10 +673,11 @@ class SkodaEntity(Entity):
             model=f"{self.vehicle.model}/{self.vehicle.model_year}",
         )
 
-        if not self.vehicle.is_model_image_supported:
-            return attributes
+        # Return model image as picture attribute for position entity
+        if "position" in self.attribute:
+            if self.vehicle.is_model_image_supported:
+                attributes["entity_picture"] = self.vehicle.model_image
 
-        attributes["image_url"] = self.vehicle.model_image
         return attributes
 
     @property
@@ -729,8 +740,8 @@ class SkodaCoordinator(DataUpdateCoordinator):
         )
 
         dashboard = vehicle.dashboard(
-            mutable=self.entry.data.get(CONF_MUTABLE),
-            spin=self.entry.data.get(CONF_SPIN),
+            mutable=self.entry.options.get(CONF_MUTABLE),
+            spin=self.entry.options.get(CONF_SPIN),
             miles=convert_conf == CONF_IMPERIAL_UNITS,
             scandinavian_miles=convert_conf == CONF_SCANDINAVIAN_MILES,
         )
@@ -739,8 +750,10 @@ class SkodaCoordinator(DataUpdateCoordinator):
 
     async def async_logout(self, event=None):
         """Logout from Skoda Connect"""
+        _LOGGER.debug("Shutdown Skoda Connect")
         try:
             await self.connection.terminate()
+            self.connection = None
         except Exception as ex:
             _LOGGER.error("Failed to log out and revoke tokens for Skoda Connect. Some tokens might still be valid.")
             return False
