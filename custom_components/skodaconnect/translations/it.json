@@ -3,15 +3,15 @@
   "config": {
     "step": {
       "user": {
-        "title": "Skoda Connect Configuration",
-        "description": "Fill in Skoda Connect account information",
+        "title": "Configurazione Skoda Connect",
+        "description": "Inserisci le informazioni del tuo account Skoda Connect",
         "data": {
           "username": "Email",
           "password": "Password"
         }
       },
       "vehicle": {
-        "title": "Vehicle Settings",
+        "title": "Impostazione Veicolo",
         "description": "The following vehicle(s) was found. Please select the vehicle you wish to monitor and it's settings.\n\nThe S-PIN is only required for some specific operations such as lock/unlock and operations that activates the combustion engine heating.\nYou can leave it blank.",
         "data": {
           "vehicle": "VIN Number",
