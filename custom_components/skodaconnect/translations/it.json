@@ -1,0 +1,70 @@
+{
+  "title": "Skoda Connect",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Skoda Connect Configuration",
+        "description": "Fill in Skoda Connect account information",
+        "data": {
+          "username": "Email",
+          "password": "Password"
+        }
+      },
+      "vehicle": {
+        "title": "Vehicle Settings",
+        "description": "The following vehicle(s) was found. Please select the vehicle you wish to monitor and it's settings.\n\nThe S-PIN is only required for some specific operations such as lock/unlock and operations that activates the combustion engine heating.\nYou can leave it blank.",
+        "data": {
+          "vehicle": "VIN Number",
+          "spin": "S-PIN",
+          "mutable": "Allow interactions with car (actions). Uncheck to make the car 'read only'."
+        }
+      },
+      "monitoring": {
+        "title": "Monitoring Settings",
+        "description": "Specify additional monitoring settings.",
+        "data": {
+          "resources": "Resources to monitor.",
+          "convert": "Select distance/unit conversions.",
+          "update_interval": "Poll frequency (minutes).",
+          "debug": "Full API debug logging (requires debug logging enabled in configuration.yaml)"
+        }
+      },
+      "reauth_confirm": {
+        "description": "Re-authenticate with your Skoda Connect account.\nMake sure to accept any new EULA in the Skoda Connect portal (https://www.skoda-connect.com/) before proceeding. ",
+        "data": {
+          "username": "Email",
+          "password": "Password"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Car with this VIN is already configured",
+      "reauth_successful": "Re-authentication was successful"
+    },
+    "error": {
+      "cannot_connect": "Could not login to Skoda Connect, please check your credentials and verify that the service is working",
+      "cannot_update": "Could not query update from Skoda Connect",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "progress": {
+      "task_login": "Logging in to Skoda Connect",
+      "task_update": "Fetching vehicles"
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Options for Skoda Connect",
+        "description": "Configure settings",
+        "data": {
+          "update_interval": "Poll frequency (minutes)",
+          "spin": "S-PIN",
+          "mutable": "Allow interactions with car (actions). Uncheck to make the car 'read only'.",
+          "convert": "Select distance/unit conversions.",
+          "resources": "Resources to monitor.",
+          "debug": "Full API debug logging (requires debug logging enabled in configuration.yaml)"
+        }
+      }
+    }
+  }
+}
