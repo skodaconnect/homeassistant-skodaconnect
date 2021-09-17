@@ -253,9 +253,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # noinspection PyBroadException
             try:
-                await self._connection.doLogin()
-
-                if not await self._connection.validate_login:
+                if not await self._connection.doLogin():
                     _LOGGER.debug("Unable to login to Skoda Connect. Need to accept a new EULA/T&C? Try logging in to the portal: https://www.skoda-connect.com/")
                     errors["base"] = "cannot_connect"
                 else:
