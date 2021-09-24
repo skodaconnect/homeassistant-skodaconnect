@@ -1,0 +1,70 @@
+{
+    "title": "Seat Connect",
+    "config": {
+      "step": {
+        "user": {
+          "title": "Seat Connect Konfiguration",
+          "description": "Fyll i uppgifterna för ditt Seat Connect konto.",
+          "data": {
+            "username": "Användarnamn",
+            "password": "Lösenord"
+          }
+        },
+        "vehicle": {
+          "title": "Fordonsinställningar",
+          "description": "Följande fordon hittades. Välj det fordon som ska övervakas och alternativ.\n\nS-PIN krävs endast för specifika operationer såsom lås/lås upp m.fl.\nDu kan lämna S-PIN blankt.",
+          "data": {
+            "vehicle": "Chassinummer",
+            "spin": "S-PIN",
+            "mutable": "Tillåt interaktioner med bilen (åtgärder). Avmarkera för att göra bilen 'skrivskyddad'."
+          }
+        },
+        "monitoring": {
+          "title": "Övervakningsinställningar",
+          "description": "Ange övervaknings alternativ.",
+          "data": {
+            "resources": "Resurser att övervaka.",
+            "convert": "Ange enhetsomvandling.",
+            "update_interval": "Uppdateringsfrekvens (minuter).",
+            "debug": "Full API debug loggning (kräver debug loggning aktiverat i configuration.yaml)"
+          }
+        },
+        "reauth_confirm": {
+          "description": "Återautentisera ditt Seat Connect konto.\nSäkerställ att du accepterat eventuell ny EULA i Seat Connect portalen (https://my.seat/portal/) innan du fortsätter. ",
+          "data": {
+            "email": "Användarnamn",
+            "password": "Lösenord"
+          }
+        }
+      },
+      "abort": {
+        "already_configured": "En bil med detta chassinummer är redan konfigurerad",
+        "reauth_successful": "Autentisering lyckades"
+      },
+      "error": {
+        "cannot_connect": "Kunde inte logga in mot Seat Connect, verifiera att du angett rätt användaruppgifter och att tjänsten är tillgänglig.",
+        "cannot_update": "Kunde inte hämta data från Seat Connect",
+        "unknown": "Okänt fel"
+      },
+      "progress": {
+        "task_login": "Loggar in mot Seat Connect",
+        "task_update": "Hämtar fordon"
+      }
+    },
+    "options": {
+      "step": {
+        "user": {
+          "title": "Alternativ för Seat Connect",
+          "description": "Alternativ för hantering av Seat Connect.",
+          "data": {
+            "update_interval": "Uppdateringsfrekvens (minuter)",
+            "spin": "S-PIN",
+            "mutable": "Tillåt interaktioner med bilen (åtgärder). Avmarkera för att göra bilen 'skrivskyddad'.",
+            "convert": "Ange enhetsomvandling.",
+            "resources": "Resurser att övervaka.",
+            "debug": "Full API debug loggning (kräver debug loggning aktiverat i configuration.yaml)"
+          }
+        }
+      }
+    }
+  }

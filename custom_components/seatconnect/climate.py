@@ -4,9 +4,8 @@ Support for Seat Connect Platform
 import logging
 
 from homeassistant.components.climate import ClimateEntity
-
-# from homeassistant.components.climate import ClimateDevice
 from homeassistant.components.climate.const import (
+    HVAC_MODE_COOL,
     HVAC_MODE_HEAT,
     HVAC_MODE_OFF,
     SUPPORT_TARGET_TEMPERATURE,
@@ -16,11 +15,12 @@ from homeassistant.const import (
     STATE_UNKNOWN,
     TEMP_CELSIUS,
     TEMP_FAHRENHEIT,
+    CONF_RESOURCES
 )
 
-SUPPORT_HVAC = [HVAC_MODE_HEAT, HVAC_MODE_OFF]
+SUPPORT_HVAC = [HVAC_MODE_COOL, HVAC_MODE_HEAT, HVAC_MODE_OFF]
 
-from . import DATA_KEY, SeatEntity
+from . import DATA, DATA_KEY, DOMAIN, SeatEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,9 +32,31 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities([SeatClimate(hass.data[DATA_KEY], *discovery_info)])
 
 
+async def async_setup_entry(hass, entry, async_add_devices):
+    data = hass.data[DOMAIN][entry.entry_id][DATA]
+    coordinator = data.coordinator
+    if coordinator.data is not None:
+        if CONF_RESOURCES in entry.options:
+            resources = entry.options[CONF_RESOURCES]
+        else:
+            resources = entry.data[CONF_RESOURCES]
+
+        async_add_devices(
+            SeatClimate(
+                data, instrument.vehicle_name, instrument.component, instrument.attr
+            )
+            for instrument in (
+                instrument
+                for instrument in data.instruments
+                if instrument.component == "climate" and instrument.attr in resources
+            )
+        )
+
+    return True
+
+
 class SeatClimate(SeatEntity, ClimateEntity):
-    # class SeatClimate(SeatEntity, ClimateDevice):
-    """Representation of a Seat Carnet Climate."""
+    """Representation of a Seat Connect Climate."""
 
     @property
     def supported_features(self):
@@ -46,9 +68,14 @@ class SeatClimate(SeatEntity, ClimateEntity):
         """Return hvac operation ie. heat, cool mode.
         Need to be one of HVAC_MODE_*.
         """
-        if self.instrument.hvac_mode:
-            return HVAC_MODE_HEAT
-        return HVAC_MODE_OFF
+        if not self.instrument.hvac_mode:
+            return HVAC_MODE_OFF
+
+        hvac_modes = {
+            "HEATING": HVAC_MODE_HEAT,
+            "COOLING": HVAC_MODE_COOL,
+        }
+        return hvac_modes.get(self.instrument.hvac_mode, HVAC_MODE_OFF)
 
     @property
     def hvac_modes(self):
@@ -72,14 +99,12 @@ class SeatClimate(SeatEntity, ClimateEntity):
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperatures."""
-        _LOGGER.debug("Setting temperature for: %s", self.instrument.attr)
         temperature = kwargs.get(ATTR_TEMPERATURE)
         if temperature:
             await self.instrument.set_temperature(temperature)
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new target hvac mode."""
-        _LOGGER.debug("Setting mode for: %s", self.instrument.attr)
         if hvac_mode == HVAC_MODE_OFF:
             await self.instrument.set_hvac_mode(False)
         elif hvac_mode == HVAC_MODE_HEAT:

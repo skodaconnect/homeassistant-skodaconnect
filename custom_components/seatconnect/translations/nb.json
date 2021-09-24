@@ -1,0 +1,15 @@
+{
+    "title": "Seat Connect",
+    "config": {
+        "step": {
+            "user": {
+                "title": "Seat Connect-konfigurasjon",
+                "description": "Fyll ut Seat Connect-informasjon",
+                "data": {
+                    "username": "Brukernavn",
+                    "password": "Passord"
+                }
+            }
+        }
+    }
+}

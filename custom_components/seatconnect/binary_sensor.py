@@ -4,9 +4,9 @@ Support for Seat Connect.
 import logging
 
 from homeassistant.components.binary_sensor import DEVICE_CLASSES, BinarySensorEntity
+from homeassistant.const import CONF_RESOURCES
 
-from . import DATA_KEY, SeatEntity
-
+from . import UPDATE_CALLBACK, DATA, DATA_KEY, DOMAIN, SeatEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,13 +18,38 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     async_add_entities([SeatBinarySensor(hass.data[DATA_KEY], *discovery_info)])
 
 
+async def async_setup_entry(hass, entry, async_add_devices):
+    data = hass.data[DOMAIN][entry.entry_id][DATA]
+    coordinator = data.coordinator
+    if coordinator.data is not None:
+        if CONF_RESOURCES in entry.options:
+            resources = entry.options[CONF_RESOURCES]
+        else:
+            resources = entry.data[CONF_RESOURCES]
+
+        async_add_devices(
+            SeatBinarySensor(
+                data, instrument.vehicle_name, instrument.component, instrument.attr, hass.data[DOMAIN][entry.entry_id][UPDATE_CALLBACK]
+            )
+            for instrument in (
+                instrument
+                for instrument in data.instruments
+                if instrument.component == "binary_sensor" and instrument.attr in resources
+            )
+        )
+
+    return True
+
+
 class SeatBinarySensor(SeatEntity, BinarySensorEntity):
     """Representation of a Seat Binary Sensor """
 
     @property
     def is_on(self):
         """Return True if the binary sensor is on."""
-        _LOGGER.debug("Getting state of %s" % self.instrument.attr)
+        # Invert state for lock/window/door to get HA to display correctly
+        if self.instrument.device_class in ['lock', 'door', 'window']:
+            return not self.instrument.is_on
         return self.instrument.is_on
 
     @property

@@ -1,9 +1,265 @@
-set_pheater_duration:
-  description: "Set duration for parking heater/ventilation"
+# Describes the format for available Seat Connect service calls
+
+set_charge_limit:
+  name: Set charge limit
+  description: >
+    Set the limit that the charger will charge directly to when
+    a departure timer is active.
   fields:
-    vin:
-      description: "VIN number for vehicle to control. [VIN-number] str (required)"
-      example: "ABCDE9FG0H1234567"
+    device_id:
+      name: Vehicle
+      description: The vehicle to set charge limit for
+      required: true
+      selector:
+        device:
+          integration: seatconnect
+    limit:
+      name: Limit
+      description: The charging upper limit
+      advanced: true
+      example: 50
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 10
+          unit_of_measurement: percent
+set_charger_max_current:
+  name: Set charger max current
+  description: >
+    Set the maximum current used for charger. Overrides the current setting in departure timers.
+  fields:
+    device_id:
+      name: Vehicle
+      description: The vehicle to set maximum current for
+      required: true
+      selector:
+        device:
+          integration: seatconnect
+    current:
+      name: Current
+      description: >
+        Maximum current. String (Maximum or Reduced/Minimum) or int 1-255 (1-32 = Amps, 252 = Reduced, 254 = Maximum).
+      advanced: true
+      example: 16
+      selector:
+        number:
+          min: 1
+          max: 254
+          unit_of_measurement: Ampere
+set_pheater_duration:
+  name: Set parking heater runtime
+  description: >
+    Set the runtime of the parking heater.
+  fields:
+    device_id:
+      name: Vehicle
+      description: The vehicle to set parking heater duration for
+      required: true
+      selector:
+        device:
+          integration: seatconnect
     duration:
-      description: "[10,20,30,40,50,60] Parking heater duration for heating/ventilation"
-      example: '20'
+      name: Runtime
+      description: Runtime for heating or ventilation of the parking heater.
+      advanced: true
+      example: 20
+      selector:
+        number:
+          min: 10
+          max: 60
+          step: 10
+          unit_of_measurement: min
+set_climater:
+  name: Set climatisation
+  description: Start/stop climatisation with optional parameters
+  fields:
+    device_id:
+      name: Vehicle
+      description: The vehicle to set climatisation settings for
+      required: true
+      selector:
+        device:
+          integration: seatconnect
+    enabled:
+      name: Activate
+      description: Start or stop the climatisation
+      advanced: true
+      example: true
+      default: true
+      selector:
+        boolean:
+    temp:
+      name: Target temperature
+      description: The target temperature for climatisation (unselect to use vehicles stored setting)
+      advanced: true
+      example: 20
+      selector:
+        number:
+          min: 16
+          max: 30
+          step: 1
+          unit_of_measurement: °C
+    battery_power:
+      name: Battery power
+      description: >
+        Allow the use of battery power to run electric climatisation (unselect to use vehicles stored setting)
+      advanced: true
+      example: true
+      default: true
+      selector:
+        boolean:
+    aux_heater:
+      name: Auxiliary heater
+      description: >
+        Use the auxiliary heater for climatisation (disable to use electric), requires S-PIN
+      advanced: true
+      example: false
+      default: false
+      selector:
+        boolean:
+    spin:
+      name: S-PIN
+      description: >
+        The S-PIN for the vehicle
+      advanced: true
+      example: 1234
+      selector:
+        text:
+set_departure_schedule:
+  name: Set departure schedule
+  description: >
+    Set the departure for one of the departure schedules.
+  fields:
+    device_id:
+      name: Vehicle
+      description: "[Required] The vehicle to set departure schedule for."
+      required: true
+      selector:
+        device:
+          integration: seatconnect
+    id:
+      name: ID
+      description: "[Required] Which departure schedule to change."
+      required: true
+      advanced: true
+      example: 1
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 3
+          mode: box
+    time:
+      name: Time
+      description: "[Required] The time for departure, 24h HH:MM."
+      required: true
+      advanced: true
+      example: "17:00"
+      default: "08:00"
+      selector:
+        text:
+    enabled:
+      name: Activated
+      description: "[Required] If the departure schedule should be activated."
+      required: true
+      advanced: true
+      example: true
+      default: true
+      selector:
+        boolean:
+    recurring:
+      name: Recurring schedule
+      description: "[Required] Wether the schedule should be recurring or one off."
+      required: true
+      advanced: true
+      example: false
+      default: false
+      selector:
+        boolean:
+    date:
+      name: Date
+      description: "The date for departure (required for single schedule, not recurring)."
+      advanced: true
+      example: "2021-06-31"
+      selector:
+        text:
+    days:
+      name: Days
+      description: "Weekday mask for recurring schedule, mon-sun - (required for recurring schedule, not single)."
+      advanced: true
+      example: "yyynnnn"
+      default: "yyyyynn"
+      selector:
+        text:
+    temp:
+      name: Target temperature
+      description: "[Optional] Target temperature for climatisation. Global setting and affects all climatisation actions and schedules."
+      advanced: true
+      example: 20
+      default: 20
+      selector:
+        number:
+          min: 16
+          max: 30
+          mode: slider
+    climatisation:
+      name: Climatisation
+      description: "[Optional] Wether or not to enable climatisation for this departure."
+      advanced: true
+      example: true
+      default: true
+      selector:
+        boolean:
+    charging:
+      name: Charging
+      description: "[Optional] Wether or not to enable charging for this departure."
+      advanced: true
+      example: true
+      default: true
+      selector:
+        boolean:
+    charge_current:
+      name: Current
+      description: "[Optional] Maximum charging current for this departure. (1-254 or maximum/reduced)"
+      advanced: true
+      example: "Maximum"
+      default: "Maximum"
+      selector:
+        text:
+    charge_target:
+      name: Charge Target
+      description: "[Optional] The target charge level for departure."
+      advanced: true
+      example: 100
+      default: 100
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 10
+          unit_of_measurement: percent
+    off_peak_active:
+      name: Off-peak active
+      description: "[Optional] Enable off-peak hours"
+      advanced: true
+      example: false
+      default: false
+      selector:
+        boolean:
+    off_peak_start:
+      name: Off-peak Start
+      description: "[Optional] The time when off-peak hours for electric price start, 24h HH:MM."
+      advanced: true
+      example: "00:00"
+      default: "00:00"
+      selector:
+        text:
+    off_peak_end:
+      name: Off-peak End
+      description: "[Optional] The time when off-peak hours for electric price end, 24h HH:MM."
+      advanced: true
+      example: "06:00"
+      default: "06:00"
+      selector:
+        text:

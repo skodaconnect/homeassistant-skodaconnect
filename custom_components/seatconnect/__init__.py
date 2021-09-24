@@ -1,273 +1,556 @@
 # -*- coding: utf-8 -*-
-import logging
-from datetime import timedelta
+"""
+Seat Connect integration
 
-import homeassistant.helpers.config_validation as cv
+Read more at https://github.com/farfar/homeassistant-seatconnect/
+"""
+import re
+import asyncio
+import logging
+from datetime import datetime, timedelta
+from typing import Union
 import voluptuous as vol
+
+from homeassistant.config_entries import ConfigEntry, SOURCE_REAUTH, SOURCE_IMPORT
 from homeassistant.const import (
     CONF_NAME,
     CONF_PASSWORD,
     CONF_RESOURCES,
-    CONF_SCAN_INTERVAL,
-    CONF_USERNAME,
-    EVENT_HOMEASSISTANT_STOP,
+    CONF_USERNAME, EVENT_HOMEASSISTANT_STOP,
 )
-from homeassistant.helpers import discovery
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv, device_registry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.dispatcher import (
-    async_dispatcher_connect,
-    async_dispatcher_send,
-)
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.icon import icon_for_battery_level
-from homeassistant.util.dt import utcnow
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
 from seatconnect import Connection
-
-__version__ = "1.0.32"
-_LOGGER = logging.getLogger(__name__)
-
-DOMAIN = "seatconnect"
-DATA_KEY = DOMAIN
-CONF_MUTABLE = "mutable"
-CONF_SPIN = "spin"
-CONF_FULLDEBUG = "response_debug"
-CONF_PHEATER_DURATION = "climatisation_duration"
-CONF_MILES = "scandinavian_miles"
-
-SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
-
-MIN_UPDATE_INTERVAL = timedelta(minutes=1)
-DEFAULT_UPDATE_INTERVAL = timedelta(minutes=5)
-
-COMPONENTS = {
-    "sensor": "sensor",
-    "binary_sensor": "binary_sensor",
-    "lock": "lock",
-    "device_tracker": "device_tracker",
-    "switch": "switch",
-    "climate": "climate",
-}
-
-RESOURCES = [
-    "position",
-    "distance",
-    "request_in_progress",
-    "requests_remaining",
-    "request_results",
-    "last_connected",
-    "parking_light",
-    "adblue_level",
-    "battery_level",
-    "fuel_level",
-    "combustion_range",
-    "electric_range",
-    "combined_range",
-    "service_inspection",
-    "oil_inspection",
-    "service_inspection_km",
-    "oil_inspection_km",
-    "charging",
-    "charging_cable_connected",
-    "charging_cable_locked",
-    "charging_time_left",
-    "charge_max_ampere",
-    "external_power",
-    "energy_flow",
-    "outside_temperature",
-    "climatisation_target_temperature",
-    "climatisation_without_external_power",
-    "window_heater",
-    "electric_climatisation",
-    "auxiliary_climatisation",
-    "pheater_heating",
-    "pheater_ventilation",
-    "pheater_status",
-    "pheater_duration",
-    "door_locked",
-    "door_closed_left_front",
-    "door_closed_right_front",
-    "door_closed_left_back",
-    "door_closed_right_back",
-    "trunk_locked",
-    "trunk_closed",
-    "hood_closed",
-    "windows_closed",
-    "window_closed_left_front",
-    "window_closed_right_front",
-    "window_closed_left_back",
-    "window_closed_right_back",
-    "sunroof_closed",
-    "trip_last_average_speed",
-    "trip_last_average_electric_consumption",
-    "trip_last_average_fuel_consumption",
-    "trip_last_duration",
-    "trip_last_length",
-]
-
-CONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: vol.Schema(
-            {
-                vol.Required(CONF_USERNAME): cv.string,
-                vol.Required(CONF_PASSWORD): cv.string,
-                vol.Optional(CONF_MUTABLE, default=True): cv.boolean,
-                vol.Optional(CONF_SPIN, default=""): cv.string,
-                vol.Optional(CONF_FULLDEBUG, default=False): cv.boolean,
-                vol.Optional(CONF_PHEATER_DURATION, default=20): vol.In(
-                    [10, 20, 30, 40, 50, 60]
-                ),
-                vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): (
-                    vol.All(cv.time_period, vol.Clamp(min=MIN_UPDATE_INTERVAL))
-                ),
-                vol.Optional(CONF_NAME, default={}): cv.schema_with_slug_keys(
-                    cv.string
-                ),
-                vol.Optional(CONF_RESOURCES): vol.All(
-                    cv.ensure_list, [vol.In(RESOURCES)]
-                ),
-                vol.Optional(CONF_MILES, default=False): cv.boolean,
-            }
-        ),
-    },
-    extra=vol.ALLOW_EXTRA,
+from seatconnect.vehicle import Vehicle
+from seatconnect.exceptions import (
+    SeatConfigException,
+    SeatAuthenticationException,
+    SeatAccountLockedException,
+    SeatTokenExpiredException,
+    SeatException,
+    SeatEULAException,
+    SeatThrottledException,
+    SeatLoginFailedException,
+    SeatInvalidRequestException,
+    SeatRequestInProgressException
 )
-SERVICE_SET_PHEATER_DURATION = "set_pheater_duration"
+
+from .const import (
+    PLATFORMS,
+    CONF_MUTABLE,
+    CONF_SCANDINAVIAN_MILES,
+    CONF_SPIN,
+    CONF_VEHICLE,
+    CONF_UPDATE_INTERVAL,
+    CONF_INSTRUMENTS,
+    DATA,
+    DATA_KEY,
+    DEFAULT_UPDATE_INTERVAL,
+    DOMAIN,
+    MIN_UPDATE_INTERVAL,
+    SIGNAL_STATE_UPDATED,
+    UNDO_UPDATE_LISTENER, UPDATE_CALLBACK, CONF_DEBUG, DEFAULT_DEBUG, CONF_CONVERT, CONF_NO_CONVERSION,
+    CONF_IMPERIAL_UNITS,
+    SERVICE_SET_SCHEDULE,
+    SERVICE_SET_MAX_CURRENT,
+    SERVICE_SET_CHARGE_LIMIT,
+    SERVICE_SET_CLIMATER,
+    SERVICE_SET_PHEATER_DURATION,
+)
+
+SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("id"): vol.In([1,2,3]),
+        vol.Required("time"): cv.string,
+        vol.Required("enabled"): cv.boolean,
+        vol.Required("recurring"): cv.boolean,
+        vol.Optional("date"): cv.string,
+        vol.Optional("days"): cv.string,
+        vol.Optional("temp"): vol.All(vol.Coerce(int), vol.Range(min=16, max=30)),
+        vol.Optional("climatisation"): cv.boolean,
+        vol.Optional("charging"): cv.boolean,
+        vol.Optional("charge_current"): vol.Any(
+            vol.Range(min=1, max=254),
+            vol.In(['Maximum', 'maximum', 'Max', 'max', 'Minimum', 'minimum', 'Min', 'min', 'Reduced', 'reduced'])
+        ),
+        vol.Optional("charge_target"): vol.In([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]),
+        vol.Optional("off_peak_active"): cv.boolean,
+        vol.Optional("off_peak_start"): cv.string,
+        vol.Optional("off_peak_end"): cv.string,
+    }
+)
+SERVICE_SET_MAX_CURRENT_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("current"): vol.Any(
+            vol.Range(min=1, max=255),
+            vol.In(['Maximum', 'maximum', 'Max', 'max', 'Minimum', 'minimum', 'Min', 'min', 'Reduced', 'reduced'])
+        ),
+    }
+)
+SERVICE_SET_CHARGE_LIMIT_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("limit"): vol.In([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]),
+    }
+)
+SERVICE_SET_CLIMATER_SCHEMA = vol.Schema(
+    {
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("enabled", default=True): cv.boolean,
+        vol.Optional("temp"): vol.All(vol.Coerce(int), vol.Range(min=16, max=30)),
+        vol.Optional("battery_power"): cv.boolean,
+        vol.Optional("aux_heater"): cv.boolean,
+        vol.Optional("spin"): vol.All(cv.string, vol.Match(r"^[0-9]{4}$"))
+    }
+)
 SERVICE_SET_PHEATER_DURATION_SCHEMA = vol.Schema(
     {
-        vol.Required("vin"): cv.string,
-        vol.Required("duration"): vol.In([10,20,30,40,50,60]),
+        vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
+        vol.Required("duration"): vol.In([10, 20, 30, 40, 50, 60]),
     }
 )
 
+# Set max parallel updates to 2 simultaneous (1 poll and 1 request waiting)
+#PARALLEL_UPDATES = 2
 
-async def async_setup(hass, config):
-    """Setup seat connect component"""
-    session = async_get_clientsession(hass)
+_LOGGER = logging.getLogger(__name__)
 
-    _LOGGER.info(f"Starting Seat Connect, version {__version__}")
-    _LOGGER.debug("Creating connection to seat connect")
-    connection = Connection(
-        session=session,
-        username=config[DOMAIN].get(CONF_USERNAME),
-        password=config[DOMAIN].get(CONF_PASSWORD),
-        fulldebug=config[DOMAIN].get(CONF_FULLDEBUG),
-        interval=config[DOMAIN].get(CONF_SCAN_INTERVAL),
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Setup Seat Connect component from a config entry."""
+    _LOGGER.debug(f'Init async_setup_entry')
+    hass.data.setdefault(DOMAIN, {})
+
+    if entry.options.get(CONF_UPDATE_INTERVAL):
+        update_interval = timedelta(minutes=entry.options[CONF_UPDATE_INTERVAL])
+    else:
+        update_interval = timedelta(minutes=DEFAULT_UPDATE_INTERVAL)
+
+    coordinator = SeatCoordinator(hass, entry, update_interval)
+
+    if not await coordinator.async_login():
+        await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": SOURCE_REAUTH},
+            data=entry,
+        )
+        return False
+
+    entry.async_on_unload(
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_logout)
     )
 
-    interval = config[DOMAIN].get(CONF_SCAN_INTERVAL)
-    data = hass.data[DATA_KEY] = SeatData(config)
+    await coordinator.async_refresh()
+    if not coordinator.last_update_success:
+        raise ConfigEntryNotReady
+
+    # Get parent device
+    try:
+        identifiers={(DOMAIN, entry.unique_id)}
+        registry = device_registry.async_get(hass)
+        device = registry.async_get_device(identifiers)
+        # Get user configured name for device
+        name = device.name_by_user if not device.name_by_user is None else None
+    except:
+        name = None
+
+    data = SeatData(entry.data, name, coordinator)
+    instruments = coordinator.data
+
+    conf_instruments = entry.data.get(CONF_INSTRUMENTS, {}).copy()
+    if entry.options.get(CONF_DEBUG, False) is True:
+        _LOGGER.debug(f"Configured data: {entry.data}")
+        _LOGGER.debug(f"Configured options: {entry.options}")
+        _LOGGER.debug(f"Resources from options are: {entry.options.get(CONF_RESOURCES, [])}")
+        _LOGGER.debug(f"All instruments (data): {conf_instruments}")
+    new_instruments = {}
 
     def is_enabled(attr):
         """Return true if the user has enabled the resource."""
-        return attr in config[DOMAIN].get(CONF_RESOURCES, [attr])
+        return attr in entry.data.get(CONF_RESOURCES, [attr])
 
-    def discover_vehicle(vehicle):
-        """Load relevant platforms."""
-        data.vehicles.add(vehicle.vin)
+    components = set()
 
-        dashboard = vehicle.dashboard(
-            mutable=config[DOMAIN][CONF_MUTABLE],
-            spin=config[DOMAIN][CONF_SPIN],
-            miles=config[DOMAIN][CONF_MILES],
+    # Check if new instruments
+    for instrument in (
+        instrument
+        for instrument in instruments
+        if not instrument.attr in conf_instruments
+    ):
+            _LOGGER.info(f"Discovered new instrument {instrument.name}")
+            new_instruments[instrument.attr] = instrument.name
+
+    # Update config entry with new instruments
+    if len(new_instruments) > 0:
+        conf_instruments.update(new_instruments)
+        # Prepare data to update config entry with
+        update = {
+            'data': {
+                CONF_INSTRUMENTS: dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
+            },
+            'options': {
+                CONF_RESOURCES: entry.options.get(
+                    CONF_RESOURCES,
+                    entry.data.get(CONF_RESOURCES, ['none']))
+            }
+        }
+
+        # Enable new instruments if "activate newly enable entitys" is active
+        if hasattr(entry, "pref_disable_new_entities"):
+            if not entry.pref_disable_new_entities:
+                _LOGGER.debug(f"Enabling new instruments {new_instruments}")
+                for item in new_instruments:
+                    update['options'][CONF_RESOURCES].append(item)
+
+        _LOGGER.debug(f"Updating config entry data: {update.get('data')}")
+        _LOGGER.debug(f"Updating config entry options: {update.get('options')}")
+        hass.config_entries.async_update_entry(
+            entry,
+            data={**entry.data, **update['data']},
+            options={**entry.options, **update['options']}
         )
 
-        for instrument in (
-            instrument
-            for instrument in dashboard.instruments
-            if instrument.component in COMPONENTS and is_enabled(instrument.slug_attr)
-        ):
+    for instrument in (
+        instrument
+        for instrument in instruments
+        if instrument.component in PLATFORMS and is_enabled(instrument.slug_attr)
+    ):
+        data.instruments.add(instrument)
+        components.add(PLATFORMS[instrument.component])
 
-            data.instruments.add(instrument)
-            hass.async_create_task(
-                discovery.async_load_platform(
-                    hass,
-                    COMPONENTS[instrument.component],
-                    DOMAIN,
-                    (vehicle.vin, instrument.component, instrument.attr),
-                    config,
-                )
-            )
+    for component in components:
+        coordinator.platforms.append(component)
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, component)
+        )
 
-    async def update(now):
-        """Update status from Seat Connect"""
+    hass.data[DOMAIN][entry.entry_id] = {
+        UPDATE_CALLBACK: update_callback,
+        DATA: data,
+        UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
+    }
+
+    # Service functions
+    async def get_car(service_call):
+        """Get VIN associated with HomeAssistant device ID."""
+        # Get device entry
+        dev_id = service_call.data.get("device_id")
+        dev_reg = device_registry.async_get(hass)
+        dev_entry = dev_reg.async_get(dev_id)
+
+        # Get vehicle VIN from device identifiers
+        seat_identifiers = [
+            identifier
+            for identifier in dev_entry.identifiers
+            if identifier[0] == DOMAIN
+        ]
+        vin_identifier = next(iter(seat_identifiers))
+        vin = vin_identifier[1]
+
+        # Get coordinator handling the device entry
+        conf_entry = next(iter(dev_entry.config_entries))
         try:
-            # Try to login
-            if not connection.logged_in:
-                await connection._login()
-                if not connection.logged_in:
-                    _LOGGER.warning(
-                        "Could not login to Seat Connect, please check your credentials and verify that the service is working"
-                    )
-                    return False
+            dev_coordinator = hass.data[DOMAIN][conf_entry]['data'].coordinator
+        except:
+            raise SeatConfigException('Could not find associated coordinator for given vehicle')
 
-            # Update vehicle information
-            if not await connection.update():
-                _LOGGER.warning("Could not query update from Seat Connect")
-                return False
+        # Return with associated Vehicle class object
+        return dev_coordinator.connection.vehicle(vin)
 
-            _LOGGER.debug("Updating data from Seat Connect")
-            for vehicle in connection.vehicles:
-                if vehicle.vin not in data.vehicles:
-                    _LOGGER.info(f"Adding data for VIN: {vehicle.vin} from Seat Connect")
-                    discover_vehicle(vehicle)
-
-            async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
-            return True
-        finally:
-            async_track_point_in_utc_time(hass, update, utcnow() + interval)
-
-    async def set_pheater_duration(call):
-        """Prepare data and modify parking heater duration."""
+    async def set_schedule(service_call=None):
+        """Set departure schedule."""
         try:
-            _LOGGER.debug("Try to fetch object for VIN: %s" % call.data.get("vin", ""))
-            vin = call.data.get("vin")
-            car = connection.vehicle(vin)
-            _LOGGER.debug(f"Found car: {car.nickname}")
-            _LOGGER.debug(f"Set climatisation duration to {call.data.get('duration', 0)}")
-            car.pheater_duration = call.data.get("duration")
-            async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
-            return
-        except Exception as error:
-            _LOGGER.warning(f"Couldn't execute, error: {err}")
-            async_dispatcher_send(hass, SIGNAL_STATE_UPDATED)
-        raise Exception(f"Service call failed")
+            # Prepare data
+            id = service_call.data.get("id", 0)
+            temp = None
 
-    async def cleanup(call):
-        """Terminate session and clean up."""
-        _LOGGER.info(f'Cleaning up')
-        await connection.terminate()
+            # Convert datetime objects to simple strings or check that strings are correctly formatted
+            try:
+                time = service_call.data.get("time").strftime("%H:%M")
+            except:
+                if re.match('^[0-9]{2}:[0-9]{2}$', service_call.data.get('time', '')):
+                    time = service_call.data.get("time", "08:00")
+                else:
+                    raise SeatInvalidRequestException(f"Invalid time string: {service_call.data.get('time')}")
+            if service_call.data.get("off_peak_start", False):
+                try:
+                    peakstart = service_call.data.get("off_peak_start").strftime("%H:%M")
+                except:
+                    if re.match('^[0-9]{2}:[0-9]{2}$', service_call.data.get("off_peak_start", "")):
+                        time = service_call.data.get("off_peak_start", "00:00")
+                    else:
+                        raise SeatInvalidRequestException(f"Invalid value for off peak start hours: {service_call.data.get('off_peak_start')}")
+            if service_call.data.get("off_peak_end", False):
+                try:
+                    peakend = service_call.data.get("off_peak_end").strftime("%H:%M")
+                except:
+                    if re.match('^[0-9]{2}:[0-9]{2}$', service_call.data.get("off_peak_end", "")):
+                        time = service_call.data.get("off_peak_end", "00:00")
+                    else:
+                        raise SeatInvalidRequestException(f"Invalid value for off peak end hours: {service_call.data.get('off_peak_end')}")
 
-    _LOGGER.info("Starting seatconnect component")
+            # Convert to parseable data
+            schedule = {
+                "id": service_call.data.get("id", 1),
+                "enabled": service_call.data.get("enabled"),
+                "recurring": service_call.data.get("recurring"),
+                "date": service_call.data.get("date"),
+                "time": time,
+                "days": service_call.data.get("days", "nnnnnnn"),
+            }
+            # Set optional values
+            # Night rate
+            if service_call.data.get("climatisation", None) is not None:
+                schedule["nightRateActive"] = service_call.data.get("climatisation")
+            if service_call.data.get("off_peak_start", None) is not None:
+                schedule["nightRateTimeStart"] = service_call.data.get("off_peak_start")
+            if service_call.data.get("off_peak_end", None) is not None:
+                schedule["nightRateTimeEnd"] = service_call.data.get("off_peak_end")
+            # Climatisation and charging options
+            if service_call.data.get("climatisation", None) is not None:
+                schedule["operationClimatisation"] = service_call.data.get("climatisation")
+            if service_call.data.get("charging", None) is not None:
+                schedule["operationCharging"] = service_call.data.get("charging")
+            if service_call.data.get("charge_target", None) is not None:
+                schedule["targetChargeLevel"] = service_call.data.get("charge_target")
+            if service_call.data.get("charge_current", None) is not None:
+                schedule["chargeMaxCurrent"] = service_call.data.get("charge_current")
+            # Global optional options
+            if service_call.data.get("target_temp", None) is not None:
+                schedule["targetTemp"] = service_call.data.get("target_temp")
 
-    # Register services and callbacks
+            # Find the correct car and execute service call
+            car = await get_car(service_call)
+            _LOGGER.info(f'Set departure schedule {id} with data {schedule} for car {car.vin}')
+            if await car.set_timer_schedule(id, schedule) is True:
+                _LOGGER.debug(f"Service call 'set_schedule' executed without error")
+                await coordinator.async_request_refresh()
+            else:
+                _LOGGER.warning(f"Failed to execute service call 'set_schedule' with data '{service_call}'")
+        except (SeatInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+        except Exception as e:
+            raise
+
+    async def set_charge_limit(service_call=None):
+        """Set minimum charge limit."""
+        try:
+            car = await get_car(service_call)
+
+            # Get charge limit and execute service call
+            limit = service_call.data.get("limit", 50)
+            if await car.set_charge_limit(limit) is True:
+                _LOGGER.debug(f"Service call 'set_charge_limit' executed without error")
+                await coordinator.async_request_refresh()
+            else:
+                _LOGGER.warning(f"Failed to execute service call 'set_charge_limit' with data '{service_call}'")
+        except (SeatInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+        except Exception as e:
+            raise
+
+    async def set_current(service_call=None):
+        """Set departure schedule."""
+        try:
+            car = await get_car(service_call)
+
+            # Get charge current and execute service call
+            current = service_call.data.get('current', None)
+            if await car.set_charger_current(current) is True:
+                _LOGGER.debug(f"Service call 'set_current' executed without error")
+                await coordinator.async_request_refresh()
+            else:
+                _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
+        except (SeatInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+        except Exception as e:
+            raise
+
+    async def set_pheater_duration(service_call=None):
+        """Set duration for parking heater."""
+        try:
+            car = await get_car(service_call)
+            car.pheater_duration = service_call.data.get("duration", car.pheater_duration)
+            _LOGGER.debug(f"Service call 'set_pheater_duration' executed without error")
+            await coordinator.async_request_refresh()
+        except (SeatInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+        except Exception as e:
+            raise
+
+    async def set_climater(service_call=None):
+        """Start or stop climatisation with options."""
+        try:
+            car = await get_car(service_call)
+
+            if service_call.data.get('enabled'):
+                action = 'auxiliary' if service_call.data.get('aux_heater', False) else 'electric'
+                temp = service_call.data.get('temp', None)
+                hvpower = service_call.data.get('battery_power', None)
+                spin = service_call.data.get('spin', None)
+            else:
+                action = 'off'
+                temp = hvpower = spin = None
+            # Execute service call
+            if await car.set_climatisation(action, temp, hvpower, spin) is True:
+                _LOGGER.debug(f"Service call 'set_climater' executed without error")
+                await coordinator.async_request_refresh()
+            else:
+                _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
+        except (SeatInvalidRequestException) as e:
+            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+        except Exception as e:
+            raise
+
+    # Register services
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_SCHEDULE,
+        set_schedule,
+        schema = SERVICE_SET_SCHEDULE_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_MAX_CURRENT,
+        set_current,
+        schema = SERVICE_SET_MAX_CURRENT_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_CHARGE_LIMIT,
+        set_charge_limit,
+        schema = SERVICE_SET_CHARGE_LIMIT_SCHEMA
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SET_CLIMATER,
+        set_climater,
+        schema = SERVICE_SET_CLIMATER_SCHEMA
+    )
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_PHEATER_DURATION,
         set_pheater_duration,
-        schema=SERVICE_SET_PHEATER_DURATION_SCHEMA
+        schema = SERVICE_SET_PHEATER_DURATION_SCHEMA
     )
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, cleanup)
 
-    return await update(utcnow())
+    return True
+
+
+def update_callback(hass, coordinator):
+    _LOGGER.debug("CALLBACK!")
+    hass.async_create_task(
+        coordinator.async_request_refresh()
+    )
+
+
+async def async_setup(hass: HomeAssistant, config: dict):
+    """Set up the component from configuration.yaml."""
+    hass.data.setdefault(DOMAIN, {})
+
+    if hass.config_entries.async_entries(DOMAIN):
+        return True
+
+    if DOMAIN in config:
+        _LOGGER.info("Found existing Seat Connect configuration.")
+        hass.async_create_task(
+            hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": SOURCE_IMPORT},
+                data=config[DOMAIN],
+            )
+        )
+
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Unload a config entry."""
+    _LOGGER.debug("Unloading services")
+    hass.services.async_remove(DOMAIN, SERVICE_SET_SCHEDULE)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_MAX_CURRENT)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_CHARGE_LIMIT)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_CLIMATER)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_PHEATER_DURATION)
+
+    _LOGGER.debug("Unloading update listener")
+    hass.data[DOMAIN][entry.entry_id][UNDO_UPDATE_LISTENER]()
+
+    return await async_unload_coordinator(hass, entry)
+
+
+async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
+    """Unload auth token based entry."""
+    _LOGGER.debug("Unloading coordinator")
+    coordinator = hass.data[DOMAIN][entry.entry_id][DATA].coordinator
+
+    _LOGGER.debug("Log out from Seat Connect")
+    await coordinator.async_logout()
+    unloaded = all(
+        await asyncio.gather(
+            *[
+                hass.config_entries.async_forward_entry_unload(entry, platform)
+                for platform in PLATFORMS
+                if platform in coordinator.platforms
+            ]
+        )
+    )
+    if unloaded:
+        _LOGGER.debug("Unloading entry")
+        del hass.data[DOMAIN][entry.entry_id]
+
+    if not hass.data[DOMAIN]:
+        _LOGGER.debug("Unloading data")
+        del hass.data[DOMAIN]
+
+    return unloaded
+
+
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
+    """Handle options update."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+def get_convert_conf(entry: ConfigEntry):
+    return CONF_SCANDINAVIAN_MILES if entry.options.get(
+        CONF_SCANDINAVIAN_MILES,
+        entry.data.get(
+            CONF_SCANDINAVIAN_MILES,
+            False
+        )
+    ) else CONF_NO_CONVERSION
 
 
 class SeatData:
     """Hold component state."""
 
-    def __init__(self, config):
+    def __init__(self, config, name=None, coordinator=None):
         """Initialize the component state."""
         self.vehicles = set()
         self.instruments = set()
-        self.config = config[DOMAIN]
-        self.names = self.config.get(CONF_NAME)
+        self.config = config.get(DOMAIN, config)
+        self.name = name
+        self.coordinator = coordinator
 
     def instrument(self, vin, component, attr):
         """Return corresponding instrument."""
         return next(
             (
                 instrument
-                for instrument in self.instruments
+                for instrument in (
+                    self.coordinator.data
+                    if self.coordinator is not None
+                    else self.instruments
+                )
                 if instrument.vehicle.vin == vin
                 and instrument.component == component
                 and instrument.attr == attr
@@ -277,37 +560,67 @@ class SeatData:
 
     def vehicle_name(self, vehicle):
         """Provide a friendly name for a vehicle."""
-        if vehicle.vin and vehicle.vin.lower() in self.names:
-            return self.names[vehicle.vin.lower()]
-        elif vehicle.is_nickname_supported:
-            return vehicle.nickname
-        elif vehicle.vin:
-            return vehicle.vin
-        else:
+        try:
+            # Return name if configured by user
+            if isinstance(self.name, str):
+                if len(self.name) > 0:
+                    return self.name
+        except:
+            pass
+
+        # Default name to nickname if supported, else vin number
+        try:
+            if vehicle.is_nickname_supported:
+                return vehicle.nickname
+            elif vehicle.vin:
+                return vehicle.vin
+        except:
+            _LOGGER.info(f"Name set to blank")
             return ""
 
 
 class SeatEntity(Entity):
     """Base class for all Seat entities."""
 
-    def __init__(self, data, vin, component, attribute):
+    def __init__(self, data, vin, component, attribute, callback=None):
         """Initialize the entity."""
+
+        def update_callbacks():
+            if callback is not None:
+                callback(self.hass, data.coordinator)
+
         self.data = data
         self.vin = vin
         self.component = component
         self.attribute = attribute
+        self.coordinator = data.coordinator
+        self.instrument.callback = update_callbacks
+        self.callback = callback
+
+    async def async_update(self) -> None:
+        """Update the entity.
+
+        Only used by the generic entity update service.
+        """
+
+        # Ignore manual update requests if the entity is disabled
+        if not self.enabled:
+            return
+
+        await self.coordinator.async_request_refresh()
 
     async def async_added_to_hass(self):
         """Register update dispatcher."""
-        self.async_on_remove(
-            async_dispatcher_connect(
-                self.hass, SIGNAL_STATE_UPDATED, self.async_write_ha_state
+        if self.coordinator is not None:
+            self.async_on_remove(
+                self.coordinator.async_add_listener(self.async_write_ha_state)
             )
-        )
-
-    async def update_hass(self):
-        """Send signal to home assistant to update states."""
-        async_dispatcher_send(self.hass, SIGNAL_STATE_UPDATED)
+        else:
+            self.async_on_remove(
+                async_dispatcher_connect(
+                    self.hass, SIGNAL_STATE_UPDATED, self.async_write_ha_state
+                )
+            )
 
     @property
     def instrument(self):
@@ -355,10 +668,17 @@ class SeatEntity(Entity):
     @property
     def device_state_attributes(self):
         """Return device specific state attributes."""
-        return dict(
+        attributes = dict(
             self.instrument.attributes,
             model=f"{self.vehicle.model}/{self.vehicle.model_year}",
         )
+
+        # Return model image as picture attribute for position entity
+        if "position" in self.attribute:
+            if self.vehicle.is_model_image_supported:
+                attributes["entity_picture"] = self.vehicle.model_image
+
+        return attributes
 
     @property
     def device_info(self):
@@ -372,6 +692,98 @@ class SeatEntity(Entity):
         }
 
     @property
+    def available(self):
+        """Return if sensor is available."""
+        if self.data.coordinator is not None:
+            return self.data.coordinator.last_update_success
+        return True
+
+    @property
     def unique_id(self) -> str:
         """Return a unique ID."""
         return f"{self.vin}-{self.component}-{self.attribute}"
+
+
+class SeatCoordinator(DataUpdateCoordinator):
+    """Class to manage fetching data from the API."""
+
+    def __init__(self, hass: HomeAssistant, entry, update_interval: timedelta):
+        self.vin = entry.data[CONF_VEHICLE].upper()
+        self.entry = entry
+        self.platforms = []
+        self.report_last_updated = None
+        self.connection = Connection(
+            session=async_get_clientsession(hass),
+            username=self.entry.data[CONF_USERNAME],
+            password=self.entry.data[CONF_PASSWORD],
+            fulldebug=self.entry.options.get(CONF_DEBUG, self.entry.data.get(CONF_DEBUG, DEFAULT_DEBUG)),
+        )
+
+        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=update_interval)
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        vehicle = await self.update()
+
+        if not vehicle:
+            raise UpdateFailed("No vehicles found.")
+
+        # Backward compatibility
+        default_convert_conf = get_convert_conf(self.entry)
+
+        convert_conf = self.entry.options.get(
+            CONF_CONVERT,
+            self.entry.data.get(
+                CONF_CONVERT,
+                default_convert_conf
+            )
+        )
+
+        dashboard = vehicle.dashboard(
+            mutable=self.entry.options.get(CONF_MUTABLE),
+            spin=self.entry.options.get(CONF_SPIN),
+            miles=convert_conf == CONF_IMPERIAL_UNITS,
+            scandinavian_miles=convert_conf == CONF_SCANDINAVIAN_MILES,
+        )
+
+        return dashboard.instruments
+
+    async def async_logout(self, event=None):
+        """Logout from Seat Connect"""
+        _LOGGER.debug("Shutdown Seat Connect")
+        try:
+            await self.connection.terminate()
+            self.connection = None
+        except Exception as ex:
+            _LOGGER.error("Failed to log out and revoke tokens for Seat Connect. Some tokens might still be valid.")
+            return False
+        return True
+
+    async def async_login(self):
+        """Login to Seat Connect"""
+        # Check if we can login
+        if await self.connection.doLogin() is False:
+            _LOGGER.warning(
+                "Could not login to Seat Connect, please check your credentials and verify that the service is working"
+            )
+            return False
+        # Get associated vehicles before we continue
+        await self.connection.get_vehicles()
+        return True
+
+    async def update(self) -> Union[bool, Vehicle]:
+        """Update status from Seat Connect"""
+
+        # Update vehicle data
+        _LOGGER.debug("Updating data from Seat Connect")
+        try:
+            # Get Vehicle object matching VIN number
+            vehicle = self.connection.vehicle(self.vin)
+            if not await vehicle.update():
+                _LOGGER.warning("Could not query update from Seat Connect")
+                return False
+            else:
+                return vehicle
+        except Exception as error:
+            _LOGGER.warning(f"An error occured while requesting update from Seat Connect: {error}")
+            return False

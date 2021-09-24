@@ -4,10 +4,10 @@
     "step": {
       "user": {
         "title": "Seat Connect Configuration",
-        "description": "Fill in Seat Connect account information",
+        "description": "Fill in your Seat Connect account information.",
         "data": {
-          "username": "Email",
-          "password": "Password"
+          "username": "[%key:common::config_flow::data::email%]",
+          "password": "[%key:common::config_flow::data::password%]"
         }
       },
       "vehicle": {
@@ -32,14 +32,14 @@
       "reauth_confirm": {
         "description": "Re-authenticate with your Seat Connect account.\nMake sure to accept any new EULA in the Seat Connect portal (https://my.seat/portal/) before proceeding. ",
         "data": {
-          "username": "Email",
-          "password": "Password"
+          "email": "[%key:common::config_flow::data::email%]",
+          "password": "[%key:common::config_flow::data::password%]"
         }
       }
     },
     "abort": {
-      "already_configured": "Car with this VIN is already configured",
-      "reauth_successful": "Re-authentication was successful"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_account%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
     },
     "error": {
       "cannot_connect": "Could not login to Seat Connect, please check your credentials and verify that the service is working",
@@ -55,7 +55,7 @@
     "step": {
       "user": {
         "title": "Options for Seat Connect",
-        "description": "Configure settings",
+        "description": "Configure update interval",
         "data": {
           "update_interval": "Poll frequency (minutes)",
           "spin": "S-PIN",
