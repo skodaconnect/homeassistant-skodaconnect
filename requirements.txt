@@ -1,1 +1,1 @@
-seatconnect>=1.1.0
+seatconnect>=1.1.3

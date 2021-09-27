@@ -4,7 +4,7 @@
 
 # Seat Connect - A Home Assistant custom component for Seat Connect
 
-# v1.1.0
+# v1.1.1
 ## This is fork of [lendy007/homeassistant-skodaconnect](https://github.com/lendy007/homeassistant-skodaconnect) modified to support Seat
 This integration for Home Assistant will fetch data from VAG connect servers related to your Seat Connect enabled car.
 Seat Connect never fetch data directly from car, the car sends updated data to VAG servers on specific events such as lock/unlock, charging events, climatisation events and when vehicle is parked. The integration will then fetch this data from the servers.
