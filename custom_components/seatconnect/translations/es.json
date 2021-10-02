@@ -1,0 +1,70 @@
+{
+  "title": "Seat Connect",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuración Seat Connect",
+        "description": "Ingresa información de la cuenta Seat Connect",
+        "data": {
+          "username": "Correo electrónico",
+          "password": "Contraseña"
+        }
+      },
+      "vehicle": {
+        "title": "Ajustes del vehículo",
+        "description": "El siguiente vehículo(s) fueron encontrado(s). Por favor, selecciona el vehículo y los ajustes que quieras monitorizar.\n\nEl S-PIN sólo es necesario para algunas operaciones concretas como bloquear/desbloquear y operaciones que activan el calentamiento del motor de combustión.\nPuedes dejarlo en blanco.",
+        "data": {
+          "vehicle": "Número VIN",
+          "spin": "S-PIN",
+          "mutable": "Permite interacciones con el vehículo (acciones). Desmarca para que el vehículo sea 'solo lectura'."
+        }
+      },
+      "monitoring": {
+        "title": "Monitorizando Ajustes",
+        "description": "Específica ajustes adicionales a monitorizar.",
+        "data": {
+          "resources": "Elementos a monitorizar.",
+          "convert": "Selecciona la conversión de distancia/unidades.",
+          "update_interval": "Frequencia de actualización (minutos).",
+          "debug": "Registro de depuración completo de API (requiere que el registro de depuración este activado en configuration.yaml)"
+        }
+      },
+      "reauth_confirm": {
+        "description": "Vuelve a autenticarte con tu cuenta Seat Connect.\nCerciórate de aceptar cualquier nuevo EULA en el portal Seat Connect (https://my.seat/portal/) antes de proceder. ",
+        "data": {
+          "username": "Correo electrónico",
+          "password": "Contraseña"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "El vehículo con este VIN ya está configurado",
+      "reauth_successful": "La re-autenticación fue satisfactoria"
+    },
+    "error": {
+      "cannot_connect": "No se pudo iniciar sesión en Seat Connect, por favor verifica tus credenciales y verifica que el servicio está funcionando",
+      "cannot_update": "No se pudo actualzizar los datos de Seat Connect",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "progress": {
+      "task_login": "Iniciando sesión en Seat Connect",
+      "task_update": "Buscando vehículos"
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Opciones para Seat Connect",
+        "description": "Configurar ajustes",
+        "data": {
+          "update_interval": "Frequencia de actualización (minutos)",
+          "spin": "S-PIN",
+          "mutable": "Permite interacciones con el vehículo (acciones). Desmarca para que el vehículo sea 'solo lectura'.",
+          "convert": "Selecciona la conversión de distancia/unidades.",
+          "resources": "Elementos a monitorizar.",
+          "debug": "Registro de depuración completo de API (requiere que el registro de depuración este activado en configuration.yaml)"
+        }
+      }
+    }
+  }
+}
