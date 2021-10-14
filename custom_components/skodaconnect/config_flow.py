@@ -7,6 +7,7 @@ from homeassistant.const import (
     CONF_PASSWORD,
     CONF_RESOURCES,
     CONF_USERNAME,
+    CONF_SCAN_INTERVAL
 )
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -21,11 +22,11 @@ from .const import (
     CONF_DEBUG,
     CONVERT_DICT,
     CONF_MUTABLE,
-    CONF_UPDATE_INTERVAL,
     CONF_SPIN,
     CONF_VEHICLE,
     CONF_INSTRUMENTS,
-    DEFAULT_UPDATE_INTERVAL,
+    MIN_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     DEFAULT_DEBUG
 )
@@ -33,7 +34,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 1
+    VERSION = 2
     task_login = None
     task_finish = None
     task_get_vehicles = None
@@ -65,7 +66,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._options = {
                 CONF_CONVERT: CONF_NO_CONVERSION,
                 CONF_MUTABLE: True,
-                CONF_UPDATE_INTERVAL: 5,
+                CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
                 CONF_DEBUG: False,
                 CONF_SPIN: None,
                 CONF_RESOURCES: []
@@ -142,7 +143,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._options[CONF_RESOURCES] = user_input[CONF_RESOURCES]
             self._options[CONF_CONVERT] = user_input[CONF_CONVERT]
-            self._options[CONF_UPDATE_INTERVAL] = user_input[CONF_UPDATE_INTERVAL]
+            self._options[CONF_SCAN_INTERVAL] = user_input[CONF_SCAN_INTERVAL]
             self._options[CONF_DEBUG] = user_input[CONF_DEBUG]
 
             await self.async_set_unique_id(self._data[CONF_VEHICLE])
@@ -172,8 +173,11 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_CONVERT, default=CONF_NO_CONVERSION
                     ): vol.In(CONVERT_DICT),
                     vol.Required(
-                        CONF_UPDATE_INTERVAL, default=1
-                    ): cv.positive_int,
+                        CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
+                    ): vol.All(
+                        vol.Coerce(int),
+                        vol.Range(min=MIN_SCAN_INTERVAL, max=900)
+                    ),
                     vol.Required(
                         CONF_DEBUG, default=False
                     ): cv.boolean
@@ -298,7 +302,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._options = {
             CONF_CONVERT: CONF_NO_CONVERSION,
             CONF_MUTABLE: True,
-            CONF_UPDATE_INTERVAL: 5,
+            CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
             CONF_DEBUG: False,
             CONF_SPIN: None,
             CONF_RESOURCES: []
@@ -321,8 +325,13 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if yaml["scandinavian_miles"]:
                 self._options[CONF_CONVERT] = "scandinavian_miles"
         if "scan_interval" in yaml:
+            seconds = 60
+            minutes = 0
+            if "seconds" in yaml["scan_interval"]:
+                seconds = int(yaml["scan_interval"]["seconds"])
             if "minutes" in yaml["scan_interval"]:
-                self._options[CONF_UPDATE_INTERVAL] = int(yaml["scan_interval"]["minutes"])
+                minutes = int(yaml["scan_interval"]["minutes"])
+            self._options[CONF_SCAN_INTERVAL] = seconds+(minutes*60)
         if "name" in yaml:
             vin = next(iter(yaml["name"]))
             self._data[CONF_VEHICLE] = vin.upper()
@@ -408,7 +417,7 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                 self.hass.config_entries.async_update_entry(self._config_entry, data={**data})
 
             options = self._config_entry.options.copy()
-            options[CONF_UPDATE_INTERVAL] = user_input.get(CONF_UPDATE_INTERVAL, 1)
+            options[CONF_SCAN_INTERVAL] = user_input.get(CONF_SCAN_INTERVAL, 1)
             options[CONF_SPIN] = user_input.get(CONF_SPIN, None)
             options[CONF_MUTABLE] = user_input.get(CONF_MUTABLE, True)
             options[CONF_DEBUG] = user_input.get(CONF_DEBUG, False)
@@ -443,11 +452,14 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Optional(
-                        CONF_UPDATE_INTERVAL,
-                        default=self._config_entry.options.get(CONF_UPDATE_INTERVAL,
-                            self._config_entry.data.get(CONF_UPDATE_INTERVAL, 5)
+                        CONF_SCAN_INTERVAL,
+                        default=self._config_entry.options.get(CONF_SCAN_INTERVAL,
+                            self._config_entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
                         )
-                    ): cv.positive_int,
+                    ): vol.All(
+                        vol.Coerce(int),
+                        vol.Range(min=MIN_SCAN_INTERVAL, max=900)
+                    ),
                     vol.Optional(
                         CONF_SPIN,
                         default=self._config_entry.options.get(CONF_SPIN,

@@ -1,1 +1,1 @@
-skodaconnect>=1.1.6
+skodaconnect>=1.1.7

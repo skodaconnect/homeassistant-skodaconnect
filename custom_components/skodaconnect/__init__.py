@@ -16,6 +16,7 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_PASSWORD,
     CONF_RESOURCES,
+    CONF_SCAN_INTERVAL,
     CONF_USERNAME, EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant
@@ -48,13 +49,12 @@ from .const import (
     CONF_SCANDINAVIAN_MILES,
     CONF_SPIN,
     CONF_VEHICLE,
-    CONF_UPDATE_INTERVAL,
     CONF_INSTRUMENTS,
     DATA,
     DATA_KEY,
-    DEFAULT_UPDATE_INTERVAL,
+    MIN_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
-    MIN_UPDATE_INTERVAL,
     SIGNAL_STATE_UPDATED,
     UNDO_UPDATE_LISTENER, UPDATE_CALLBACK, CONF_DEBUG, DEFAULT_DEBUG, CONF_CONVERT, CONF_NO_CONVERSION,
     CONF_IMPERIAL_UNITS,
@@ -130,10 +130,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug(f'Init async_setup_entry')
     hass.data.setdefault(DOMAIN, {})
 
-    if entry.options.get(CONF_UPDATE_INTERVAL):
-        update_interval = timedelta(minutes=entry.options[CONF_UPDATE_INTERVAL])
+    if entry.options.get(CONF_SCAN_INTERVAL):
+        update_interval = timedelta(seconds=entry.options[CONF_SCAN_INTERVAL])
     else:
-        update_interval = timedelta(minutes=DEFAULT_UPDATE_INTERVAL)
+        update_interval = timedelta(seconds=DEFAULT_SCAN_INTERVAL)
+    if update_interval < timedelta(seconds=MIN_SCAN_INTERVAL):
+        update_interval = timedelta(seconds=MIN_SCAN_INTERVAL)
 
     coordinator = SkodaCoordinator(hass, entry, update_interval)
 
@@ -529,7 +531,28 @@ def get_convert_conf(entry: ConfigEntry):
         )
     ) else CONF_NO_CONVERSION
 
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Migrate configuration from old version to new."""
+    _LOGGER.debug(f'Migrating from version {entry.version}')
 
+    # Migrate data from version 1, pre 1.0.57
+    if entry.version == 1:
+        # Make a copy of old config
+        new = {**entry.data}
+
+        # Convert from minutes to seconds for poll interval
+        minutes = entry.options.get("update_interval", 1)
+        seconds = minutes*60
+        new.pop("update_interval", None)
+        new[CONF_SCAN_INTERVAL] = seconds
+
+        # Save "new" config
+        entry.data = {**new}
+
+        entry.version = 2
+
+    _LOGGER.info("Migration to version %s successful", entry.version)
+    return True
 class SkodaData:
     """Hold component state."""
 
@@ -675,8 +698,11 @@ class SkodaEntity(Entity):
 
         # Return model image as picture attribute for position entity
         if "position" in self.attribute:
-            if self.vehicle.is_model_image_supported:
-                attributes["entity_picture"] = self.vehicle.model_image
+            # Try to use small thumbnail firt hand, else fallback to fullsize
+            if self.vehicle.is_model_image_small_supported:
+                attributes["entity_picture"] = self.vehicle.model_image_small
+            elif self.vehicle.is_model_image_large_supported:
+                attributes["entity_picture"] = self.vehicle.model_image_large
 
         return attributes
 
@@ -779,11 +805,11 @@ class SkodaCoordinator(DataUpdateCoordinator):
         try:
             # Get Vehicle object matching VIN number
             vehicle = self.connection.vehicle(self.vin)
-            if not await vehicle.update():
+            if await vehicle.update():
+                return vehicle
+            else:
                 _LOGGER.warning("Could not query update from Skoda Connect")
                 return False
-            else:
-                return vehicle
         except Exception as error:
             _LOGGER.warning(f"An error occured while requesting update from Skoda Connect: {error}")
             return False
