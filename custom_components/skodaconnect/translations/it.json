@@ -25,7 +25,7 @@
         "data": {
           "resources": "Risorse da monitorare.",
           "convert": "Scegli la conversione di distanza/unità.",
-          "update_interval": "Frequenza di aggiornamento (minuti).",
+          "update_interval": "Frequenza di aggiornamento (secondi).",
           "debug": "API debug logging completo (richiede che il debug logging sia abilitato in configuration.yaml)"
         }
       },
@@ -57,7 +57,7 @@
         "title": "Opzioni per Skoda Connect",
         "description": "Configura impostazioni",
         "data": {
-          "update_interval": "Frequenza di aggiornamento (minuti)",
+          "update_interval": "Frequenza di aggiornamento (secondi)",
           "spin": "S-PIN",
           "mutable": "Permetti interazione con l'auto(azioni). Deseleziona se vuoi sono monitorare..",
           "convert": "Scegli la conversione di distanza/unità.",

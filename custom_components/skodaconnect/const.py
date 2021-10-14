@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 DOMAIN = "skodaconnect"
 DATA_KEY = DOMAIN
 
@@ -13,7 +11,6 @@ CONF_NO_CONVERSION = "no_conversion"
 CONF_CONVERT = "convert"
 CONF_VEHICLE = "vehicle"
 CONF_INSTRUMENTS = "instruments"
-CONF_UPDATE_INTERVAL = "update_interval"
 CONF_DEBUG = "debug"
 
 # Service definitions
@@ -29,8 +26,8 @@ UNDO_UPDATE_LISTENER = "undo_update_listener"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
 
-MIN_UPDATE_INTERVAL = timedelta(minutes=1)
-DEFAULT_UPDATE_INTERVAL = 5
+MIN_SCAN_INTERVAL = 10
+DEFAULT_SCAN_INTERVAL = 60
 
 CONVERT_DICT = {
     CONF_NO_CONVERSION: "No conversion",
