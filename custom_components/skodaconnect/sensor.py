@@ -52,3 +52,15 @@ class SkodaSensor(SkodaEntity):
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return self.instrument.unit
+
+    @property
+    def state_class(self):
+        """Return the state_class for the sensor, to enable statistics"""
+        state_class = None
+        if self.instrument.attr in [
+            'battery_level', 'adblue_level', 'fuel_level', 'charging_time_left', 'charging_power', 'charge_rate',
+            'electric_range', 'combustion_range', 'combined_range', 'outside_temperature'
+        ]:
+            state_class = "measurement"
+        return state_class
+
