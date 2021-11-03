@@ -1,0 +1,70 @@
+{
+  "title": "Skoda Connect",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Skoda Connect Configuratie",
+        "description": "Vul account gegevens van Skoda Connect in",
+        "data": {
+          "username": "E-mail",
+          "password": "Wachtwoord"
+        }
+      },
+      "vehicle": {
+        "title": "Voertuig instellingen",
+        "description": "Het volgende voertuig/voertuigen was gevonden Kies het voertuig dat je wilt volgen en vul de instellingen in.\n\nDe S-PIN is alleen nodig voor enkele handelingen, zoals openen/sluiten en handelingen die de motorverwarming bedienen.\nJe kunt dit leeg laten.",
+        "data": {
+          "vehicle": "VIN Nummer",
+          "spin": "S-PIN",
+          "mutable": "Interactie met de auto toelaten. Uitvinken maakt de auto 'alleen lezen'."
+        }
+      },
+      "monitoring": {
+        "title": "Monitoring instellingen",
+        "description": "Geef extra monitoring instellingen op.",
+        "data": {
+          "resources": "Bronnen om te volgen.",
+          "convert": "Kies afstand/eenheid conversies.",
+          "update_interval": "Poll snelheid (seconden).",
+          "debug": "Volledige API debug logging (debug logging moet aan staan in configuration.yaml)"
+        }
+      },
+      "reauth_confirm": {
+        "description": "Her-authenticeer me je Skoda Connect account.\nLet er op dat je een eventuele nieuwe EULA accepteert (https://www.skoda-connect.com/) voor je doorgaat. ",
+        "data": {
+          "username": "E-mail",
+          "password": "Wachtwoord"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Auto met deze VIN is al geconfigureerd",
+      "reauth_successful": "Her-authenticatie geslaagd"
+    },
+    "error": {
+      "cannot_connect": "Kon niet aanmelden bij Skoda Connect, controleer je gegevens en controleer of de dienst werkt.",
+      "cannot_update": "Kon geen nieuwe gegevens krijgen van Skoda Connect",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "progress": {
+      "task_login": "Aanmelden bij Skoda Connect",
+      "task_update": "Voertuigen ophalen"
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Opties voor Skoda Connect",
+        "description": "Instellingen",
+        "data": {
+          "update_interval": "Poll interval (seconden)",
+          "spin": "S-PIN",
+          "mutable": "Interactie met de auto toelaten. Uitvinken maakt de auto 'alleen lezen'.",
+          "convert": "Kies afstand/eenheid conversies.",
+          "resources": "Bronnen om te volgen.",
+          "debug": "Volledige API debug logging (debug logging moet aan staan in configuration.yaml)"
+        }
+      }
+    }
+  }
+}
