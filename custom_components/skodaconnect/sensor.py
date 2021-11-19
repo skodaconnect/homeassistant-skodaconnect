@@ -5,6 +5,7 @@ import logging
 
 from . import DATA_KEY, DOMAIN, SkodaEntity
 from .const import DATA
+from homeassistant.components.sensor import DEVICE_CLASSES, SensorEntity
 from homeassistant.const import CONF_RESOURCES
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     return True
 
 
-class SkodaSensor(SkodaEntity):
+class SkodaSensor(SkodaEntity, SensorEntity):
     """Representation of a Skoda Sensor."""
 
     @property
@@ -52,6 +53,13 @@ class SkodaSensor(SkodaEntity):
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return self.instrument.unit
+
+    @property
+    def device_class(self):
+        """Return the class of this sensor, from DEVICE_CLASSES."""
+        if self.instrument.device_class in DEVICE_CLASSES:
+            return self.instrument.device_class
+        return None
 
     @property
     def state_class(self):
