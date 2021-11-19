@@ -327,8 +327,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             if service_call.data.get("charge_current", None) is not None:
                 schedule["chargeMaxCurrent"] = service_call.data.get("charge_current")
             # Global optional options
-            if service_call.data.get("target_temp", None) is not None:
-                schedule["targetTemp"] = service_call.data.get("target_temp")
+            if service_call.data.get("temp", None) is not None:
+                schedule["targetTemp"] = service_call.data.get("temp")
 
             # Find the correct car and execute service call
             car = await get_car(service_call)
@@ -657,8 +657,7 @@ class SkodaEntity(Entity):
             return icon_for_battery_level(
                 battery_level=self.instrument.state, charging=self.vehicle.charging
             )
-        else:
-            return self.instrument.icon
+        return self.instrument.icon
 
     @property
     def vehicle(self):
