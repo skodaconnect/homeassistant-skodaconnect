@@ -20,7 +20,7 @@ from homeassistant.const import (
     CONF_USERNAME, EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv, device_registry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -127,7 +127,6 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Setup Skoda Connect component from a config entry."""
-    _LOGGER.debug(f'Init async_setup_entry')
     hass.data.setdefault(DOMAIN, {})
 
     if entry.options.get(CONF_SCAN_INTERVAL):
@@ -139,13 +138,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     coordinator = SkodaCoordinator(hass, entry, update_interval)
 
-    if not await coordinator.async_login():
-        await hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": SOURCE_REAUTH},
-            data=entry,
-        )
-        return False
+    try:
+        if not await coordinator.async_login():
+            await hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": SOURCE_REAUTH},
+                data=entry,
+            )
+            return False
+    except (SkodaAuthenticationException, SkodaAccountLockedException, SkodaLoginFailedException) as e:
+        raise ConfigEntryAuthFailed(e) from e
+    except Exception as e:
+        raise ConfigEntryNotReady(e) from e
 
     entry.async_on_unload(
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_logout)
@@ -787,14 +791,17 @@ class SkodaCoordinator(DataUpdateCoordinator):
     async def async_login(self):
         """Login to Skoda Connect"""
         # Check if we can login
-        if await self.connection.doLogin() is False:
-            _LOGGER.warning(
-                "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
-            )
-            return False
-        # Get associated vehicles before we continue
-        await self.connection.get_vehicles()
-        return True
+        try:
+            if await self.connection.doLogin() is False:
+                _LOGGER.warning(
+                    "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
+                )
+                return False
+            # Get associated vehicles before we continue
+            await self.connection.get_vehicles()
+            return True
+        except:
+            raise
 
     async def update(self) -> Union[bool, Vehicle]:
         """Update status from Skoda Connect"""
