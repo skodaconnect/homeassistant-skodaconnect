@@ -800,6 +800,9 @@ class SkodaCoordinator(DataUpdateCoordinator):
             # Get associated vehicles before we continue
             await self.connection.get_vehicles()
             return True
+        except (SkodaAccountLockedException, SkodaAuthenticationException) as e:
+            # Raise auth failed error in config flow
+            raise ConfigEntryAuthFailed(e) from e
         except:
             raise
 
