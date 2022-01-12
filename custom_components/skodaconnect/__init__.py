@@ -692,8 +692,8 @@ class SkodaEntity(Entity):
         return True
 
     @property
-    def device_state_attributes(self):
-        """Return device specific state attributes."""
+    def extra_state_attributes(self):
+        """Return extra state attributes."""
         attributes = dict(
             self.instrument.attributes,
             model=f"{self.vehicle.model}/{self.vehicle.model_year}",
@@ -701,7 +701,7 @@ class SkodaEntity(Entity):
 
         # Return model image as picture attribute for position entity
         if "position" in self.attribute:
-            # Try to use small thumbnail firt hand, else fallback to fullsize
+            # Try to use small thumbnail first hand, else fallback to fullsize
             if self.vehicle.is_model_image_small_supported:
                 attributes["entity_picture"] = self.vehicle.model_image_small
             elif self.vehicle.is_model_image_large_supported:
