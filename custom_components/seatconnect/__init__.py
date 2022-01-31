@@ -16,10 +16,11 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_PASSWORD,
     CONF_RESOURCES,
+    CONF_SCAN_INTERVAL,
     CONF_USERNAME, EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv, device_registry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -48,13 +49,12 @@ from .const import (
     CONF_SCANDINAVIAN_MILES,
     CONF_SPIN,
     CONF_VEHICLE,
-    CONF_UPDATE_INTERVAL,
     CONF_INSTRUMENTS,
     DATA,
     DATA_KEY,
-    DEFAULT_UPDATE_INTERVAL,
+    MIN_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
-    MIN_UPDATE_INTERVAL,
     SIGNAL_STATE_UPDATED,
     UNDO_UPDATE_LISTENER, UPDATE_CALLBACK, CONF_DEBUG, DEFAULT_DEBUG, CONF_CONVERT, CONF_NO_CONVERSION,
     CONF_IMPERIAL_UNITS,
@@ -127,23 +127,29 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Setup Seat Connect component from a config entry."""
-    _LOGGER.debug(f'Init async_setup_entry')
     hass.data.setdefault(DOMAIN, {})
 
-    if entry.options.get(CONF_UPDATE_INTERVAL):
-        update_interval = timedelta(minutes=entry.options[CONF_UPDATE_INTERVAL])
+    if entry.options.get(CONF_SCAN_INTERVAL):
+        update_interval = timedelta(seconds=entry.options[CONF_SCAN_INTERVAL])
     else:
-        update_interval = timedelta(minutes=DEFAULT_UPDATE_INTERVAL)
+        update_interval = timedelta(seconds=DEFAULT_SCAN_INTERVAL)
+    if update_interval < timedelta(seconds=MIN_SCAN_INTERVAL):
+        update_interval = timedelta(seconds=MIN_SCAN_INTERVAL)
 
     coordinator = SeatCoordinator(hass, entry, update_interval)
 
-    if not await coordinator.async_login():
-        await hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": SOURCE_REAUTH},
-            data=entry,
-        )
-        return False
+    try:
+        if not await coordinator.async_login():
+            await hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": SOURCE_REAUTH},
+                data=entry,
+            )
+            return False
+    except (SeatAuthenticationException, SeatAccountLockedException, SeatLoginFailedException) as e:
+        raise ConfigEntryAuthFailed(e) from e
+    except Exception as e:
+        raise ConfigEntryNotReady(e) from e
 
     entry.async_on_unload(
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_logout)
@@ -325,8 +331,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             if service_call.data.get("charge_current", None) is not None:
                 schedule["chargeMaxCurrent"] = service_call.data.get("charge_current")
             # Global optional options
-            if service_call.data.get("target_temp", None) is not None:
-                schedule["targetTemp"] = service_call.data.get("target_temp")
+            if service_call.data.get("temp", None) is not None:
+                schedule["targetTemp"] = service_call.data.get("temp")
 
             # Find the correct car and execute service call
             car = await get_car(service_call)
@@ -529,6 +535,28 @@ def get_convert_conf(entry: ConfigEntry):
         )
     ) else CONF_NO_CONVERSION
 
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Migrate configuration from old version to new."""
+    _LOGGER.debug(f'Migrating from version {entry.version}')
+
+    # Migrate data from version 1
+    if entry.version == 1:
+        # Make a copy of old config
+        new = {**entry.data}
+
+        # Convert from minutes to seconds for poll interval
+        minutes = entry.options.get("update_interval", 1)
+        seconds = minutes*60
+        new.pop("update_interval", None)
+        new[CONF_SCAN_INTERVAL] = seconds
+
+        # Save "new" config
+        entry.data = {**new}
+
+        entry.version = 2
+
+    _LOGGER.info("Migration to version %s successful", entry.version)
+    return True
 
 class SeatData:
     """Hold component state."""
@@ -634,8 +662,7 @@ class SeatEntity(Entity):
             return icon_for_battery_level(
                 battery_level=self.instrument.state, charging=self.vehicle.charging
             )
-        else:
-            return self.instrument.icon
+        return self.instrument.icon
 
     @property
     def vehicle(self):
@@ -675,8 +702,11 @@ class SeatEntity(Entity):
 
         # Return model image as picture attribute for position entity
         if "position" in self.attribute:
-            if self.vehicle.is_model_image_supported:
-                attributes["entity_picture"] = self.vehicle.model_image
+            # Try to use small thumbnail first hand, else fallback to fullsize
+            if self.vehicle.is_model_image_small_supported:
+                attributes["entity_picture"] = self.vehicle.model_image_small
+            elif self.vehicle.is_model_image_large_supported:
+                attributes["entity_picture"] = self.vehicle.model_image_large
 
         return attributes
 
@@ -762,14 +792,20 @@ class SeatCoordinator(DataUpdateCoordinator):
     async def async_login(self):
         """Login to Seat Connect"""
         # Check if we can login
-        if await self.connection.doLogin() is False:
-            _LOGGER.warning(
-                "Could not login to Seat Connect, please check your credentials and verify that the service is working"
-            )
-            return False
-        # Get associated vehicles before we continue
-        await self.connection.get_vehicles()
-        return True
+        try:
+            if await self.connection.doLogin() is False:
+                _LOGGER.warning(
+                    "Could not login to Seat Connect, please check your credentials and verify that the service is working"
+                )
+                return False
+            # Get associated vehicles before we continue
+            await self.connection.get_vehicles()
+            return True
+        except (SeatAccountLockedException, SeatAuthenticationException) as e:
+            # Raise auth failed error in config flow
+            raise ConfigEntryAuthFailed(e) from e
+        except:
+            raise
 
     async def update(self) -> Union[bool, Vehicle]:
         """Update status from Seat Connect"""
@@ -779,11 +815,11 @@ class SeatCoordinator(DataUpdateCoordinator):
         try:
             # Get Vehicle object matching VIN number
             vehicle = self.connection.vehicle(self.vin)
-            if not await vehicle.update():
+            if await vehicle.update():
+                return vehicle
+            else:
                 _LOGGER.warning("Could not query update from Seat Connect")
                 return False
-            else:
-                return vehicle
         except Exception as error:
             _LOGGER.warning(f"An error occured while requesting update from Seat Connect: {error}")
             return False

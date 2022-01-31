@@ -5,6 +5,7 @@ import logging
 
 from . import DATA_KEY, DOMAIN, SeatEntity
 from .const import DATA
+from homeassistant.components.sensor import DEVICE_CLASSES, SensorEntity
 from homeassistant.const import CONF_RESOURCES
 
 _LOGGER = logging.getLogger(__name__)
@@ -52,3 +53,22 @@ class SeatSensor(SeatEntity):
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return self.instrument.unit
+
+    @property
+    def device_class(self):
+        """Return the class of this sensor, from DEVICE_CLASSES."""
+        if self.instrument.device_class in DEVICE_CLASSES:
+            return self.instrument.device_class
+        return None
+
+    @property
+    def state_class(self):
+        """Return the state_class for the sensor, to enable statistics"""
+        state_class = None
+        if self.instrument.attr in [
+            'battery_level', 'adblue_level', 'fuel_level', 'charging_time_left', 'charging_power', 'charge_rate',
+            'electric_range', 'combustion_range', 'combined_range', 'outside_temperature'
+        ]:
+            state_class = "measurement"
+        return state_class
+

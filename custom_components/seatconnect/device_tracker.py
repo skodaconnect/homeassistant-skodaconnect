@@ -81,6 +81,11 @@ class SeatDeviceTracker(SeatEntity, TrackerEntity):
         return SOURCE_TYPE_GPS
 
     @property
+    def force_update(self):
+        """All updates do not need to be written to the state machine."""
+        return False
+
+    @property
     def icon(self):
         """Return the icon."""
         return "mdi:car"
