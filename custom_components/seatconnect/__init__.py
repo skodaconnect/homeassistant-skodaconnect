@@ -693,8 +693,8 @@ class SeatEntity(Entity):
         return True
 
     @property
-    def device_state_attributes(self):
-        """Return device specific state attributes."""
+    def extra_state_attributes(self):
+        """Return extra state attributes."""
         attributes = dict(
             self.instrument.attributes,
             model=f"{self.vehicle.model}/{self.vehicle.model_year}",
