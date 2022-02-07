@@ -25,7 +25,7 @@
         "data": {
           "resources": "Bronnen om te volgen.",
           "convert": "Kies afstand/eenheid conversies.",
-          "update_interval": "Poll snelheid (seconden).",
+          "scan_interval": "Poll snelheid (seconden).",
           "debug": "Volledige API debug logging (debug logging moet aan staan in configuration.yaml)"
         }
       },
@@ -57,7 +57,7 @@
         "title": "Opties voor Skoda Connect",
         "description": "Instellingen",
         "data": {
-          "update_interval": "Poll interval (seconden)",
+          "scan_interval": "Poll interval (seconden)",
           "spin": "S-PIN",
           "mutable": "Interactie met de auto toelaten. Uitvinken maakt de auto 'alleen lezen'.",
           "convert": "Kies afstand/eenheid conversies.",

@@ -25,7 +25,7 @@
         "data": {
           "resources": "Resources to monitor.",
           "convert": "Select distance/unit conversions.",
-          "update_interval": "Poll frequency (seconds).",
+          "scan_interval": "Poll frequency (seconds).",
           "debug": "Full API debug logging (requires debug logging enabled in configuration.yaml)"
         }
       },
@@ -57,7 +57,7 @@
         "title": "Options for Skoda Connect",
         "description": "Configure update interval",
         "data": {
-          "update_interval": "Poll frequency (seconds)",
+          "scan_interval": "Poll frequency (seconds)",
           "spin": "S-PIN",
           "mutable": "Allow interactions with car (actions). Uncheck to make the car 'read only'.",
           "convert": "Select distance/unit conversions.",

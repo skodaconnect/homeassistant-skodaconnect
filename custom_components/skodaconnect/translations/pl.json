@@ -25,7 +25,7 @@
         "data": {
           "resources": "Zasoby do dodania",
           "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości",
-          "update_interval": "Częstotliwość sondowania (sekundy).",
+          "scan_interval": "Częstotliwość sondowania (sekundy).",
           "debug": "Pełne rejestrowanie debugowania interfejsu API (wymaga włączenia rejestrowania debugowania w pliku configuration.yaml)"
         }
       },
@@ -57,7 +57,7 @@
         "title": "Opcje Skoda Connect",
         "description": "Skonfiguruj opcje monitorowania pojazdu Skoda Connect.",
         "data": {
-          "update_interval": "Częstotliwość aktualizacji czujników (sekundy)",
+          "scan_interval": "Częstotliwość aktualizacji czujników (sekundy)",
           "spin": "S-PIN",
           "mutable": "Usuń zaznaczenie, aby samochód był „tylko do odczytu”. Jeśli je zostawisz będziesz mógł wejść w interakcję z samochodem",
           "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości",

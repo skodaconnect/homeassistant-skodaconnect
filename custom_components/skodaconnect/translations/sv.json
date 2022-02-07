@@ -25,7 +25,7 @@
           "data": {
             "resources": "Resurser att övervaka.",
             "convert": "Ange enhetsomvandling.",
-            "update_interval": "Uppdateringsfrekvens (sekunder).",
+            "scan_interval": "Uppdateringsfrekvens (sekunder).",
             "debug": "Full API debug loggning (kräver debug loggning aktiverat i configuration.yaml)"
           }
         },
@@ -57,7 +57,7 @@
           "title": "Alternativ för Skoda Connect",
           "description": "Alternativ för hantering av Skoda Connect.",
           "data": {
-            "update_interval": "Uppdateringsfrekvens (sekunder)",
+            "scan_interval": "Uppdateringsfrekvens (sekunder)",
             "spin": "S-PIN",
             "mutable": "Tillåt interaktioner med bilen (åtgärder). Avmarkera för att göra bilen 'skrivskyddad'.",
             "convert": "Ange enhetsomvandling.",
