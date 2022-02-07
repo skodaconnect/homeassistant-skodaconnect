@@ -1,5 +1,5 @@
 ![Version](https://img.shields.io/github/v/release/lendy007/homeassistant-skodaconnect?include_prereleases)
-![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20pypi)
+![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20library)
 ![Downloads](https://img.shields.io/github/downloads/lendy007/homeassistant-skodaconnect/total)
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
