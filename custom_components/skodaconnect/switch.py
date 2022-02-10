@@ -23,12 +23,13 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 async def async_setup_entry(hass, entry, async_add_devices):
     data = hass.data[DOMAIN][entry.entry_id][DATA]
+    _LOGGER.debug(f"Data is {type(data)} {dir(data)}")
     coordinator = data.coordinator
     if coordinator.data is not None:
-        if CONF_RESOURCES in entry.options:
-            resources = entry.options[CONF_RESOURCES]
-        else:
-            resources = entry.data[CONF_RESOURCES]
+        #if CONF_RESOURCES in entry.options:
+        #    resources = entry.options[CONF_RESOURCES]
+        #else:
+        #    resources = entry.data[CONF_RESOURCES]
 
         async_add_devices(
             SkodaSwitch(
@@ -37,7 +38,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
             for instrument in (
                 instrument
                 for instrument in data.instruments
-                if instrument.component == "switch" and instrument.attr in resources
+                if instrument.component == "switch" #and instrument.attr in resources
             )
         )
 

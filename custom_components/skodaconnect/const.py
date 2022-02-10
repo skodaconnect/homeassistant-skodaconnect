@@ -10,6 +10,7 @@ CONF_IMPERIAL_UNITS = "imperial_units"
 CONF_NO_CONVERSION = "no_conversion"
 CONF_CONVERT = "convert"
 CONF_VEHICLE = "vehicle"
+CONF_VEHICLES = "vehicles"
 CONF_INSTRUMENTS = "instruments"
 CONF_DEBUG = "debug"
 

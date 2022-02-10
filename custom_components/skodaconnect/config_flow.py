@@ -1,29 +1,40 @@
-import homeassistant.helpers.config_validation as cv
 import logging
 import voluptuous as vol
-from homeassistant import config_entries
+from homeassistant import config_entries #, exceptions
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_PASSWORD,
     CONF_RESOURCES,
     CONF_USERNAME,
-    CONF_SCAN_INTERVAL
+    CONF_SCAN_INTERVAL,
+    #CONF_DEVICE,
+    #CONF_DEVICES,
+    #CONF_DEVICE_ID,
 )
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.device_registry import (
+    DeviceEntry,
+    DeviceRegistry,
+    async_entries_for_config_entry,
+    async_get_registry as async_get_device_registry,
+)
+from homeassistant.helpers.entity_registry import (
+    async_entries_for_device,
+    async_get_registry as async_get_entity_registry,
+)
 
 from skodaconnect import Connection
+from skodaconnect.exceptions import SkodaAccountLockedException, SkodaLoginFailedException
 from . import get_convert_conf
 from .const import (
     CONF_CONVERT,
-    CONF_SCANDINAVIAN_MILES,
-    CONF_IMPERIAL_UNITS,
     CONF_NO_CONVERSION,
     CONF_DEBUG,
     CONVERT_DICT,
     CONF_MUTABLE,
     CONF_SPIN,
-    CONF_VEHICLE,
     CONF_INSTRUMENTS,
     MIN_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
@@ -33,181 +44,124 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 2
-    task_login = None
-    task_finish = None
-    task_get_vehicles = None
-    entry = None
+    """Handle Skoda Connect config flow instance."""
+
+    VERSION = 3
 
     def __init__(self):
-        """Initialize."""
+        """Initialize flow instance."""
         self._entry = None
-        self._init_info = {}
-        self._data = {}
-        self._options = {}
-        self._errors = {}
         self._connection = None
-        self._session = None
+        self._vehicles = None
+        self.task_login = None
+        self.task_get_vehicles = None
+        self.error = None
+        self.data = {}
 
+   # Config flow steps
+    # Initial step - User input
     async def async_step_user(self, user_input=None):
+        """Handle start of Skoda Connect config flow."""
         if user_input is not None:
             self.task_login = None
-            self.task_update = None
-            self.task_finish = None
-            self._errors = {}
-            self._data = {
-                CONF_USERNAME: user_input[CONF_USERNAME],
-                CONF_PASSWORD: user_input[CONF_PASSWORD],
-                CONF_INSTRUMENTS: {},
-                CONF_VEHICLE: None
+            self.error = None
+            # Abort if this account is already configured
+            await self.async_set_unique_id(user_input[CONF_USERNAME])
+            self._abort_if_unique_id_configured()
+            self.data = {
+                CONF_USERNAME: user_input.get(CONF_USERNAME, None),
+                CONF_PASSWORD: user_input.get(CONF_PASSWORD, None),
+                CONF_SPIN: user_input.get(CONF_SPIN, None),
+                CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+                CONF_CONVERT: user_input.get(CONF_CONVERT, CONF_NO_CONVERSION),
+                CONF_MUTABLE: user_input.get(CONF_MUTABLE, True),
+                CONF_DEBUG: user_input.get(CONF_DEBUG, False)
             }
-            # Set default options
-            self._options = {
-                CONF_CONVERT: CONF_NO_CONVERSION,
-                CONF_MUTABLE: True,
-                CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
-                CONF_DEBUG: False,
-                CONF_SPIN: None,
-                CONF_RESOURCES: []
-            }
-
-            _LOGGER.debug("Creating connection to Skoda Connect")
-            self._connection = Connection(
-                session=async_get_clientsession(self.hass),
-                username=self._data[CONF_USERNAME],
-                password=self._data[CONF_PASSWORD],
-                fulldebug=False
-            )
 
             return await self.async_step_login()
 
+        return await self._async_setup_form()
+
+    # Return user input form
+    async def _async_setup_form(self):
+        """Show the initial setup form."""
         return self.async_show_form(
             step_id="user", data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_USERNAME): cv.string,
-                    vol.Required(CONF_PASSWORD): cv.string,
-                }
-            ), errors=self._errors
-        )
-
-    # noinspection PyBroadException
-    async def _async_task_login(self):
-        try:
-            result = await self._connection.doLogin()
-        except Exception as e:
-            _LOGGER.error(f"Login failed with error: {e}")
-            self._errors["base"] = "cannot_connect"
-
-        if result is False:
-            self._errors["base"] = "cannot_connect"
-
-        self.hass.async_create_task(
-            self.hass.config_entries.flow.async_configure(flow_id=self.flow_id)
-        )
-
-    async def _async_task_get_vehicles(self):
-        try:
-            result = await self._connection.get_vehicles()
-        except Exception as e:
-            _LOGGER.error(f"Fetch vehicles failed with error: {e}")
-            self._errors["base"] = "cannot_connect"
-
-        if result is False:
-            self._errors["base"] = "cannot_connect"
-
-        self.hass.async_create_task(
-            self.hass.config_entries.flow.async_configure(flow_id=self.flow_id)
-        )
-
-    async def async_step_vehicle(self, user_input=None):
-        if user_input is not None:
-            self._data[CONF_VEHICLE] = user_input[CONF_VEHICLE]
-            self._options[CONF_SPIN] = user_input[CONF_SPIN]
-            self._options[CONF_MUTABLE] = user_input[CONF_MUTABLE]
-            return await self.async_step_monitoring()
-
-        vin_numbers = self._init_info["CONF_VEHICLES"].keys()
-        return self.async_show_form(
-            step_id="vehicle",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_VEHICLE, default=next(iter(vin_numbers))): vol.In(vin_numbers),
-                    vol.Optional(CONF_SPIN, default=""): cv.string,
-                    vol.Required(CONF_MUTABLE, default=True): cv.boolean
-                }
-            ), errors=self._errors
-        )
-
-    async def async_step_monitoring(self, user_input=None):
-        if user_input is not None:
-            self._options[CONF_RESOURCES] = user_input[CONF_RESOURCES]
-            self._options[CONF_CONVERT] = user_input[CONF_CONVERT]
-            self._options[CONF_SCAN_INTERVAL] = user_input[CONF_SCAN_INTERVAL]
-            self._options[CONF_DEBUG] = user_input[CONF_DEBUG]
-
-            await self.async_set_unique_id(self._data[CONF_VEHICLE])
-            self._abort_if_unique_id_configured()
-
-            return self.async_create_entry(
-                title=self._data[CONF_VEHICLE],
-                data=self._data,
-                options=self._options
-            )
-
-        instruments = self._init_info["CONF_VEHICLES"][self._data[CONF_VEHICLE]]
-        instruments_dict = {
-            instrument.attr: instrument.name for instrument in instruments
-        }
-        self._data[CONF_INSTRUMENTS] = dict(sorted(instruments_dict.items(), key=lambda item: item[1]))
-
-        return self.async_show_form(
-            step_id="monitoring",
-            errors=self._errors,
-            data_schema=vol.Schema(
-                {
                     vol.Required(
-                        CONF_RESOURCES, default=list(self._data[CONF_INSTRUMENTS].keys())
-                    ): cv.multi_select(self._data[CONF_INSTRUMENTS]),
+                        CONF_USERNAME,
+                        default=self.data.get(CONF_USERNAME, "")
+                    ): cv.string,
                     vol.Required(
-                        CONF_CONVERT, default=CONF_NO_CONVERSION
-                    ): vol.In(CONVERT_DICT),
+                        CONF_PASSWORD,
+                        default=self.data.get(CONF_PASSWORD, "")
+                    ): cv.string,
+                    vol.Optional(
+                        CONF_SPIN,
+                        default=self.data.get(CONF_SPIN, "")
+                    ): cv.string,
                     vol.Required(
-                        CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL
+                        CONF_SCAN_INTERVAL,
+                        default=self.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
                     ): vol.All(
                         vol.Coerce(int),
                         vol.Range(min=MIN_SCAN_INTERVAL, max=900)
                     ),
                     vol.Required(
-                        CONF_DEBUG, default=False
-                    ): cv.boolean
+                        CONF_CONVERT,
+                        default=self.data.get(CONF_CONVERT, CONF_NO_CONVERSION)
+                    ): vol.In(CONVERT_DICT),
+                    vol.Required(
+                        CONF_MUTABLE,
+                        default=self.data.get(CONF_MUTABLE, True)
+                    ): cv.boolean,
+                    vol.Optional(
+                        CONF_DEBUG,
+                        default=self.data.get(CONF_DEBUG, DEFAULT_DEBUG)
+                    ): cv.boolean,
                 }
-            ),
+            ), errors={"base": self.error}
         )
 
-   # Authentication and login
+    # Step 2 - Validate credentials via login background task
     async def async_step_login(self, user_input=None):
+        """Test login with credentials."""
+        # Create background task if it doesn't exist
         if not self.task_login:
+            _LOGGER.debug(f"Creating login bg task with user input {user_input}")
             self.task_login = self.hass.async_create_task(self._async_task_login())
-
+            _LOGGER.debug("Show login progress")
             return self.async_show_progress(
                 step_id="login",
                 progress_action="task_login",
             )
 
-        # noinspection PyBroadException
-        try:
-            await self.task_login
-        except Exception:
-            return self.async_abort(reason="Failed to connect to Skoda Connect")
-
-        if self._errors:
+        # If errors were encountered, return to setup form and display them
+        if self.error:
+            _LOGGER.debug(f"Error is: {self.error}")
+            self.task_login = None
             return self.async_show_progress_done(next_step_id="user")
 
-        #return self.async_show_progress_done(next_step_id="vehicle")
+        #_LOGGER.debug(f"Next step login progress, bg task is {self.task_login}")
+        # Wait for background login task, abort if it fails
+        try:
+            _LOGGER.debug(f"Wait for login, user data {user_input}")
+            await self.task_login
+        except Exception:
+            return self.async_abort(reason="An error occured when trying to fetch vehicles associated with account.")
+
+        _LOGGER.debug("Next step, vehicles")
+
+        # If login doesn't encounter errors, try to fetch vehicles
         return await self.async_step_get_vehicles()
 
+    # Step 3 - Validate account via fetching vehicles associated
     async def async_step_get_vehicles(self, user_input=None):
+        """Fetch vehicles associated with account."""
+        _LOGGER.debug("Starting step get vehicles")
+        # Create background task if it doesn't exist
         if not self.task_get_vehicles:
             self.task_get_vehicles = self.hass.async_create_task(self._async_task_get_vehicles())
 
@@ -216,27 +170,116 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 progress_action="task_get_vehicles"
             )
 
-        # noinspection PyBroadException
+        # Try to fetch vehicles associated with account and abort if it fails
         try:
+            _LOGGER.debug("Wait for backgroud task get vehicles to finish")
             await self.task_get_vehicles
         except Exception:
             return self.async_abort(reason="An error occured when trying to fetch vehicles associated with account.")
 
-        if self._errors:
+        # If errors were encountered, return to credentials form and display them
+        if self.error:
             return self.async_show_progress_done(next_step_id="user")
 
+        # Check that discovered vehicles doesn't exist in old config entries
+        _LOGGER.debug("Verify old config entries")
         for vehicle in self._connection.vehicles:
-            _LOGGER.info(f"Found data for VIN: {vehicle.vin} from Skoda Connect")
-        if len(self._connection.vehicles) == 0:
-            return self.async_abort(reason="Could not find any vehicles associated with account!")
+            for entry in self.hass.config_entries.async_entries(DOMAIN):
+                if entry.unique_id == vehicle.vin:
+                    return self.async_abort(reason=f"There's existing config for VIN number {vehicle.vin}. Please remove it and try again.")
+        return await self.async_step_create_entry(user_input)
 
-        self._init_info["CONF_VEHICLES"] = {
-            vehicle.vin: vehicle.dashboard().instruments
-            for vehicle in self._connection.vehicles
+    # Step 4 - Save config entry
+    async def async_step_create_entry(self, user_input=None):
+        """Finalize config flow and create config entry."""
+        # Set credentials
+        config_data = {
+            CONF_USERNAME: self.data[CONF_USERNAME],
+            CONF_PASSWORD: self.data[CONF_PASSWORD],
         }
-        return self.async_show_progress_done(next_step_id="vehicle")
+        # Set options, use defaults if not in user data
+        config_options = {
+            CONF_CONVERT: self.data.get(
+                CONF_CONVERT,
+                CONF_NO_CONVERSION
+            ),
+            CONF_MUTABLE: self.data.get(
+                CONF_MUTABLE,
+                True
+            ),
+            CONF_SCAN_INTERVAL: self.data.get(
+                CONF_SCAN_INTERVAL,
+                DEFAULT_SCAN_INTERVAL
+            ),
+            CONF_SPIN: self.data.get(
+                CONF_SPIN,
+                None
+            ),
+            CONF_DEBUG: self.data.get(
+                CONF_DEBUG,
+                DEFAULT_DEBUG
+            ),
+        }
+        return self.async_create_entry(
+            title=config_data[CONF_USERNAME],
+            data=config_data,
+            options=config_options
+        )
 
 
+   # Background tasks
+    async def _async_task_login(self):
+        """Background login task."""
+        try:
+            _LOGGER.debug("Creating connection to Skoda Connect")
+            self._connection = Connection(
+                session=async_get_clientsession(self.hass),
+                username=self.data[CONF_USERNAME],
+                password=self.data[CONF_PASSWORD],
+                fulldebug=False
+            )
+            self.error = None
+            result = await self._connection.doLogin()
+        except (SkodaAccountLockedException):
+            _LOGGER.debug("Account locked exception")
+            self.error = "account_locked"
+        except (SkodaLoginFailedException):
+            _LOGGER.debug("Login failed exception")
+            self.error = "login_failed"
+        except Exception as e:
+            _LOGGER.debug("Generic exception")
+            self.error = "cannot_connect"
+
+        if self.error is None:
+            if result is False and self.error is None:
+                self.error = "cannot_connect"
+        _LOGGER.debug(f"Exit login task, errror is: {self.error}")
+
+        _LOGGER.debug("Create task end")
+        return self.hass.async_create_task(
+            self.hass.config_entries.flow.async_configure(flow_id=self.flow_id)
+        )
+
+    async def _async_task_get_vehicles(self):
+        """Background task to fetch vehicles."""
+        try:
+            _LOGGER.debug("Running bg task get vehicles")
+            result = await self._connection.get_vehicles()
+        except Exception as e:
+            _LOGGER.error(f"Fetch vehicles failed with error: {e}")
+            self.error = "cannot_connect"
+
+        if result is False:
+            self.error = "cannot_connect"
+        elif len(self._connection.vehicles) == 0:
+            self.error = "no_vehicles"
+
+        _LOGGER.debug("Task get vehicles end")
+        self.hass.async_create_task(
+            self.hass.config_entries.flow.async_configure(flow_id=self.flow_id)
+        )
+
+   # Handle re-authentication
     async def async_step_reauth(self, entry) -> dict:
         """Handle initiation of re-authentication with Skoda Connect."""
         self.entry = entry
@@ -244,7 +287,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth_confirm(self, user_input: dict = None) -> dict:
         """Handle re-authentication with Skoda Connect."""
-        errors: dict = {}
+        error: dict = {}
 
         if user_input is not None:
             _LOGGER.debug("Creating connection to Skoda Connect")
@@ -255,11 +298,10 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 fulldebug=self.entry.options.get(CONF_DEBUG, self.entry.data.get(CONF_DEBUG, DEFAULT_DEBUG)),
             )
 
-            # noinspection PyBroadException
             try:
                 if not await self._connection.doLogin():
                     _LOGGER.debug("Unable to login to Skoda Connect. Need to accept a new EULA/T&C? Try logging in to the portal: https://www.skoda-connect.com/")
-                    errors["base"] = "cannot_connect"
+                    error = "cannot_connect"
                 else:
                     data = self.entry.data.copy()
                     self.hass.config_entries.async_update_entry(
@@ -286,8 +328,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_USERNAME, default=self.entry.data[CONF_USERNAME]): str,
                     vol.Required(CONF_PASSWORD): str,
                 }
-            ),
-            errors=errors,
+            ), errors={"base": error}
         )
    # Configuration.yaml import
     async def async_step_import(self, yaml):
@@ -296,8 +337,6 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._data = {
             CONF_USERNAME: None,
             CONF_PASSWORD: None,
-            CONF_INSTRUMENTS: {},
-            CONF_VEHICLE: None
         }
         self._options = {
             CONF_CONVERT: CONF_NO_CONVERSION,
@@ -305,7 +344,6 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
             CONF_DEBUG: False,
             CONF_SPIN: None,
-            CONF_RESOURCES: []
         }
         self._init_info = {}
 
@@ -332,12 +370,12 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if "minutes" in yaml["scan_interval"]:
                 minutes = int(yaml["scan_interval"]["minutes"])
             self._options[CONF_SCAN_INTERVAL] = seconds+(minutes*60)
-        if "name" in yaml:
-            vin = next(iter(yaml["name"]))
-            self._data[CONF_VEHICLE] = vin.upper()
         if "response_debug" in yaml:
                 if yaml["response_debug"]:
                     self._options[CONF_DEBUG] = True
+
+        await self.async_set_unique_id(self._data[CONF_USERNAME])
+        self._abort_if_unique_id_configured()
 
         # Try to login and fetch vehicles
         self._connection = Connection(
@@ -359,30 +397,11 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             for vehicle in self._connection.vehicles
         }
 
-        if self._data[CONF_VEHICLE] is None:
-            self._data[CONF_VEHICLE] = next(iter(self._init_info["CONF_VEHICLES"]))
-        elif self._data[CONF_VEHICLE] not in self._init_info["CONF_VEHICLES"]:
-            self._data[CONF_VEHICLE] = next(iter(self._init_info["CONF_VEHICLES"]))
-
-        await self.async_set_unique_id(self._data[CONF_VEHICLE])
-        self._abort_if_unique_id_configured()
-
-        instruments = self._init_info["CONF_VEHICLES"][self._data[CONF_VEHICLE]]
-        self._data[CONF_INSTRUMENTS] = {
-            instrument.attr: instrument.name for instrument in instruments
-        }
-
-        if "resources" in yaml:
-            for resource in yaml["resources"]:
-                if resource in self._data[CONF_INSTRUMENTS]:
-                    self._options[CONF_RESOURCES].append(resource)
-
         return self.async_create_entry(
-            title=self._data[CONF_VEHICLE],
+            title=self._data[CONF_USERNAME],
             data=self._data,
             options=self._options
         )
-
 
     @staticmethod
     @callback

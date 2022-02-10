@@ -129,6 +129,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Setup Skoda Connect component from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
+    # Load config entry
     if entry.options.get(CONF_SCAN_INTERVAL):
         update_interval = timedelta(seconds=entry.options[CONF_SCAN_INTERVAL])
     else:
@@ -136,8 +137,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if update_interval < timedelta(seconds=MIN_SCAN_INTERVAL):
         update_interval = timedelta(seconds=MIN_SCAN_INTERVAL)
 
+    # Create data coordinator and login to API
     coordinator = SkodaCoordinator(hass, entry, update_interval)
-
     try:
         if not await coordinator.async_login():
             await hass.config_entries.flow.async_init(
@@ -151,94 +152,104 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     except Exception as e:
         raise ConfigEntryNotReady(e) from e
 
+    # Attach logout function to call if HASS stops
     entry.async_on_unload(
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_logout)
     )
 
+    # Call for refresh to get new data
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
 
     # Get parent device
-    try:
-        identifiers={(DOMAIN, entry.unique_id)}
-        registry = device_registry.async_get(hass)
-        device = registry.async_get_device(identifiers)
-        # Get user configured name for device
-        name = device.name_by_user if not device.name_by_user is None else None
-    except:
-        name = None
+    #try:
+    #    identifiers={(DOMAIN, entry.unique_id)}
+    #    registry = device_registry.async_get(hass)
+    #    device = registry.async_get_device(identifiers)
+    #    # Get user configured name for device
+    #    name = device.name_by_user if not device.name_by_user is None else None
+    #except:
+    #    name = None
 
-    data = SkodaData(entry.data, name, coordinator)
+    #data = SkodaData(entry.data, name, coordinator)
+    data = SkodaData(entry.data, None, coordinator)
     instruments = coordinator.data
 
-    conf_instruments = entry.data.get(CONF_INSTRUMENTS, {}).copy()
-    if entry.options.get(CONF_DEBUG, False) is True:
-        _LOGGER.debug(f"Configured data: {entry.data}")
-        _LOGGER.debug(f"Configured options: {entry.options}")
-        _LOGGER.debug(f"Resources from options are: {entry.options.get(CONF_RESOURCES, [])}")
-        _LOGGER.debug(f"All instruments (data): {conf_instruments}")
-    new_instruments = {}
+    #conf_instruments = entry.data.get(CONF_INSTRUMENTS, {}).copy()
+    #if entry.options.get(CONF_DEBUG, False) is True:
+    #    _LOGGER.debug(f"Configured data: {entry.data}")
+    #    _LOGGER.debug(f"Configured options: {entry.options}")
+    #    _LOGGER.debug(f"Resources from options are: {entry.options.get(CONF_RESOURCES, [])}")
+    #    _LOGGER.debug(f"All instruments (data): {conf_instruments}")
+    #new_instruments = {}
 
-    def is_enabled(attr):
-        """Return true if the user has enabled the resource."""
-        return attr in entry.data.get(CONF_RESOURCES, [attr])
+    #def is_enabled(attr):
+    #    """Return true if the user has enabled the resource."""
+    #    return attr in entry.data.get(CONF_RESOURCES, [attr])
 
     components = set()
 
     # Check if new instruments
-    for instrument in (
-        instrument
-        for instrument in instruments
-        if not instrument.attr in conf_instruments
-    ):
-            _LOGGER.info(f"Discovered new instrument {instrument.name}")
-            new_instruments[instrument.attr] = instrument.name
+    #for instrument in (
+    #    instrument
+    #    for instrument in instruments
+    #    if not instrument.attr in conf_instruments
+    #):
+    #        _LOGGER.info(f"Discovered new instrument {instrument.name}")
+    #        new_instruments[instrument.attr] = instrument.name
 
     # Update config entry with new instruments
-    if len(new_instruments) > 0:
-        conf_instruments.update(new_instruments)
-        # Prepare data to update config entry with
-        update = {
-            'data': {
-                CONF_INSTRUMENTS: dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
-            },
-            'options': {
-                CONF_RESOURCES: entry.options.get(
-                    CONF_RESOURCES,
-                    entry.data.get(CONF_RESOURCES, ['none']))
-            }
-        }
+    #if len(new_instruments) > 0:
+    #    conf_instruments.update(new_instruments)
+    #    # Prepare data to update config entry with
+    #    update = {
+    #        'data': {
+    #            CONF_INSTRUMENTS: dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
+    #        },
+    #        'options': {
+    #            CONF_RESOURCES: entry.options.get(
+    #                CONF_RESOURCES,
+    #                entry.data.get(CONF_RESOURCES, ['none']))
+    #        }
+    #    }
 
-        # Enable new instruments if "activate newly enable entitys" is active
-        if hasattr(entry, "pref_disable_new_entities"):
-            if not entry.pref_disable_new_entities:
-                _LOGGER.debug(f"Enabling new instruments {new_instruments}")
-                for item in new_instruments:
-                    update['options'][CONF_RESOURCES].append(item)
+    #    # Enable new instruments if "activate newly enable entitys" is active
+    #    if hasattr(entry, "pref_disable_new_entities"):
+    #        if not entry.pref_disable_new_entities:
+    #            _LOGGER.debug(f"Enabling new instruments {new_instruments}")
+    #            for item in new_instruments:
+    #                update['options'][CONF_RESOURCES].append(item)
 
-        _LOGGER.debug(f"Updating config entry data: {update.get('data')}")
-        _LOGGER.debug(f"Updating config entry options: {update.get('options')}")
-        hass.config_entries.async_update_entry(
-            entry,
-            data={**entry.data, **update['data']},
-            options={**entry.options, **update['options']}
-        )
+    #    _LOGGER.debug(f"Updating config entry data: {update.get('data')}")
+    #    _LOGGER.debug(f"Updating config entry options: {update.get('options')}")
+    #    hass.config_entries.async_update_entry(
+    #        entry,
+    #        data={**entry.data, **update['data']},
+    #        options={**entry.options, **update['options']}
+    #    )
 
+    # Create integration entities
+    _LOGGER.debug(f"Have instruments of type {type(instruments)}")
+    _LOGGER.debug(f"First instrument is {instruments[0]} of type {type(instruments[0])}")
     for instrument in (
         instrument
         for instrument in instruments
-        if instrument.component in PLATFORMS and is_enabled(instrument.slug_attr)
+        if instrument.component in PLATFORMS #and is_enabled(instrument.slug_attr)
     ):
+        _LOGGER.debug(f"Add {instrument} to data")
         data.instruments.add(instrument)
+        _LOGGER.debug(f"Add component {instrument.component}")
         components.add(PLATFORMS[instrument.component])
 
     for component in components:
+        _LOGGER.debug(f"Add component {component} to coordinator")
         coordinator.platforms.append(component)
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, component)
         )
 
+    # Add discovered entities data to HASS
     hass.data[DOMAIN][entry.entry_id] = {
         UPDATE_CALLBACK: update_callback,
         DATA: data,
@@ -542,21 +553,45 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
     # Migrate data from version 1, pre 1.0.57
     if entry.version == 1:
         # Make a copy of old config
-        new = {**entry.data}
+        new_data = {**entry.data}
+        new_options = {**entry.options}
+
+        # Remove old unused options
+        new_data.pop("update_interval", None)
+        new_data.pop("instruments", None)
+        new_data.pop("vehicle", None)
+        new_options.pop("resources", None)
 
         # Convert from minutes to seconds for poll interval
         minutes = entry.options.get("update_interval", 1)
         seconds = minutes*60
-        new.pop("update_interval", None)
-        new[CONF_SCAN_INTERVAL] = seconds
+        new_data[CONF_SCAN_INTERVAL] = seconds
 
         # Save "new" config
-        entry.data = {**new}
+        entry.data = {**new_data}
+        entry.options = {**new_options}
+        entry.version = 3
 
-        entry.version = 2
+    # Migrate data from version 2, pre 1.2.0
+    if entry.version == 2:
+        # Make a copy of old config
+        new_data = {**entry.data}
+        new_options = {**entry.options}
+
+        # Remove old unused options
+        new_data.pop("instruments", None)
+        new_data.pop("vehicle", None)
+        new_options.pop("resources", None)
+
+        # Save "new" config
+        entry.data = {**new_data}
+        entry.options = {**new_data}
+        entry.version = 3
+
 
     _LOGGER.info("Migration to version %s successful", entry.version)
     return True
+
 class SkodaData:
     """Hold component state."""
 
@@ -565,7 +600,7 @@ class SkodaData:
         self.vehicles = set()
         self.instruments = set()
         self.config = config.get(DOMAIN, config)
-        self.name = name
+        #self.name = name
         self.coordinator = coordinator
 
     def instrument(self, vin, component, attr):
@@ -737,7 +772,7 @@ class SkodaCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
     def __init__(self, hass: HomeAssistant, entry, update_interval: timedelta):
-        self.vin = entry.data[CONF_VEHICLE].upper()
+        #self.vin = entry.data[CONF_VEHICLE].upper()
         self.entry = entry
         self.platforms = []
         self.report_last_updated = None
@@ -752,9 +787,9 @@ class SkodaCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Update data via library."""
-        vehicle = await self.update()
+        vehicles = await self.update()
 
-        if not vehicle:
+        if not vehicles:
             raise UpdateFailed("No vehicles found.")
 
         # Backward compatibility
@@ -768,14 +803,18 @@ class SkodaCoordinator(DataUpdateCoordinator):
             )
         )
 
-        dashboard = vehicle.dashboard(
-            mutable=self.entry.options.get(CONF_MUTABLE),
-            spin=self.entry.options.get(CONF_SPIN),
-            miles=convert_conf == CONF_IMPERIAL_UNITS,
-            scandinavian_miles=convert_conf == CONF_SCANDINAVIAN_MILES,
-        )
+        all_instruments = []
+        for vehicle in vehicles:
+            dashboard = vehicle.dashboard(
+                mutable=self.entry.options.get(CONF_MUTABLE),
+                spin=self.entry.options.get(CONF_SPIN),
+                miles=convert_conf == CONF_IMPERIAL_UNITS,
+                scandinavian_miles=convert_conf == CONF_SCANDINAVIAN_MILES,
+            )
+            instruments = dashboard.instruments
+            all_instruments += instruments
 
-        return dashboard.instruments
+        return all_instruments
 
     async def async_logout(self, event=None):
         """Logout from Skoda Connect"""
@@ -813,9 +852,12 @@ class SkodaCoordinator(DataUpdateCoordinator):
         _LOGGER.debug("Updating data from Skoda Connect")
         try:
             # Get Vehicle object matching VIN number
-            vehicle = self.connection.vehicle(self.vin)
-            if await vehicle.update():
-                return vehicle
+            #vehicle = self.connection.vehicle(self.vin)
+            #if await vehicle.update():
+            #    return vehicle
+            if await self.connection.update_all():
+                _LOGGER.debug("Update finished, return vehicles")
+                return self.connection.vehicles
             else:
                 _LOGGER.warning("Could not query update from Skoda Connect")
                 return False
