@@ -13,6 +13,7 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, SOURCE_REAUTH, SOURCE_IMPORT
 from homeassistant.const import (
+    CONF_DEVICES,
     CONF_NAME,
     CONF_PASSWORD,
     CONF_RESOURCES,
@@ -34,13 +35,9 @@ from skodaconnect.exceptions import (
     SkodaConfigException,
     SkodaAuthenticationException,
     SkodaAccountLockedException,
-    SkodaTokenExpiredException,
-    SkodaException,
     SkodaEULAException,
-    SkodaThrottledException,
     SkodaLoginFailedException,
     SkodaInvalidRequestException,
-    SkodaRequestInProgressException
 )
 
 from .const import (
@@ -48,8 +45,6 @@ from .const import (
     CONF_MUTABLE,
     CONF_SCANDINAVIAN_MILES,
     CONF_SPIN,
-    CONF_VEHICLE,
-    CONF_INSTRUMENTS,
     DATA,
     DATA_KEY,
     MIN_SCAN_INTERVAL,
@@ -129,8 +124,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Setup Skoda Connect component from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    # Load config entry
-    if entry.options.get(CONF_SCAN_INTERVAL):
+    # Set update interval
+    if entry.options.get(CONF_SCAN_INTERVAL, False):
         update_interval = timedelta(seconds=entry.options[CONF_SCAN_INTERVAL])
     else:
         update_interval = timedelta(seconds=DEFAULT_SCAN_INTERVAL)
@@ -147,7 +142,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 data=entry,
             )
             return False
-    except (SkodaAuthenticationException, SkodaAccountLockedException, SkodaLoginFailedException) as e:
+    except (SkodaEULAException):
+        raise ConfigEntryNotReady("New EULA must be accepted in Skoda Connect portal")
+    except (SkodaAccountLockedException):
+        raise ConfigEntryAuthFailed("Account locked")
+    except (SkodaAuthenticationException, SkodaLoginFailedException) as e:
         raise ConfigEntryAuthFailed(e) from e
     except Exception as e:
         raise ConfigEntryNotReady(e) from e
@@ -162,88 +161,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
 
-    # Get parent device
-    #try:
-    #    identifiers={(DOMAIN, entry.unique_id)}
-    #    registry = device_registry.async_get(hass)
-    #    device = registry.async_get_device(identifiers)
-    #    # Get user configured name for device
-    #    name = device.name_by_user if not device.name_by_user is None else None
-    #except:
-    #    name = None
-
-    #data = SkodaData(entry.data, name, coordinator)
-    data = SkodaData(entry.data, None, coordinator)
+    data = SkodaData(entry.data, coordinator)
     instruments = coordinator.data
-
-    #conf_instruments = entry.data.get(CONF_INSTRUMENTS, {}).copy()
-    #if entry.options.get(CONF_DEBUG, False) is True:
-    #    _LOGGER.debug(f"Configured data: {entry.data}")
-    #    _LOGGER.debug(f"Configured options: {entry.options}")
-    #    _LOGGER.debug(f"Resources from options are: {entry.options.get(CONF_RESOURCES, [])}")
-    #    _LOGGER.debug(f"All instruments (data): {conf_instruments}")
-    #new_instruments = {}
-
-    #def is_enabled(attr):
-    #    """Return true if the user has enabled the resource."""
-    #    return attr in entry.data.get(CONF_RESOURCES, [attr])
 
     components = set()
 
-    # Check if new instruments
-    #for instrument in (
-    #    instrument
-    #    for instrument in instruments
-    #    if not instrument.attr in conf_instruments
-    #):
-    #        _LOGGER.info(f"Discovered new instrument {instrument.name}")
-    #        new_instruments[instrument.attr] = instrument.name
-
-    # Update config entry with new instruments
-    #if len(new_instruments) > 0:
-    #    conf_instruments.update(new_instruments)
-    #    # Prepare data to update config entry with
-    #    update = {
-    #        'data': {
-    #            CONF_INSTRUMENTS: dict(sorted(conf_instruments.items(), key=lambda item: item[1]))
-    #        },
-    #        'options': {
-    #            CONF_RESOURCES: entry.options.get(
-    #                CONF_RESOURCES,
-    #                entry.data.get(CONF_RESOURCES, ['none']))
-    #        }
-    #    }
-
-    #    # Enable new instruments if "activate newly enable entitys" is active
-    #    if hasattr(entry, "pref_disable_new_entities"):
-    #        if not entry.pref_disable_new_entities:
-    #            _LOGGER.debug(f"Enabling new instruments {new_instruments}")
-    #            for item in new_instruments:
-    #                update['options'][CONF_RESOURCES].append(item)
-
-    #    _LOGGER.debug(f"Updating config entry data: {update.get('data')}")
-    #    _LOGGER.debug(f"Updating config entry options: {update.get('options')}")
-    #    hass.config_entries.async_update_entry(
-    #        entry,
-    #        data={**entry.data, **update['data']},
-    #        options={**entry.options, **update['options']}
-    #    )
-
-    # Create integration entities
-    _LOGGER.debug(f"Have instruments of type {type(instruments)}")
-    _LOGGER.debug(f"First instrument is {instruments[0]} of type {type(instruments[0])}")
+    # Add all discovered instruments and corresponding componentes
     for instrument in (
         instrument
         for instrument in instruments
         if instrument.component in PLATFORMS #and is_enabled(instrument.slug_attr)
     ):
-        _LOGGER.debug(f"Add {instrument} to data")
         data.instruments.add(instrument)
-        _LOGGER.debug(f"Add component {instrument.component}")
         components.add(PLATFORMS[instrument.component])
 
+    # Add all discovered components to coordinator platforms
     for component in components:
-        _LOGGER.debug(f"Add component {component} to coordinator")
         coordinator.platforms.append(component)
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(entry, component)
@@ -537,70 +470,62 @@ async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-def get_convert_conf(entry: ConfigEntry):
-    return CONF_SCANDINAVIAN_MILES if entry.options.get(
-        CONF_SCANDINAVIAN_MILES,
-        entry.data.get(
-            CONF_SCANDINAVIAN_MILES,
-            False
-        )
-    ) else CONF_NO_CONVERSION
-
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Migrate configuration from old version to new."""
     _LOGGER.debug(f'Migrating from version {entry.version}')
 
-    # Migrate data from version 1, pre 1.0.57
-    if entry.version == 1:
-        # Make a copy of old config
-        new_data = {**entry.data}
-        new_options = {**entry.options}
+    if entry.version != 3:
+        # Save the parts of the config entry that we want to keep
+        new_data = {
+            CONF_USERNAME: entry.data[CONF_USERNAME],
+            CONF_PASSWORD: entry.data[CONF_PASSWORD],
+        }
+        new_options = {
+            CONF_SCAN_INTERVAL: entry.options.get(
+                CONF_SCAN_INTERVAL,
+                DEFAULT_SCAN_INTERVAL
+            ),
+            CONF_SPIN: entry.options.get(
+                CONF_SPIN,
+                ""
+            ),
+            CONF_MUTABLE: entry.options.get(
+                CONF_MUTABLE,
+                True
+            ),
+            CONF_DEBUG: entry.options.get(
+                CONF_DEBUG,
+                False
+            ),
+            CONF_CONVERT: entry.options.get(
+                CONF_CONVERT,
+                CONF_NO_CONVERSION
+            )
+        }
 
-        # Remove old unused options
-        new_data.pop("update_interval", None)
-        new_data.pop("instruments", None)
-        new_data.pop("vehicle", None)
-        new_options.pop("resources", None)
-
-        # Convert from minutes to seconds for poll interval
-        minutes = entry.options.get("update_interval", 1)
-        seconds = minutes*60
-        new_data[CONF_SCAN_INTERVAL] = seconds
+        # Migrate poll interval from version 1, pre 1.0.57
+        if entry.version == 1:
+            # Convert from minutes to seconds for poll interval
+            minutes = entry.options.get("update_interval", 1)
+            seconds = minutes*60
+            new_options[CONF_SCAN_INTERVAL] = seconds
 
         # Save "new" config
         entry.data = {**new_data}
         entry.options = {**new_options}
         entry.version = 3
 
-    # Migrate data from version 2, pre 1.2.0
-    if entry.version == 2:
-        # Make a copy of old config
-        new_data = {**entry.data}
-        new_options = {**entry.options}
-
-        # Remove old unused options
-        new_data.pop("instruments", None)
-        new_data.pop("vehicle", None)
-        new_options.pop("resources", None)
-
-        # Save "new" config
-        entry.data = {**new_data}
-        entry.options = {**new_data}
-        entry.version = 3
-
-
-    _LOGGER.info("Migration to version %s successful", entry.version)
+    _LOGGER.info(f"Migration to version {entry.version} successful")
     return True
 
 class SkodaData:
     """Hold component state."""
 
-    def __init__(self, config, name=None, coordinator=None):
+    def __init__(self, config, coordinator=None):
         """Initialize the component state."""
         self.vehicles = set()
         self.instruments = set()
         self.config = config.get(DOMAIN, config)
-        #self.name = name
         self.coordinator = coordinator
 
     def instrument(self, vin, component, attr):
@@ -792,17 +717,12 @@ class SkodaCoordinator(DataUpdateCoordinator):
         if not vehicles:
             raise UpdateFailed("No vehicles found.")
 
-        # Backward compatibility
-        default_convert_conf = get_convert_conf(self.entry)
-
         convert_conf = self.entry.options.get(
             CONF_CONVERT,
-            self.entry.data.get(
-                CONF_CONVERT,
-                default_convert_conf
-            )
+            CONF_NO_CONVERSION
         )
 
+        # Create dashboard for every vehicle and return instruments
         all_instruments = []
         for vehicle in vehicles:
             dashboard = vehicle.dashboard(
@@ -845,22 +765,42 @@ class SkodaCoordinator(DataUpdateCoordinator):
         except:
             raise
 
-    async def update(self) -> Union[bool, Vehicle]:
+    async def update(self) -> Union[bool, list]:
         """Update status from Skoda Connect"""
 
         # Update vehicle data
         _LOGGER.debug("Updating data from Skoda Connect")
         try:
-            # Get Vehicle object matching VIN number
-            #vehicle = self.connection.vehicle(self.vin)
-            #if await vehicle.update():
-            #    return vehicle
-            if await self.connection.update_all():
-                _LOGGER.debug("Update finished, return vehicles")
-                return self.connection.vehicles
+            monitor = self.entry.options.get(
+                CONF_RESOURCES,
+                self.entry.data.get(
+                    CONF_DEVICES,
+                    []
+                )
+            )
+            _LOGGER.debug(f"To monitor is: {monitor} of type {type(monitor)}")
+
+            update_list = []
+            for vin in monitor:
+                _LOGGER.debug(f"VIN number is {vin}")
+                vehicle = self.connection.vehicle(vin)
+                _LOGGER.debug(f"Vehicle is {vehicle}")
+                if vehicle.vin not in update_list:
+                    update_list.append(vehicle.update())
+
+            # Wait for all data updates to complete
+            if len(update_list) == 0:
+                # Update all vehicles if none is chosen
+                if await self.connection.update_all():
+                    return self.connection.vehicles
+                else:
+                    return False
             else:
-                _LOGGER.warning("Could not query update from Skoda Connect")
-                return False
+                # update all chosen vehicles in parallel
+                if await asyncio.gather(*update_list):
+                    return self.connection.vehicles
+                else:
+                    return False
         except Exception as error:
             _LOGGER.warning(f"An error occured while requesting update from Skoda Connect: {error}")
             return False
