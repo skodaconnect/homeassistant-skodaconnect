@@ -133,7 +133,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         update_interval = timedelta(seconds=CONF_DEFAULT_SCAN_INTERVAL)
     if update_interval < timedelta(seconds=CONF_MIN_SCAN_INTERVAL):
         update_interval = timedelta(seconds=CONF_MIN_SCAN_INTERVAL)
-    elif update_interval > timedelta(seconds=CONF_MAX_SCAN_INTERVAL)
+    elif update_interval > timedelta(seconds=CONF_MAX_SCAN_INTERVAL):
         update_interval = timedelta(seconds=CONF_MAX_SCAN_INTERVAL)
 
     # Create data coordinator and login to API
@@ -487,7 +487,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
         new_options = {
             CONF_SCAN_INTERVAL: entry.options.get(
                 CONF_SCAN_INTERVAL,
-                DEFAULT_SCAN_INTERVAL
+                CONF_DEFAULT_SCAN_INTERVAL
             ),
             CONF_SPIN: entry.options.get(
                 CONF_SPIN,
