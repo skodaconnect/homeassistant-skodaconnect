@@ -18,15 +18,15 @@ from skodaconnect.exceptions import SkodaAccountLockedException, SkodaLoginFaile
 
 from .const import (
     DOMAIN,
+    CONVERT_DICT,
     CONF_CONVERT,
+    CONF_NO_CONVERSION,
+    CONF_MIN_SCAN_INTERVAL,
+    CONF_MAX_SCAN_INTERVAL,
+    CONF_DEFAULT_SCAN_INTERVAL,
     CONF_DEBUG,
     CONF_MUTABLE,
-    CONF_NO_CONVERSION,
     CONF_SPIN,
-    CONVERT_DICT,
-    MIN_SCAN_INTERVAL,
-    DEFAULT_SCAN_INTERVAL,
-    DEFAULT_DEBUG
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -39,9 +39,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self):
         """Initialize flow instance."""
-        self._entry = None
         self._connection = None
-        self._vehicles = None
         self.task_login = None
         self.task_get_vehicles = None
         self.error = None
@@ -61,7 +59,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_USERNAME: user_input.get(CONF_USERNAME, None),
                 CONF_PASSWORD: user_input.get(CONF_PASSWORD, None),
                 CONF_SPIN: user_input.get(CONF_SPIN, None),
-                CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+                CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, CONF_DEFAULT_SCAN_INTERVAL),
                 CONF_CONVERT: user_input.get(CONF_CONVERT, CONF_NO_CONVERSION),
                 CONF_MUTABLE: user_input.get(CONF_MUTABLE, True),
                 CONF_DEBUG: user_input.get(CONF_DEBUG, False),
@@ -91,10 +89,10 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ): cv.string,
                     vol.Required(
                         CONF_SCAN_INTERVAL,
-                        default=self.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+                        default=self.data.get(CONF_SCAN_INTERVAL, CONF_DEFAULT_SCAN_INTERVAL)
                     ): vol.All(
                         vol.Coerce(int),
-                        vol.Range(min=MIN_SCAN_INTERVAL, max=900)
+                        vol.Range(min=CONF_MIN_SCAN_INTERVAL, max=CONF_MAX_SCAN_INTERVAL)
                     ),
                     vol.Required(
                         CONF_CONVERT,
@@ -106,7 +104,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ): cv.boolean,
                     vol.Optional(
                         CONF_DEBUG,
-                        default=self.data.get(CONF_DEBUG, DEFAULT_DEBUG)
+                        default=self.data.get(CONF_DEBUG, False)
                     ): cv.boolean,
                 }
             ), errors={"base": self.error}
@@ -197,7 +195,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
             CONF_SCAN_INTERVAL: self.data.get(
                 CONF_SCAN_INTERVAL,
-                DEFAULT_SCAN_INTERVAL
+                CONF_DEFAULT_SCAN_INTERVAL
             ),
             CONF_SPIN: self.data.get(
                 CONF_SPIN,
@@ -205,7 +203,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
             CONF_DEBUG: self.data.get(
                 CONF_DEBUG,
-                DEFAULT_DEBUG
+                False
             ),
         }
         # Save config entry
@@ -276,7 +274,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 session=async_get_clientsession(self.hass),
                 username=user_input[CONF_USERNAME],
                 password=user_input[CONF_PASSWORD],
-                fulldebug=self.entry.options.get(CONF_DEBUG, self.entry.data.get(CONF_DEBUG, DEFAULT_DEBUG)),
+                fulldebug=self.entry.options.get(CONF_DEBUG, self.entry.data.get(CONF_DEBUG, False)),
             )
 
             try:
@@ -321,7 +319,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._options = {
             CONF_CONVERT: CONF_NO_CONVERSION,
             CONF_MUTABLE: True,
-            CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
+            CONF_SCAN_INTERVAL: CONF_DEFAULT_SCAN_INTERVAL,
             CONF_DEBUG: False,
             CONF_SPIN: None,
         }
@@ -343,7 +341,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if yaml["scandinavian_miles"]:
                 self._options[CONF_CONVERT] = "scandinavian_miles"
         if "scan_interval" in yaml:
-            seconds = 60
+            seconds = CONF_DEFAULT_SCAN_INTERVAL
             minutes = 0
             if "seconds" in yaml["scan_interval"]:
                 seconds = int(yaml["scan_interval"]["seconds"])
@@ -423,7 +421,7 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                 ),
                 CONF_SCAN_INTERVAL: user_input.get(
                     CONF_SCAN_INTERVAL,
-                    DEFAULT_SCAN_INTERVAL
+                    60
                 ),
                 CONF_SPIN: user_input.get(
                     CONF_SPIN,
@@ -479,12 +477,12 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_SCAN_INTERVAL,
                         default=self._config_entry.options.get(
                             CONF_SCAN_INTERVAL,
-                            DEFAULT_SCAN_INTERVAL
+                            CONF_DEFAULT_SCAN_INTERVAL
                         )): vol.All(
                             vol.Coerce(int),
                             vol.Range(
-                                min=MIN_SCAN_INTERVAL,
-                                max=900
+                                min=CONF_MIN_SCAN_INTERVAL,
+                                max=CONF_MAX_SCAN_INTERVAL
                             )
                         ),
                     vol.Optional(

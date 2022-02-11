@@ -41,14 +41,16 @@ from skodaconnect.exceptions import (
 )
 
 from .const import (
+    CONF_MAX_SCAN_INTERVAL,
     PLATFORMS,
     CONF_MUTABLE,
     CONF_SCANDINAVIAN_MILES,
     CONF_SPIN,
     DATA,
     DATA_KEY,
-    MIN_SCAN_INTERVAL,
-    DEFAULT_SCAN_INTERVAL,
+    CONF_MIN_SCAN_INTERVAL,
+    CONF_MAX_SCAN_INTERVAL,
+    CONF_DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     SIGNAL_STATE_UPDATED,
     UNDO_UPDATE_LISTENER, UPDATE_CALLBACK, CONF_DEBUG, DEFAULT_DEBUG, CONF_CONVERT, CONF_NO_CONVERSION,
@@ -124,13 +126,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Setup Skoda Connect component from a config entry."""
     hass.data.setdefault(DOMAIN, {})
 
-    # Set update interval
+    # Set update interval, make sure it's within range
     if entry.options.get(CONF_SCAN_INTERVAL, False):
         update_interval = timedelta(seconds=entry.options[CONF_SCAN_INTERVAL])
     else:
-        update_interval = timedelta(seconds=DEFAULT_SCAN_INTERVAL)
-    if update_interval < timedelta(seconds=MIN_SCAN_INTERVAL):
-        update_interval = timedelta(seconds=MIN_SCAN_INTERVAL)
+        update_interval = timedelta(seconds=CONF_DEFAULT_SCAN_INTERVAL)
+    if update_interval < timedelta(seconds=CONF_MIN_SCAN_INTERVAL):
+        update_interval = timedelta(seconds=CONF_MIN_SCAN_INTERVAL)
+    elif update_interval > timedelta(seconds=CONF_MAX_SCAN_INTERVAL)
+        update_interval = timedelta(seconds=CONF_MAX_SCAN_INTERVAL)
 
     # Create data coordinator and login to API
     coordinator = SkodaCoordinator(hass, entry, update_interval)
