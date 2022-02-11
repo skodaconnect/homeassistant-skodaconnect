@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Union
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigEntry, SOURCE_REAUTH, SOURCE_IMPORT
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, SOURCE_REAUTH, SOURCE_IMPORT
 from homeassistant.const import (
     CONF_DEVICES,
     CONF_NAME,
@@ -479,10 +479,15 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
     _LOGGER.debug(f'Migrating from version {entry.version}')
 
     if entry.version != 3:
+        # Get VIN of current entry
+        vin_migrate = {
+            entry.unique_id: entry.unique_id
+        }
         # Save the parts of the config entry that we want to keep
         new_data = {
             CONF_USERNAME: entry.data[CONF_USERNAME],
             CONF_PASSWORD: entry.data[CONF_PASSWORD],
+            CONF_DEVICES: vin_migrate
         }
         new_options = {
             CONF_SCAN_INTERVAL: entry.options.get(
@@ -504,19 +509,22 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
             CONF_CONVERT: entry.options.get(
                 CONF_CONVERT,
                 CONF_NO_CONVERSION
-            )
+            ),
+            CONF_RESOURCES: vin_migrate
         }
 
-        # Migrate poll interval from version 1, pre 1.0.57
+        # Migrate poll interval from minutes in version 1, pre 1.0.57
         if entry.version == 1:
             # Convert from minutes to seconds for poll interval
             minutes = entry.options.get("update_interval", 1)
             seconds = minutes*60
             new_options[CONF_SCAN_INTERVAL] = seconds
 
-        # Save "new" config
+        # Save "new" config to new config entry
         entry.data = {**new_data}
         entry.options = {**new_options}
+        # Change title of config entry to email
+        entry.title = new_data[CONF_USERNAME]
         entry.version = 3
 
     _LOGGER.info(f"Migration to version {entry.version} successful")
