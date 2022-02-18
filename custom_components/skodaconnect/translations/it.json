@@ -12,7 +12,7 @@
       },
       "vehicle": {
         "title": "Impostazione Veicolo",
-        "description": "TYrovati i seguenti veicoli. Perfavore scegli il veicolo che vuoi monitorare e la sua configurazione.\n\nL'S-PIN è richiesto solo per operazioni specifiche come l'Apertura/Chiusura e l'attivazione del riscaldamento\nPuoi lasciare il campo vuoto.",
+        "description": "Trovati i seguenti veicoli. Perfavore scegli il veicolo che vuoi monitorare e la sua configurazione.\n\nL'S-PIN è richiesto solo per operazioni specifiche come l'Apertura/Chiusura e l'attivazione del riscaldamento\nPuoi lasciare il campo vuoto.",
         "data": {
           "vehicle": "Numero VIN",
           "spin": "S-PIN",
@@ -47,7 +47,7 @@
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "progress": {
-      "task_login": "Accessp a Skoda Connect",
+      "task_login": "Accesso a Skoda Connect",
       "task_update": "Recupero veicoli"
     }
   },
