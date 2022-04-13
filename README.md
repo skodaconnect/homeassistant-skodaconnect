@@ -164,6 +164,33 @@ Create the automation, in yaml or via GUI editor.
         {{ trigger.to_state.state }}
 ```
 
+### Charge rate guesstimate
+
+Thanks to @haraldpaulsen
+An estimated charge rate template sensor based on battery capacity and reported time left.
+Replace <name> with the name of your vehicle and <capacity> with battery capacity in Wh.
+
+```yaml
+template:
+  - sensor:
+    - name: "Charge speed guesstimate"
+      state: >
+        {% if is_state('switch.<name>_charging', 'on') %}
+        {% set maxcharge = <capacity> %}
+        {% set percentleft = 100 - states('sensor.<name>_battery_level') | int %}
+        {% set hoursleft = states('sensor.<name>_charging_time_left').split(':')[0] | int  %}
+        {% set minutesleft = states('sensor.<name>_charging_time_left').split(':')[1] | int %}
+        {% set totalminutesleft = hoursleft*60 + minutesleft %}
+        {% set chargeleft = maxcharge * percentleft / 100  %}
+        {% set chargespeed = chargeleft / (totalminutesleft / 60)  %}
+        {{ (chargespeed / 1000) | round(1) }}
+        {% else %}
+        0
+        {% endif %}
+      unit_of_measurement: "kW"
+      state_class: measurement
+```
+
 ### Get notification when your car is on a new place and show a map with start position and end position
 
 Note: only available for iOS devices since Android companion app does not support this yet.
