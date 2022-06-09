@@ -74,7 +74,7 @@ SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
         vol.Required("recurring"): cv.boolean,
         vol.Optional("date"): cv.string,
         vol.Optional("days"): cv.string,
-        vol.Optional("temp"): vol.All(vol.Coerce(int), vol.Range(min=16, max=30)),
+        vol.Optional("temp"): vol.All(vol.Coerce(float), vol.Range(min=16, max=30)),
         vol.Optional("climatisation"): cv.boolean,
         vol.Optional("charging"): cv.boolean,
         vol.Optional("charge_current"): vol.Any(
@@ -106,7 +106,7 @@ SERVICE_SET_CLIMATER_SCHEMA = vol.Schema(
     {
         vol.Required("device_id"): vol.All(cv.string, vol.Length(min=32, max=32)),
         vol.Required("enabled", default=True): cv.boolean,
-        vol.Optional("temp"): vol.All(vol.Coerce(int), vol.Range(min=16, max=30)),
+        vol.Optional("temp"): vol.All(vol.Coerce(float), vol.Range(min=16, max=30)),
         vol.Optional("battery_power"): cv.boolean,
         vol.Optional("aux_heater"): cv.boolean,
         vol.Optional("spin"): vol.All(cv.string, vol.Match(r"^[0-9]{4}$"))
@@ -360,7 +360,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_charge_limit' with data '{service_call}'")
         except (SkodaInvalidRequestException) as e:
-            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+            _LOGGER.warning(f"Service call 'set_charge_limit' failed {e}")
         except Exception as e:
             raise
 
@@ -377,7 +377,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
         except (SkodaInvalidRequestException) as e:
-            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+            _LOGGER.warning(f"Service call 'set_current' failed {e}")
         except Exception as e:
             raise
 
@@ -389,7 +389,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             _LOGGER.debug(f"Service call 'set_pheater_duration' executed without error")
             await coordinator.async_request_refresh()
         except (SkodaInvalidRequestException) as e:
-            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+            _LOGGER.warning(f"Service call 'set_pheater_duration' failed {e}")
         except Exception as e:
             raise
 
@@ -411,9 +411,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 _LOGGER.debug(f"Service call 'set_climater' executed without error")
                 await coordinator.async_request_refresh()
             else:
-                _LOGGER.warning(f"Failed to execute service call 'set_current' with data '{service_call}'")
+                _LOGGER.warning(f"Failed to execute service call 'set_climater' with data '{service_call}'")
         except (SkodaInvalidRequestException) as e:
-            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+            _LOGGER.warning(f"Service call 'set_climater' failed {e}")
         except Exception as e:
             raise
 
