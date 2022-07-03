@@ -292,7 +292,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                     peakstart = service_call.data.get("off_peak_start").strftime("%H:%M")
                 except:
                     if re.match('^[0-9]{2}:[0-9]{2}$', service_call.data.get("off_peak_start", "")):
-                        time = service_call.data.get("off_peak_start", "00:00")
+                        peakstart = service_call.data.get("off_peak_start", "00:00")
                     else:
                         raise SkodaInvalidRequestException(f"Invalid value for off peak start hours: {service_call.data.get('off_peak_start')}")
             if service_call.data.get("off_peak_end", False):
@@ -300,7 +300,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                     peakend = service_call.data.get("off_peak_end").strftime("%H:%M")
                 except:
                     if re.match('^[0-9]{2}:[0-9]{2}$', service_call.data.get("off_peak_end", "")):
-                        time = service_call.data.get("off_peak_end", "00:00")
+                        peakend = service_call.data.get("off_peak_end", "00:00")
                     else:
                         raise SkodaInvalidRequestException(f"Invalid value for off peak end hours: {service_call.data.get('off_peak_end')}")
 
