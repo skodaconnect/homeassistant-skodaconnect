@@ -14,9 +14,13 @@ The scan_interval is how often the integration should fetch data from the server
 ### Supported setups
 
 This integration will only work for your car if you have Skoda Connect/MyŠKODA functionality. Cars using other third party, semi-official, mobile apps such as the "MinSkoda" from ConnectedCars in Denmark won't work.
+The library used for API communication is reverse engineered from the MySkoda Android app.
 Initial support has been added for SmartLink and newer style API cars, such as the Enyaq iV.
 
 The car privacy settings must be set to "Share my position" for full functionality of this integration. Without this setting, if set to "Use my position", the sensors for position (device tracker), requests remaining and parking time might not work reliably or at all. Set to even stricter privacy setting will limit functionality even further.
+
+### If you need to accept Terms and/or EULA
+If you encounter a problem where the integration can't continue because of unaccepted terms or eula and you only use iPhone then a workaround is to open the MySkoda app on an android device and the terms can be accepted. This is because the library used are mimicing the Android client and terms are shown and accepted per platform as it seems.
 
 ### What is working, all cars
 
