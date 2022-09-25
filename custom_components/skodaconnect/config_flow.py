@@ -97,7 +97,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             result = await self._connection.doLogin()
         except Exception as e:
             _LOGGER.error(f"Login failed with error: {e}")
-            self._errors["base"] = "cannot_connect"
+            result = False
 
         if result is False:
             self._errors["base"] = "cannot_connect"
