@@ -1,2 +1,2 @@
-skodaconnect>=1.1.25
+skodaconnect>=1.1.26
 homeassistant>=2021.12.0

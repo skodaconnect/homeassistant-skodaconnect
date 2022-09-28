@@ -19,8 +19,11 @@ Initial support has been added for SmartLink and newer style API cars, such as t
 
 The car privacy settings must be set to "Share my position" for full functionality of this integration. Without this setting, if set to "Use my position", the sensors for position (device tracker), requests remaining and parking time might not work reliably or at all. Set to even stricter privacy setting will limit functionality even further.
 
-### If you need to accept Terms and/or EULA
-If you encounter a problem where the integration can't continue because of unaccepted terms or eula and you only use iPhone then a workaround is to open the MySkoda app on an android device and the terms can be accepted. This is because the library used are mimicing the Android client and terms are shown and accepted per platform as it seems.
+### If you encounter problems
+If you encounter a problem where the integration can't be setup or if you receive an error that there's unaccepted terms or eula, it might be because of your mobile app platform.
+The underlying library is built by reverse engineering the Android App behavious and thus it use the same client configurations as an Adnroid device. If you only use the app on iPhone/iOS devices it might cause issues with this integration.
+A workaround is to open the MySkoda app on an android device and it should present an EULA or new terms and condititions to be accepted.
+If this does not work for you and the particular problem you are facing, please open an issue and provide as detailed problem description as possible and relevant debug logs.
 
 ### What is working, all cars
 
@@ -36,19 +39,19 @@ If you encounter a problem where the integration can't continue because of unacc
 - Charger maximum current
   (1-16 tested OK for Superb iV, Enyaq limited to "Maximum"/"Reduced")
 - Set departure timers (switch on/off and service call to set parameters)
+- Odometer and service info
+- Lock, windows, trunk, hood, sunroof and door status
+- Position - gps coordinates, if vehicle is moving, time parked
+- Device tracker - entity is set to 'not_home' when car is moving
 
 ### Additional information/functions VW-Group API ("All" Skodas except Enyaq iV so far)
 
-- Odometer and service info
 - Fuel level, range, adblue level
-- Lock, windows, trunk, hood, sunroof and door status
 - Last trip info
-- Position - gps coordinates, if vehicle is moving, time parked
 - start/stop auxiliary climatisation for PHEV cars
 - Lock and unlock car
 - Parking heater heating/ventilation (for non-electric cars)
 - Requests information - latest status, requests remaining until throttled
-- Device tracker - entity is set to 'not_home' when car is moving
 - Trigger data refresh - this will trigger a wake up call so the car sends new data
 
 ### Additional information/functions Skoda native API (Enyaq iV so far)
