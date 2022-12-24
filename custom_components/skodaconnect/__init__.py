@@ -82,6 +82,7 @@ SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
             vol.In(['Maximum', 'maximum', 'Max', 'max', 'Minimum', 'minimum', 'Min', 'min', 'Reduced', 'reduced'])
         ),
         vol.Optional("charge_target"): vol.In([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]),
+        vol.Optional("heater_source"): cv.boolean,
         vol.Optional("off_peak_active"): cv.boolean,
         vol.Optional("off_peak_start"): cv.string,
         vol.Optional("off_peak_end"): cv.string,
@@ -314,9 +315,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 "days": service_call.data.get("days", "nnnnnnn"),
             }
             # Set optional values
+            # Heater source
+            if service_call.data.get("heater_source", None) is not None:
+                schedule["heaterSource"] = service_call.data.get("heater_source")
             # Night rate
-            if service_call.data.get("climatisation", None) is not None:
-                schedule["nightRateActive"] = service_call.data.get("climatisation")
+            if service_call.data.get("off_peak_active", None) is not None:
+                schedule["nightRateActive"] = service_call.data.get("off_peak_active")
             if service_call.data.get("off_peak_start", None) is not None:
                 schedule["nightRateTimeStart"] = service_call.data.get("off_peak_start")
             if service_call.data.get("off_peak_end", None) is not None:
@@ -661,6 +665,11 @@ class SkodaEntity(Entity):
             return icon_for_battery_level(
                 battery_level=self.instrument.state, charging=self.vehicle.charging
             )
+        if self.instrument.attr in ["plug_autounlock"]:
+            if self.instrument.state == True:
+                return "mdi:mdi:battery-lock-open"
+            else:
+                return "mdi:battery-lock"
         return self.instrument.icon
 
     @property
