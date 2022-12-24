@@ -218,6 +218,13 @@ set_departure_schedule:
           max: 100
           step: 10
           unit_of_measurement: percent
+    heater_source:
+      name: Allow Auxiliary Heater
+      description: "[Optional] Enable allow use of aux heater for next departure"
+      advanced: true
+      example: true
+      selector:
+        boolean:
     off_peak_active:
       name: Off-peak active
       description: "[Optional] Enable off-peak hours"
