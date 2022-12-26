@@ -155,7 +155,7 @@ input_number:
     unit_of_measurement: min
 ```
 
-Create the automation, in yaml or via GUI editor.
+Create the automation, in yaml or via GUI editor. You can find the device id by going to Settings->Devices & Services and then clicking on the device for the Skodaconnect vehicle. The device ID will show in the web browser address bar after "/config/devices/device/". The ID can also be found by using the GUI services editor under developer tools. Choose one of the skodaconnect services and choose your vehicle. Change to YAML mode and copy the device ID.
 
 ```yaml
 # automations.yaml
@@ -166,9 +166,10 @@ Create the automation, in yaml or via GUI editor.
   action:
   - service: skodaconnect.set_pheater_duration
     data_template:
-     vin: <VIN-number of car>
+     device_id: <Device ID for vehicle>
      duration: >
         {{ trigger.to_state.state }}
+        
 ```
 
 ### Charge rate guesstimate
