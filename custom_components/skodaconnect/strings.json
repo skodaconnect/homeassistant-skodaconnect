@@ -16,6 +16,7 @@
         "data": {
           "vehicle": "VIN Number",
           "spin": "S-PIN",
+          "store_tokens": "Save session tokens in configuration. Allows for faster startup.",
           "mutable": "Allow interactions with car (actions). Uncheck to make the car 'read only'."
         }
       },
@@ -60,6 +61,7 @@
           "scan_interval": "Poll frequency (seconds)",
           "spin": "S-PIN",
           "mutable": "Allow interactions with car (actions). Uncheck to make the car 'read only'.",
+          "store_tokens": "Save session tokens in configuration. Allows for faster startup.",
           "convert": "Select distance/unit conversions.",
           "resources": "Resources to monitor.",
           "debug": "Full API debug logging (requires debug logging enabled in configuration.yaml)"

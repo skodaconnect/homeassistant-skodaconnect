@@ -25,6 +25,8 @@ from .const import (
     CONF_SPIN,
     CONF_VEHICLE,
     CONF_INSTRUMENTS,
+    CONF_SAVESESSION,
+    CONF_TOKENS,
     MIN_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
@@ -34,7 +36,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    VERSION = 2
+    VERSION = 3
     task_login = None
     task_finish = None
     task_get_vehicles = None
@@ -60,6 +62,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_USERNAME: user_input[CONF_USERNAME],
                 CONF_PASSWORD: user_input[CONF_PASSWORD],
                 CONF_INSTRUMENTS: {},
+                CONF_TOKENS: {},
                 CONF_VEHICLE: None
             }
             # Set default options
@@ -69,6 +72,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
                 CONF_DEBUG: False,
                 CONF_SPIN: None,
+                CONF_SAVESESSION: False,
                 CONF_RESOURCES: []
             }
 
@@ -124,6 +128,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._data[CONF_VEHICLE] = user_input[CONF_VEHICLE]
             self._options[CONF_SPIN] = user_input[CONF_SPIN]
+            self._options[CONF_SAVESESSION] = user_input[CONF_SAVESESSION]
             self._options[CONF_MUTABLE] = user_input[CONF_MUTABLE]
             return await self.async_step_monitoring()
 
@@ -134,6 +139,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_VEHICLE, default=next(iter(vin_numbers))): vol.In(vin_numbers),
                     vol.Optional(CONF_SPIN, default=""): cv.string,
+                    vol.Optional(CONF_SAVESESSION, default=False): cv.boolean,
                     vol.Required(CONF_MUTABLE, default=True): cv.boolean
                 }
             ), errors=self._errors
@@ -297,7 +303,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_USERNAME: None,
             CONF_PASSWORD: None,
             CONF_INSTRUMENTS: {},
-            CONF_VEHICLE: None
+            CONF_VEHICLE: None,
         }
         self._options = {
             CONF_CONVERT: CONF_NO_CONVERSION,
@@ -305,6 +311,7 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
             CONF_DEBUG: False,
             CONF_SPIN: None,
+            CONF_SAVESESSION: False,
             CONF_RESOURCES: []
         }
         self._init_info = {}
@@ -420,6 +427,7 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
             options[CONF_SCAN_INTERVAL] = user_input.get(CONF_SCAN_INTERVAL, 1)
             options[CONF_SPIN] = user_input.get(CONF_SPIN, None)
             options[CONF_MUTABLE] = user_input.get(CONF_MUTABLE, True)
+            options[CONF_SAVESESSION] = user_input.get(CONF_SAVESESSION, True)
             options[CONF_DEBUG] = user_input.get(CONF_DEBUG, False)
             options[CONF_RESOURCES] = user_input.get(CONF_RESOURCES, [])
             options[CONF_CONVERT] = user_input.get(CONF_CONVERT, CONF_NO_CONVERSION)
@@ -470,6 +478,12 @@ class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_MUTABLE,
                         default=self._config_entry.options.get(CONF_MUTABLE,
                             self._config_entry.data.get(CONF_MUTABLE, False)
+                        )
+                    ): cv.boolean,
+                    vol.Optional(
+                        CONF_SAVESESSION,
+                        default=self._config_entry.options.get(CONF_SAVESESSION,
+                            self._config_entry.data.get(CONF_SAVESESSION, False)
                         )
                     ): cv.boolean,
                     vol.Optional(

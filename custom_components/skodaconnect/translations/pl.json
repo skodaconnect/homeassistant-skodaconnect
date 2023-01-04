@@ -16,6 +16,7 @@
         "data": {
           "vehicle": "Numer VIN",
           "spin": "S-PIN",
+          "store_tokens": "Save session tokens in configuration. Allows for faster startup.",
           "mutable": "Usuń zaznaczenie, aby samochód był „tylko do odczytu”. Jeśli je zostawisz będziesz mógł wejść w interakcję z samochodem"
         }
       },
@@ -60,6 +61,7 @@
           "scan_interval": "Częstotliwość aktualizacji czujników (sekundy)",
           "spin": "S-PIN",
           "mutable": "Usuń zaznaczenie, aby samochód był „tylko do odczytu”. Jeśli je zostawisz będziesz mógł wejść w interakcję z samochodem",
+          "store_tokens": "Save session tokens in configuration. Allows for faster startup.",
           "convert": "Wybierz, jeśli chcesz dokonać konwersji jednostek odległości",
           "resources": "Zasoby do dodania",
           "debug": "Włącz pełne dzienniki debugowania z interfejsu API (wymaga włączenia rejestrowania debugowania w konfiguracji)"

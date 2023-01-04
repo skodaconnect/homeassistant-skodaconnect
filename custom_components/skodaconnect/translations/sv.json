@@ -16,6 +16,7 @@
           "data": {
             "vehicle": "Chassinummer",
             "spin": "S-PIN",
+            "store_tokens": "Save session tokens in configuration. Allows for faster startup.",
             "mutable": "Tillåt interaktioner med bilen (åtgärder). Avmarkera för att göra bilen 'skrivskyddad'."
           }
         },
@@ -60,6 +61,7 @@
             "scan_interval": "Uppdateringsfrekvens (sekunder)",
             "spin": "S-PIN",
             "mutable": "Tillåt interaktioner med bilen (åtgärder). Avmarkera för att göra bilen 'skrivskyddad'.",
+            "store_tokens": "Save session tokens in configuration. Allows for faster startup.",
             "convert": "Ange enhetsomvandling.",
             "resources": "Resurser att övervaka.",
             "debug": "Full API debug loggning (kräver debug loggning aktiverat i configuration.yaml)"

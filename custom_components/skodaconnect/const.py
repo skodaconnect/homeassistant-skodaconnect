@@ -12,6 +12,8 @@ CONF_CONVERT = "convert"
 CONF_VEHICLE = "vehicle"
 CONF_INSTRUMENTS = "instruments"
 CONF_DEBUG = "debug"
+CONF_SAVESESSION = "store_tokens"
+CONF_TOKENS = "tokens"
 
 # Service definitions
 SERVICE_SET_SCHEDULE = "set_departure_schedule"

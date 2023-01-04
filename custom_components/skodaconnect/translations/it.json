@@ -16,6 +16,7 @@
         "data": {
           "vehicle": "Numero VIN",
           "spin": "S-PIN",
+          "store_tokens": "Save session tokens in configuration. Allows for faster startup.",
           "mutable": "Permetti interazione con l'auto(azioni). Deseleziona se vuoi sono monitorare."
         }
       },
@@ -60,6 +61,7 @@
           "scan_interval": "Frequenza di aggiornamento (secondi)",
           "spin": "S-PIN",
           "mutable": "Permetti interazione con l'auto(azioni). Deseleziona se vuoi sono monitorare..",
+          "store_tokens": "Save session tokens in configuration. Allows for faster startup.",
           "convert": "Scegli la conversione di distanza/unità.",
           "resources": "Risorse da monitorare.",
           "debug": "API debug logging completo (richiede che il debug logging sia abilitato in configuration.yaml)"

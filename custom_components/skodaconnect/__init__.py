@@ -35,6 +35,7 @@ from skodaconnect.exceptions import (
     SkodaAuthenticationException,
     SkodaAccountLockedException,
     SkodaTokenExpiredException,
+    SkodaTokenInvalidException,
     SkodaException,
     SkodaEULAException,
     SkodaThrottledException,
@@ -49,6 +50,7 @@ from .const import (
     CONF_SCANDINAVIAN_MILES,
     CONF_SPIN,
     CONF_VEHICLE,
+    CONF_TOKENS,
     CONF_INSTRUMENTS,
     DATA,
     DATA_KEY,
@@ -58,6 +60,7 @@ from .const import (
     SIGNAL_STATE_UPDATED,
     UNDO_UPDATE_LISTENER, UPDATE_CALLBACK, CONF_DEBUG, DEFAULT_DEBUG, CONF_CONVERT, CONF_NO_CONVERSION,
     CONF_IMPERIAL_UNITS,
+    CONF_SAVESESSION,
     SERVICE_SET_SCHEDULE,
     SERVICE_SET_MAX_CURRENT,
     SERVICE_SET_CHARGE_LIMIT,
@@ -156,6 +159,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_logout)
     )
 
+    # Do a first update of all vehicles
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
@@ -546,18 +550,38 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
     # Migrate data from version 1, pre 1.0.57
     if entry.version == 1:
         # Make a copy of old config
-        new = {**entry.data}
+        new_data = {**entry.data}
+        new_options = {**entry.options}
 
         # Convert from minutes to seconds for poll interval
         minutes = entry.options.get("update_interval", 1)
         seconds = minutes*60
-        new.pop("update_interval", None)
-        new[CONF_SCAN_INTERVAL] = seconds
+        new_data.pop("update_interval", None)
+        new_data[CONF_SCAN_INTERVAL] = seconds
+        # Default "save session" to false
+        new_options[CONF_SAVESESSION] = False
 
         # Save "new" config
-        entry.data = {**new}
+        entry.data = {**new_data}
+        entry.options = {**new_options}
+        entry.version = 3
+        hass.config_entries.async_update_entry(entry, data=new_data, options=new_options)
 
-        entry.version = 2
+    # Migrate data from version 2, pre version 1.2
+    if entry.version == 2:
+        # Make a copy of old config
+        new_data = {**entry.data}
+        new_options = {**entry.options}
+
+        # Default "save session" to false
+        new_options[CONF_SAVESESSION] = False
+        new_data[CONF_TOKENS] = {}
+
+        # Save "new" config
+        #entry.options = {**new_options}
+        #entry.data = {**new_data}
+        entry.version = 3
+        hass.config_entries.async_update_entry(entry, data=new_data, options=new_options)
 
     _LOGGER.info("Migration to version %s successful", entry.version)
     return True
@@ -747,6 +771,7 @@ class SkodaCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, entry, update_interval: timedelta):
         self.vin = entry.data[CONF_VEHICLE].upper()
+        self.hass = hass
         self.entry = entry
         self.platforms = []
         self.report_last_updated = None
@@ -790,10 +815,49 @@ class SkodaCoordinator(DataUpdateCoordinator):
         """Logout from Skoda Connect"""
         _LOGGER.debug("Shutdown Skoda Connect")
         try:
-            await self.connection.terminate()
+            entry_options = self.entry.options.copy()
+            entry_data = self.entry.data.copy()
+            if entry_options.get(CONF_SAVESESSION, False):
+                try:
+                    # Save session is true, save tokens for all clients
+                    tokens = await self.connection.save_tokens()
+                    if tokens is not False:
+                        _LOGGER.debug('Successfully fetched tokens to save')
+                        entry_data[CONF_TOKENS] = tokens
+                        _LOGGER.debug("Unloading update listener")
+                        self.hass.data[DOMAIN][self.entry.entry_id][UNDO_UPDATE_LISTENER]()
+                        self.hass.config_entries.async_update_entry(
+                            self.entry,
+                            data=entry_data,
+                            options=entry_options
+                        )
+                    else:
+                        _LOGGER.debug(f'Save tokens failed.')
+                except Exception as e:
+                    raise SkodaException(f'Save tokens failed: {e}')
+            else:
+                try:
+                    # Save session is false, remove any saved tokens
+                    entry_data[CONF_TOKENS] = {}
+                    _LOGGER.debug("Unloading update listener")
+                    self.hass.data[DOMAIN][self.entry.entry_id][UNDO_UPDATE_LISTENER]()
+                    self.hass.config_entries.async_update_entry(
+                        self.entry,
+                        data=entry_data,
+                        options=entry_options
+                    )
+                    # Revoke tokens
+                    await self.connection.terminate()
+                except Exception as e:
+                    raise SkodaException(f'Revocation of tokens failed: {e}')
+            # Clear connection session
+            _LOGGER.debug('Unloading library connection')
             self.connection = None
+        except (SkodaException) as e:
+            _LOGGER.error(e)
+            return False
         except Exception as ex:
-            _LOGGER.error("Failed to log out and revoke tokens for Skoda Connect. Some tokens might still be valid.")
+            _LOGGER.error('Errors occured during shutdown.')
             return False
         return True
 
@@ -801,11 +865,17 @@ class SkodaCoordinator(DataUpdateCoordinator):
         """Login to Skoda Connect"""
         # Check if we can login
         try:
-            if await self.connection.doLogin() is False:
-                _LOGGER.warning(
-                    "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
-                )
-                return False
+            restore = False
+            if self.entry.options.get(CONF_SAVESESSION, False):
+                if len(self.entry.data.get(CONF_TOKENS, {})) != 0:
+                    if await self.connection.restore_tokens(self.entry.data.get(CONF_TOKENS, None)):
+                        restore = True
+            if restore is False:
+                if await self.connection.doLogin() is False:
+                    _LOGGER.warning(
+                        "Could not login to Skoda Connect, please check your credentials and verify that the service is working"
+                    )
+                    return False
             # Get associated vehicles before we continue
             await self.connection.get_vehicles()
             return True
