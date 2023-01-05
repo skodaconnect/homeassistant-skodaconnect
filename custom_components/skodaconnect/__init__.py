@@ -17,7 +17,8 @@ from homeassistant.const import (
     CONF_PASSWORD,
     CONF_RESOURCES,
     CONF_SCAN_INTERVAL,
-    CONF_USERNAME, EVENT_HOMEASSISTANT_STOP,
+    CONF_USERNAME,
+    EVENT_HOMEASSISTANT_STOP,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
@@ -52,15 +53,21 @@ from .const import (
     CONF_VEHICLE,
     CONF_TOKENS,
     CONF_INSTRUMENTS,
+    CONF_DEBUG,
+    CONF_CONVERT,
+    CONF_NO_CONVERSION,
+    CONF_IMPERIAL_UNITS,
+    CONF_SAVESESSION,
     DATA,
     DATA_KEY,
     MIN_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
+    DEFAULT_DEBUG,
     DOMAIN,
     SIGNAL_STATE_UPDATED,
-    UNDO_UPDATE_LISTENER, UPDATE_CALLBACK, CONF_DEBUG, DEFAULT_DEBUG, CONF_CONVERT, CONF_NO_CONVERSION,
-    CONF_IMPERIAL_UNITS,
-    CONF_SAVESESSION,
+    UNDO_UPDATE_LISTENER,
+    REMOVE_LISTENER,
+    UPDATE_CALLBACK,
     SERVICE_SET_SCHEDULE,
     SERVICE_SET_MAX_CURRENT,
     SERVICE_SET_CHARGE_LIMIT,
@@ -155,10 +162,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     except Exception as e:
         raise ConfigEntryNotReady(e) from e
 
-    entry.async_on_unload(
-        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, coordinator.async_logout)
-    )
-
     # Do a first update of all vehicles
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
@@ -248,6 +251,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         UPDATE_CALLBACK: update_callback,
         DATA: data,
         UNDO_UPDATE_LISTENER: entry.add_update_listener(_async_update_listener),
+        REMOVE_LISTENER: hass.bus.async_listen_once(
+            EVENT_HOMEASSISTANT_STOP, coordinator.async_logout
+        ),
     }
 
     # Service functions
@@ -456,16 +462,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         set_pheater_duration,
         schema = SERVICE_SET_PHEATER_DURATION_SCHEMA
     )
-
     return True
-
 
 def update_callback(hass, coordinator):
     _LOGGER.debug("CALLBACK!")
     hass.async_create_task(
         coordinator.async_request_refresh()
     )
-
 
 async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the component from configuration.yaml."""
@@ -486,7 +489,6 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
     return True
 
-
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Unload a config entry."""
     _LOGGER.debug("Unloading services")
@@ -495,20 +497,18 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.services.async_remove(DOMAIN, SERVICE_SET_CHARGE_LIMIT)
     hass.services.async_remove(DOMAIN, SERVICE_SET_CLIMATER)
     hass.services.async_remove(DOMAIN, SERVICE_SET_PHEATER_DURATION)
-
-    _LOGGER.debug("Unloading update listener")
-    hass.data[DOMAIN][entry.entry_id][UNDO_UPDATE_LISTENER]()
-
     return await async_unload_coordinator(hass, entry)
-
 
 async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
     """Unload auth token based entry."""
+    _LOGGER.debug("Unloading update listener")
+    hass.data[DOMAIN][entry.entry_id][UNDO_UPDATE_LISTENER]()
+    hass.data[DOMAIN][entry.entry_id].pop(UNDO_UPDATE_LISTENER, None)
+
     _LOGGER.debug("Unloading coordinator")
     coordinator = hass.data[DOMAIN][entry.entry_id][DATA].coordinator
-
-    _LOGGER.debug("Log out from Skoda Connect")
     await coordinator.async_logout()
+    _LOGGER.debug("Waiting for shutdown to complete")
     unloaded = all(
         await asyncio.gather(
             *[
@@ -528,11 +528,10 @@ async def async_unload_coordinator(hass: HomeAssistant, entry: ConfigEntry):
 
     return unloaded
 
-
 async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
     """Handle options update."""
+    # Do a lazy reload of integration when configuration changed
     await hass.config_entries.async_reload(entry.entry_id)
-
 
 def get_convert_conf(entry: ConfigEntry):
     return CONF_SCANDINAVIAN_MILES if entry.options.get(
@@ -585,6 +584,8 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     _LOGGER.info("Migration to version %s successful", entry.version)
     return True
+
+
 class SkodaData:
     """Hold component state."""
 
@@ -817,6 +818,16 @@ class SkodaCoordinator(DataUpdateCoordinator):
         try:
             entry_options = self.entry.options.copy()
             entry_data = self.entry.data.copy()
+            # Unload update listener
+            try:
+                if UNDO_UPDATE_LISTENER in self.hass.data[DOMAIN][self.entry.entry_id]:
+                    _LOGGER.debug(f"Unloading update listener")
+                    self.hass.data[DOMAIN][self.entry.entry_id][UNDO_UPDATE_LISTENER]()
+            except Exception as e:
+                _LOGGER.debug(f"Unloading update listener")
+                # If config is only reloaded this will throw an exception
+                pass
+
             if entry_options.get(CONF_SAVESESSION, False):
                 try:
                     # Save session is true, save tokens for all clients
@@ -824,13 +835,13 @@ class SkodaCoordinator(DataUpdateCoordinator):
                     if tokens is not False:
                         _LOGGER.debug('Successfully fetched tokens to save')
                         entry_data[CONF_TOKENS] = tokens
-                        _LOGGER.debug("Unloading update listener")
-                        self.hass.data[DOMAIN][self.entry.entry_id][UNDO_UPDATE_LISTENER]()
+                        _LOGGER.debug("Saving tokens to config registry")
                         self.hass.config_entries.async_update_entry(
                             self.entry,
                             data=entry_data,
                             options=entry_options
                         )
+                        _LOGGER.debug("Save complete.")
                     else:
                         _LOGGER.debug(f'Save tokens failed.')
                 except Exception as e:
@@ -839,14 +850,14 @@ class SkodaCoordinator(DataUpdateCoordinator):
                 try:
                     # Save session is false, remove any saved tokens
                     entry_data[CONF_TOKENS] = {}
-                    _LOGGER.debug("Unloading update listener")
-                    self.hass.data[DOMAIN][self.entry.entry_id][UNDO_UPDATE_LISTENER]()
+                    _LOGGER.debug("Removing tokens from config registry")
                     self.hass.config_entries.async_update_entry(
                         self.entry,
                         data=entry_data,
                         options=entry_options
                     )
                     # Revoke tokens
+                    _LOGGER.debug("Terminate connection")
                     await self.connection.terminate()
                 except Exception as e:
                     raise SkodaException(f'Revocation of tokens failed: {e}')
