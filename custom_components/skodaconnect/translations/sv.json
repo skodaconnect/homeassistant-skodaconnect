@@ -16,7 +16,7 @@
           "data": {
             "vehicle": "Chassinummer",
             "spin": "S-PIN",
-            "store_tokens": "Save session tokens in configuration. Allows for faster startup.",
+            "store_tokens": "Spara sessions tokens i konfigurationen. Kan ge snabbare uppstart.",
             "mutable": "Tillåt interaktioner med bilen (åtgärder). Avmarkera för att göra bilen 'skrivskyddad'."
           }
         },
