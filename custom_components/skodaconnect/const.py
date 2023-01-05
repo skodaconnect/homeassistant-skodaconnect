@@ -25,6 +25,7 @@ SERVICE_SET_PHEATER_DURATION = "set_pheater_duration"
 UPDATE_CALLBACK = "update_callback"
 DATA = "data"
 UNDO_UPDATE_LISTENER = "undo_update_listener"
+REMOVE_LISTENER = "remove_listener"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}.updated"
 
