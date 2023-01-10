@@ -33,7 +33,7 @@
       "reauth_confirm": {
         "description": "Authentifizieren Sie sich erneut mit Ihrem Skoda Connect-Konto.\nVergewissern Sie sich, dass Sie alle neuen EULA im Skoda Connect-Portal (https://www.skoda-connect.de/) akzeptieren, bevor Sie fortfahren.",
         "data": {
-          "username": "E-mail",
+          "username": "E-Mail",
           "password": "Passwort"
         }
       }
