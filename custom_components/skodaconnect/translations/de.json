@@ -1,0 +1,72 @@
+{
+  "title": "Skoda Connect",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Skoda Connect Konfiguration",
+        "description": "Skoda Connect Kontoinformationen ausfüllen",
+        "data": {
+          "username": "E-Mail",
+          "password": "Passwort"
+        }
+      },
+      "vehicle": {
+        "title": "Fahrzeug-Einstellungen",
+        "description": "Das/die folgende(n) Fahrzeug(e) wurde(n) gefunden. Bitte wählen Sie das zu überwachende Fahrzeug und seine Einstellungen aus.\n\nDie S-PIN ist nur für einige spezifische Vorgänge erforderlich, wie z. B. Ver-/Entriegeln und Vorgänge, die die Heizung des Verbrennungsmotors aktivieren.\nSie können sie leer lassen.",
+        "data": {
+          "vehicle": "Fahrgestellnummer",
+          "spin": "S-PIN",
+          "store_tokens": "Speichern von Sitzungs-Tokens in der Konfiguration. Ermöglicht ein schnelleres Starten.",
+          "mutable": "Interaktionen mit dem Fahrzeug zulassen (Aktionen). Deaktivieren Sie das Kontrollkästchen, um das Fahrzeug 'schreibgeschützt' zu machen."
+        }
+      },
+      "monitoring": {
+        "title": "Überwachungseinstellungen",
+        "description": "Geben Sie zusätzliche Überwachungseinstellungen an.",
+        "data": {
+          "resources": "Zu überwachende Ressourcen.",
+          "convert": "Wählen Sie Entfernungs-/Einheitsumrechnungen.",
+          "scan_interval": "Abfragefrequenz (Sekunden).",
+          "debug": "Vollständige API-Debug-Protokollierung (erfordert aktivierte Debug-Protokollierung in configuration.yaml)"
+        }
+      },
+      "reauth_confirm": {
+        "description": "Authentifizieren Sie sich erneut mit Ihrem Skoda Connect-Konto.\nVergewissern Sie sich, dass Sie alle neuen EULA im Skoda Connect-Portal (https://www.skoda-connect.de/) akzeptieren, bevor Sie fortfahren.",
+        "data": {
+          "username": "E-Mail",
+          "password": "Passwort"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Auto mit dieser Fahrgestellnummer ist bereits konfiguriert",
+      "reauth_successful": "Re-Authentifizierung war erfolgreich"
+    },
+    "error": {
+      "cannot_connect": "Sie konnten sich nicht bei Skoda Connect anmelden. Bitte überprüfen Sie Ihre Anmeldedaten und stellen Sie sicher, dass der Dienst funktioniert.",
+      "cannot_update": "Update von Skoda Connect kann nicht abgefragt werden",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "progress": {
+      "task_login": "Anmelden bei Skoda Connect",
+      "task_update": "Abholung von Fahrzeugen"
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Optionen für Skoda Connect",
+        "description": "Einstellungen konfigurieren",
+        "data": {
+          "scan_interval": "Abfragefrequenz (Sekunden).",
+          "spin": "S-PIN",
+          "mutable": "Interaktionen mit dem Fahrzeug zulassen (Aktionen). Deaktivieren Sie das Kontrollkästchen, um das Fahrzeug 'schreibgeschützt' zu machen.",
+          "store_tokens": "Speichern von Sitzungs-Tokens in der Konfiguration. Ermöglicht ein schnelleres Starten.",
+          "convert": "Wählen Sie Entfernungs-/Einheitsumrechnungen.",
+          "resources": "Zu überwachende Ressourcen",
+          "debug": "Vollständige API-Debug-Protokollierung (erfordert aktivierte Debug-Protokollierung in configuration.yaml)"
+        }
+      }
+    }
+  }
+}
