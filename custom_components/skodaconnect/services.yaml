@@ -225,6 +225,14 @@ set_departure_schedule:
       example: true
       selector:
         boolean:
+    spin:
+      name: S-PIN
+      description: >
+        [Optional] Security PIN, required if enabling Auxiliary heater.
+      advanced: true
+      example: 1234
+      selector:
+        text:
     off_peak_active:
       name: Off-peak active
       description: "[Optional] Enable off-peak hours"

@@ -93,6 +93,7 @@ SERVICE_SET_SCHEDULE_SCHEMA = vol.Schema(
         ),
         vol.Optional("charge_target"): vol.In([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]),
         vol.Optional("heater_source"): cv.boolean,
+        vol.Optional("spin"): vol.All(cv.string, vol.Match(r"^[0-9]{4}$")),
         vol.Optional("off_peak_active"): cv.boolean,
         vol.Optional("off_peak_start"): cv.string,
         vol.Optional("off_peak_end"): cv.string,
@@ -289,6 +290,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             # Prepare data
             id = service_call.data.get("id", 0)
             temp = None
+            spin = service_call.data.get("spin", None)
+
 
             # Convert datetime objects to simple strings or check that strings are correctly formatted
             try:
@@ -327,7 +330,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             # Set optional values
             # Heater source
             if service_call.data.get("heater_source", None) is not None:
-                schedule["heaterSource"] = service_call.data.get("heater_source")
+                if service_call.data.get("heater_source", False) is True:
+                    if spin is None:
+                        raise SkodaInvalidRequestException("S-PIN is required when using auxiliary heater.")
+                    schedule["heaterSource"] = "automatic"
+                else:
+                    schedule["heaterSource"] = "electric"
             # Night rate
             if service_call.data.get("off_peak_active", None) is not None:
                 schedule["nightRateActive"] = service_call.data.get("off_peak_active")
@@ -351,13 +359,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             # Find the correct car and execute service call
             car = await get_car(service_call)
             _LOGGER.info(f'Set departure schedule {id} with data {schedule} for car {car.vin}')
-            if await car.set_timer_schedule(id, schedule) is True:
+            state = await car.set_timer_schedule(id, schedule, spin)
+            if state is not False:
                 _LOGGER.debug(f"Service call 'set_schedule' executed without error")
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_schedule' with data '{service_call}'")
         except (SkodaInvalidRequestException) as e:
-            _LOGGER.warning(f"Service call 'set_schedule' failed {e}")
+            _LOGGER.warning(f"Service call 'set_schedule' failed. {e}")
         except Exception as e:
             raise
 
@@ -368,7 +377,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # Get charge limit and execute service call
             limit = service_call.data.get("limit", 50)
-            if await car.set_charge_limit(limit) is True:
+            state = await car.set_charge_limit(limit)
+            if state is not False:
                 _LOGGER.debug(f"Service call 'set_charge_limit' executed without error")
                 await coordinator.async_request_refresh()
             else:
@@ -385,7 +395,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
             # Get charge current and execute service call
             current = service_call.data.get('current', None)
-            if await car.set_charger_current(current) is True:
+            state = await car.set_charger_current(current)
+            if state is not False:
                 _LOGGER.debug(f"Service call 'set_current' executed without error")
                 await coordinator.async_request_refresh()
             else:
@@ -422,7 +433,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 temp = hvpower = spin = None
             # Execute service call
             if await car.set_climatisation(action, temp, hvpower, spin) is True:
-                _LOGGER.debug(f"Service call 'set_climater' executed without error")
+                _LOGGER.debug("Service call 'set_climater' executed without error")
                 await coordinator.async_request_refresh()
             else:
                 _LOGGER.warning(f"Failed to execute service call 'set_climater' with data '{service_call}'")
