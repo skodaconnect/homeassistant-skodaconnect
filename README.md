@@ -2,6 +2,14 @@
 ![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20library)
 ![Downloads](https://img.shields.io/github/downloads/lendy007/homeassistant-skodaconnect/total)
 
+# **Contributors needed**
+Keeping up with changes made from VAG group to the API requires coders familiar with the code and structure for reverse engineering the changes into this code. Contributions in the form of raised issues and pull requests are much needed in order to maintain the functionality for all different models of Skoda cars.
+Up until now I have maintained this code after lendy007 and I have had my own interest in it since I've been using it for controlling my own Skoda. My Skoda Connect subscription is now expired and I won't be renewing it because I'm switching from my current Skoda to another car in the near future. This means that this project needs you, someone familiar with Python and an interest in keeping this code alive, in order to not stop working after the next VAG update.
+Please contact me on the Discord or through email if this person is you.
+
+/TheFarfar (Farfar)
+
+
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
 ## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
