@@ -10,6 +10,10 @@ assignees: Farfar
 **Describe the bug**
 A clear and concise description of what the bug is.
 
+**Is this working in MySkoda app?***
+Logout and login in the MySkoda app, preferably on Android.
+Make sure that you have the latest app updates, sometimes there's new consent needed that will only show in latest app version.
+
 **Latest working release**
 If the problem started after updating to a new release, please state latest working release.
 

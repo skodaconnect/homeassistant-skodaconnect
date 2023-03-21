@@ -703,7 +703,7 @@ class SkodaEntity(Entity):
             )
         if self.instrument.attr in ["plug_autounlock"]:
             if self.instrument.state == True:
-                return "mdi:mdi:battery-lock-open"
+                return "mdi:battery-lock-open"
             else:
                 return "mdi:battery-lock"
         return self.instrument.icon
