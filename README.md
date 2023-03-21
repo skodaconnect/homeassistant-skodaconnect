@@ -120,7 +120,7 @@ Setup multiple vehicles by adding the integration multiple times.
 The integration options can be changed after setup by clicking on the "CONFIGURE" text on the integration.
 The options available are:
 
-- **Poll frequency** The interval (in minutes) that the servers are polled for updated data.
+- **Poll frequency** The interval (in seconds) that the servers are polled for updated data.
 
 - **S-PIN** The S-PIN for the vehicle. This is optional and is only needed for certain vehicle requests/actions (auxiliary heater, lock etc).
 
@@ -169,7 +169,7 @@ Create the automation, in yaml or via GUI editor. You can find the device id by 
      device_id: <Device ID for vehicle>
      duration: >
         {{ trigger.to_state.state }}
-        
+
 ```
 
 ### Charge rate guesstimate
