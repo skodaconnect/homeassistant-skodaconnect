@@ -50,8 +50,8 @@ class SkodaSensor(SkodaEntity, SensorEntity):
         return self.instrument.state
 
     @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement."""
+    def native_unit_of_measurement(self):
+        """Return the native unit of measurement."""
         return self.instrument.unit
 
     @property
