@@ -144,7 +144,7 @@ set_departure_schedule:
           mode: slider
     time:
       name: Time
-      description: "[Required] The time for departure, 24h HH:MM."
+      description: "[Required] The time, in UTC, for departure, 24h HH:MM."
       required: true
       example: "17:00"
       selector:
@@ -242,14 +242,14 @@ set_departure_schedule:
         boolean:
     off_peak_start:
       name: Off-peak Start
-      description: "[Optional] The time when off-peak hours for electric price start, 24h HH:MM."
+      description: "[Optional] The time, in UTC, when off-peak hours for electric price start, 24h HH:MM."
       advanced: true
       example: "00:00"
       selector:
         text:
     off_peak_end:
       name: Off-peak End
-      description: "[Optional] The time when off-peak hours for electric price end, 24h HH:MM."
+      description: "[Optional] The time, in UTC, when off-peak hours for electric price end, 24h HH:MM."
       advanced: true
       example: "06:00"
       selector:
