@@ -2,7 +2,7 @@
 """
 Skoda Connect integration
 
-Read more at https://github.com/lendy007/homeassistant-skodaconnect/
+Read more at https://github.com/skodaconnect/homeassistant-skodaconnect/
 """
 import re
 import asyncio

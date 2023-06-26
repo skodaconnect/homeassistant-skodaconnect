@@ -1,6 +1,6 @@
-![Version](https://img.shields.io/github/v/release/lendy007/homeassistant-skodaconnect?include_prereleases)
+![Version](https://img.shields.io/github/v/release/skodaconnect/homeassistant-skodaconnect?include_prereleases)
 ![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20library)
-![Downloads](https://img.shields.io/github/downloads/lendy007/homeassistant-skodaconnect/total)
+![Downloads](https://img.shields.io/github/downloads/skodaconnect/homeassistant-skodaconnect/total)
 
 # **Contributors needed**
 Keeping up with changes made from VAG group to the API requires coders familiar with the code and structure for reverse engineering the changes into this code. Contributions in the form of raised issues and pull requests are much needed in order to maintain the functionality for all different models of Skoda cars.

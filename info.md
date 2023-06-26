@@ -13,10 +13,10 @@ Please be careful and do NOT install this on production systems. Also make sure 
 {% endif %}
 
 # Changes
-You can find change log under [releases](https://github.com/lendy007/homeassistant-skodaconnect/releases)
+You can find change log under [releases](https://github.com/skodaconnect/homeassistant-skodaconnect/releases)
 
 # Links
-- [Automations](https://github.com/lendy007/homeassistant-skodaconnect/blob/main/README.md#automations)
-- [Change log](https://github.com/lendy007/homeassistant-skodaconnect/releases)
-- [Configuration](https://github.com/lendy007/homeassistant-skodaconnect/blob/main/README.md#configure)
-- [Documentation](https://github.com/lendy007/homeassistant-skodaconnect/blob/main/README.md)
+- [Automations](https://github.com/skodaconnect/homeassistant-skodaconnect/blob/main/README.md#automations)
+- [Change log](https://github.com/skodaconnect/homeassistant-skodaconnect/releases)
+- [Configuration](https://github.com/skodaconnect/homeassistant-skodaconnect/blob/main/README.md#configure)
+- [Documentation](https://github.com/skodaconnect/homeassistant-skodaconnect/blob/main/README.md)
