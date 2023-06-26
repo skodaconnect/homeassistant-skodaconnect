@@ -66,7 +66,7 @@ If this does not work for you and the particular problem you are facing, please 
 
 - Charging power (Watts)
 - Charging rate (km per hour)
-- Charging time left (hours:minute)
+- Charging time left (minutes)
 - Seat heating (???)
 
 ### Under development and BETA functionality (may be buggy)

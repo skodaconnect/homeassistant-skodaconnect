@@ -2,7 +2,7 @@
     "domain": "skodaconnect",
     "name": "Skoda Connect",
     "documentation": "https://github.com/skodaconnect/homeassistant-skodaconnect/blob/main/README.md",
-    "issue_tracker": "https://github.com/skodaconnectlendy007/homeassistant-skodaconnect/issues",
+    "issue_tracker": "https://github.com/skodaconnect/homeassistant-skodaconnect/issues",
     "dependencies": [],
     "config_flow": true,
     "codeowners": [
@@ -10,7 +10,7 @@
         "@Farfar",
 	"@WebSpider"
     ],
-    "requirements": ["skodaconnect>=1.3.5", "homeassistant>=2023.3.0"],
-    "version": "v1.2.4",
+    "requirements": ["skodaconnect>=1.3.6", "homeassistant>=2023.3.0"],
+    "version": "v1.2.5",
     "iot_class": "cloud_polling"
 }
