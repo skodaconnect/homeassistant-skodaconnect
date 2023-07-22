@@ -28,9 +28,14 @@ Initial support has been added for SmartLink and newer style API cars, such as t
 The car privacy settings must be set to "Share my position" for full functionality of this integration. Without this setting, if set to "Use my position", the sensors for position (device tracker), requests remaining and parking time might not work reliably or at all. Set to even stricter privacy setting will limit functionality even further.
 
 ### If you encounter problems
-If you encounter a problem where the integration can't be setup or if you receive an error that there's unaccepted terms or eula, it might be because of your mobile app platform.
-The underlying library is built by reverse engineering the Android App behavious and thus it use the same client configurations as an Adnroid device. If you only use the app on iPhone/iOS devices it might cause issues with this integration.
-A workaround is to open the MySkoda app on an android device and it should present an EULA or new terms and condititions to be accepted.
+If you encounter a problem where the integration can't be setup or if you receive an error that there's unaccepted terms or EULA, it might be because of your mobile app platform.
+The underlying library is built by reverse engineering the Android App behavior and thus it use the same client configurations as an Android device. If you only use the app on iPhone/iOS devices it might cause issues with this integration.
+
+Possible workarounds:
+- On iOS, log in using the old "MySkoda Essentials" app (see #198).
+- Open the MySkoda app on an Android device and it should present an EULA or new terms and conditions to be accepted.
+- Log in through a web browser (https://www.skoda-connect.com/)
+
 If this does not work for you and the particular problem you are facing, please open an issue and provide as detailed problem description as possible and relevant debug logs.
 
 ### What is working, all cars
