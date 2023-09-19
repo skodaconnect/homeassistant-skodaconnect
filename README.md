@@ -172,17 +172,18 @@ Create the automation, in yaml or via GUI editor. You can find the device id by 
 
 ```yaml
 # automations.yaml
-- alias: Set pre-heater duration
+- alias: Pre-heater duration
+  description: ""
   trigger:
-  - platform: state
-    entity_id: input_number.pheater_duration
+    - platform: state
+      entity_id: input_number.pheater_duration
+  condition: []
   action:
-  - service: skodaconnect.set_pheater_duration
-    data_template:
-     device_id: <Device ID for vehicle>
-     duration: >
-        {{ trigger.to_state.state }}
-
+    - service: skodaconnect.set_pheater_duration
+      data_template:
+        device_id: <Your Device ID for vehicle>
+        duration: "{{ (states('input_number.pheater_duration') | float ) | round(0) }}"
+  mode: single
 ```
 
 ### Charge rate guesstimate
