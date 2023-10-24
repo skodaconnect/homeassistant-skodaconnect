@@ -1,0 +1,72 @@
+{
+  "title": "Škoda Connect",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Škoda Connect konfigurácia",
+        "description": "Vyplňte informácie o účte Škoda Connect",
+        "data": {
+          "username": "Email",
+          "password": "Heslo"
+        }
+      },
+      "vehicle": {
+        "title": "Nastavenia vozidla",
+        "description": "Našlo sa nasledujúce vozidlo (vozidlá). Vyberte vozidlo, ktoré chcete sledovať, a jeho nastavenia.\n\nS-PIN sa vyžaduje len pri niektorých špecifických operáciách, ako je uzamknutie/odomknutie a operácie, ktoré aktivujú vyhrievanie spaľovacieho motora.\nMôžete ho nechať prázdne.",
+        "data": {
+          "vehicle": "VIN číslo",
+          "spin": "S-PIN",
+          "store_tokens": "Uložte tokeny relácie v konfigurácii. Umožňuje rýchlejšie spustenie.",
+          "mutable": "Povoliť interakcie s autom (akcie). Zrušte začiarknutie, aby bolo auto 'iba na čítanie'."
+        }
+      },
+      "monitoring": {
+        "title": "Nastavenia monitorovania",
+        "description": "Zadajte ďalšie nastavenia monitorovania.",
+        "data": {
+          "resources": "Zdroje na monitorovanie.",
+          "convert": "Vyberte prevody vzdialenosti/jednotiek.",
+          "scan_interval": "Frekvencia hlasovania (v sekundách).",
+          "debug": "Úplné protokolovanie ladenia API (vyžaduje protokolovanie ladenia povolené v súbore configuration.yaml)"
+        }
+      },
+      "reauth_confirm": {
+        "description": "Znova sa overte pomocou svojho účtu Škoda Connect.\nNezabudnite prijať akúkoľvek novú zmluvu EULA na portáli Škoda Connect (https://www.skoda-connect.com/) pred pokračovaním. ",
+        "data": {
+          "username": "Email",
+          "password": "Heslo"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Auto s týmto VIN je už nakonfigurované",
+      "reauth_successful": "Opätovné overenie bolo úspešné"
+    },
+    "error": {
+      "cannot_connect": "Nepodarilo sa prihlásiť do Skoda Connect, skontrolujte svoje prihlasovacie údaje a overte, či služba funguje",
+      "cannot_update": "Nepodarilo sa vyžiadať aktualizáciu zo Škoda Connect",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "progress": {
+      "task_login": "Prihláste sa do Škoda Connect",
+      "task_update": "Prinášanie vozidiel"
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Možnosti pre Škoda Connect",
+        "description": "Nakonfigurujte nastavenia",
+        "data": {
+          "scan_interval": "Frekvencia hlasovania (sekundy)",
+          "spin": "S-PIN",
+          "mutable": "Povoliť interakcie s autom (akcie). Zrušte začiarknutie, aby bolo auto 'iba na čítanie'.",
+          "store_tokens": "Uložte tokeny relácie v konfigurácii. Umožňuje rýchlejšie spustenie.",
+          "convert": "Vyberte prevody vzdialenosti/jednotiek.",
+          "resources": "Zdroje na monitorovanie.",
+          "debug": "Úplné protokolovanie ladenia API (vyžaduje protokolovanie ladenia povolené v súbore configuration.yaml)"
+        }
+      }
+    }
+  }
+}
