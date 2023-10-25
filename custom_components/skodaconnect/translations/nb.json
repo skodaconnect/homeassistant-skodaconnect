@@ -1,15 +1,73 @@
 {
     "title": "Skoda Connect",
     "config": {
-        "step": {
-            "user": {
-                "title": "Skoda Connect-konfigurasjon",
-                "description": "Fyll ut Skoda Connect-informasjon",
-                "data": {
-                    "username": "Brukernavn",
-                    "password": "Passord"
-                }
-            }
+      "step": {
+        "user": {
+          "title": "Skoda Connect konfigurasjon",
+          "description": "Fyll ut Skoda Connect konto informasjon",
+          "data": {
+            "username": "E-post",
+            "password": "Passord"
+          }
+        },
+        "vehicle": {
+          "title": "Kjøretøyinnstillinger",
+          "description": "Følgende kjøretøy ble funnet, velg kjøretøyet du ønsker å legge til. \n\n S-PIN er kun påkrevd for noen handlinger som låse/låse opp og skru på varme. \nDu kan la den stå tom.",
+          "data": {
+            "vehicle": "VIN nummer",
+            "spin": "S-PIN",
+            "store_tokens": "Lagre sesjon nøklene i konfugurasjonen. Det tillater raskere oppstart.",
+            "mutable": "Tillat interaksjoner med bilen (handlinger). Ikke avhuket tilsvarer 'kun lesetilgang'."
+          }
+        },
+        "monitoring": {
+          "title": "Monitoreringsinnstillinger",
+          "description": "Spesifiser tilleggsmonitorering.",
+          "data": {
+            "resources": "Ressurser som skal monitoreres.",
+            "convert": "Velg avstand/enhet konvertering.",
+            "scan_interval": "Oppdateringsfrekvens (sekunder).",
+            "debug": "Full API debug logging (krever debug logging skrudd på i configuration.yaml)"
+          }
+        },
+        "reauth_confirm": {
+          "description": "Re-autentiser med din Skoda Connect konto. \n Sørg for å akseptere nye EULA retningslinjer i Skoda portalen før du fortsetter. (https://www.skoda-connect.com/) ",
+          "data": {
+            "username": "E-post",
+            "password": "Passord"
+          }
         }
+      },
+      "abort": {
+        "already_configured": "En bil med denne VIN koden er allerede konfigurert",
+        "reauth_successful": "Re-autentiseringen var suksessfull"
+      },
+      "error": {
+        "cannot_connect": "Kunne ikke logge inn i Skoda Connect. Sjekk at du har fylt ut riktig og at tjenesten fungerer hos Skoda",
+        "cannot_update": "Klarte ikke etterspørre oppdatering fra Skoda",
+        "unknown": "[%key:common::config_flow::error::unknown%]"
+      },
+      "progress": {
+        "task_login": "Logger inn i Skoda Connect",
+        "task_update": "Henter kjøretøy"
+      }
+    },
+    "options": {
+      "step": {
+        "user": {
+          "title": "Innstillinger for Skoda Connect",
+          "description": "Konfigurer innstillinger",
+          "data": {
+            "scan_interval": "Oppdateringsfrekvens (sekunder).",
+            "spin": "S-PIN",
+            "mutable": "Tillat interaksjoner med bilen (handlinger). Ikke avhuket tilsvarer 'kun lesetilgang'.",
+            "store_tokens": "Lagre sesjon nøklene i konfugurasjonen. Det tillater raskere oppstart.",
+            "convert": "Velg avstand/enhet konvertering.",
+            "resources": "Ressurser som skal monitoreres.",
+            "debug": "Full API debug logging (krever debug logging skrudd på i configuration.yaml)"
+        }
+        }
+      }
     }
-}
+  }
+  
