@@ -3,6 +3,7 @@
     "name": "Skoda Connect",
     "documentation": "https://github.com/skodaconnect/homeassistant-skodaconnect/blob/main/README.md",
     "issue_tracker": "https://github.com/skodaconnect/homeassistant-skodaconnect/issues",
+    "integration_type": "hub",
     "dependencies": [],
     "config_flow": true,
     "codeowners": [
