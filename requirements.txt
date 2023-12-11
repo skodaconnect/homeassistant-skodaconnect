@@ -1,2 +1,2 @@
-skodaconnect>=1.3.8
+skodaconnect>=1.3.9
 homeassistant>=2023.3.0

@@ -7,11 +7,14 @@
     "dependencies": [],
     "config_flow": true,
     "codeowners": [
-        "@lendy007",
         "@Farfar",
-	"@WebSpider"
+        "@WebSpider",
+        "@dvx76"
     ],
-    "requirements": ["skodaconnect>=1.3.8", "homeassistant>=2023.3.0"],
+    "requirements": [
+        "skodaconnect>=1.3.9",
+        "homeassistant>=2023.3.0"
+    ],
     "version": "v1.2.7",
     "iot_class": "cloud_polling"
 }
