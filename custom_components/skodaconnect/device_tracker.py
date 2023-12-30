@@ -3,7 +3,7 @@ Support for Skoda Connect Platform
 """
 import logging
 
-from homeassistant.components.device_tracker import SOURCE_TYPE_GPS
+from homeassistant.components.device_tracker import SourceType
 from homeassistant.components.device_tracker.config_entry import TrackerEntity
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.util import slugify
@@ -54,7 +54,7 @@ async def async_setup_scanner(hass, config, async_see, discovery_info=None):
         await async_see(
             dev_id=dev_id,
             host_name=host_name,
-            source_type=SOURCE_TYPE_GPS,
+            source_type=SourceType.GPS,
             gps=instrument.state,
             icon="mdi:car",
         )
@@ -78,7 +78,7 @@ class SkodaDeviceTracker(SkodaEntity, TrackerEntity):
     @property
     def source_type(self):
         """Return the source type, eg gps or router, of the device."""
-        return SOURCE_TYPE_GPS
+        return SourceType.GPS
 
     @property
     def force_update(self):
