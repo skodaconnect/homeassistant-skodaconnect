@@ -1,3 +1,4 @@
 custom_components/skodaconnect/__pycache__
 custom_components/.DS_Store
 .DS_Store
+.venv/
