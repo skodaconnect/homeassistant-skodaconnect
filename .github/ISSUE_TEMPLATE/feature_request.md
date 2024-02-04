@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+**Please search issues in https://github.com/skodaconnect/skodaconnect and https://github.com/skodaconnect/homeassistant-skodaconnect for duplicates or fixes before reporting a new issue.**
+
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 

@@ -7,4 +7,6 @@ assignees: ''
 
 ---
 
+**Please search issues in https://github.com/skodaconnect/skodaconnect and https://github.com/skodaconnect/homeassistant-skodaconnect for duplicates or fixes before reporting a new issue.**
+
 
