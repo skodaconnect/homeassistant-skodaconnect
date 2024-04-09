@@ -72,7 +72,7 @@ class SkodaSensor(SkodaEntity, SensorEntity):
         elif self.instrument.attr in [
             'odometer'
         ]:
-            state_class = "total_increasing"
+            state_class = "total"
         else:
             state_class = None
         return state_class
