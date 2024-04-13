@@ -2,22 +2,26 @@
 ![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20library)
 ![Downloads](https://img.shields.io/github/downloads/skodaconnect/homeassistant-skodaconnect/total)
 
-# **Contributors needed**
-Keeping up with changes made from VAG group to the API requires coders familiar with the code and structure for reverse engineering the changes into this code. Contributions in the form of raised issues and pull requests are much needed in order to maintain the functionality for all different models of Skoda cars.
-Up until now I have maintained this code after lendy007 and I have had my own interest in it since I've been using it for controlling my own Skoda. My Skoda Connect subscription is now expired and I won't be renewing it because I'm switching from my current Skoda to another car in the near future. This means that this project needs you, someone familiar with Python and an interest in keeping this code alive, in order to not stop working after the next VAG update.
-Please contact me on the Discord or through email if this person is you.
+# **Maintainers and contributors needed**
 
-/TheFarfar (Farfar)
+Keeping up with changes made by Skoda/VAG to the API requires coders with access to various cars and the ability to reverse engineer changes and new features into this project. Contributions in the form of raised issues and pull requests are much needed in order to maintain the functionality for all different models of Skoda cars.
 
+Contributors and maintainers will naturally drift away from the project once they either no longer own a Skoda or move away from Home Assistant. As a results, there aren't really any long-term maintainers or contributors still active. But we do what we can to keep the project alive and up to date.
+
+For questions, further help or contributions you can join the Discord server at https://discord.gg/826X9jEtCh.
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
-## This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
+If you are new to Home Assistant, please read the [Home Assistant documentation](https://www.home-assistant.io/docs/) first.
+
+This is fork of [robinostlund/homeassistant-volkswagencarnet](https://github.com/robinostlund/homeassistant-volkswagencarnet) modified to support Skoda Connect/MySkoda through native app API (API calls directly to vwg-connect services)
 
 This integration for Home Assistant will fetch data from Skoda Connect servers related to your Skoda Connect enabled car.
 Skoda Connect never fetch data directly from car, the car sends updated data to VAG servers on specific events such as lock/unlock, charging events, climatisation events and when vehicle is parked. The integration will then fetch this data from the servers.
 When vehicle actions fails or return with no response, a force refresh might help. This will trigger a "wake up" call from VAG servers to the car.
 The scan_interval is how often the integration should fetch data from the servers, if there's no new data from the car then entities won't be updated.
+
+This project contains the Home Assistant custom component code. It depends on https://github.com/skodaconnect/skodaconnect which provides the Python library interacting with the Skoda API.
 
 ### Supported setups
 
@@ -28,12 +32,12 @@ Initial support has been added for SmartLink and newer style API cars, such as t
 The car privacy settings must be set to "Share my position" for full functionality of this integration. Without this setting, if set to "Use my position", the sensors for position (device tracker), requests remaining and parking time might not work reliably or at all. Set to even stricter privacy setting will limit functionality even further.
 
 ### If you encounter problems
+
 If you encounter a problem where the integration can't be setup or if you receive an error that there's unaccepted terms or EULA, it might be because of your mobile app platform.
 The underlying library is built by reverse engineering the Android App behavior and thus it use the same client configurations as an Android device. If you only use the app on iPhone/iOS devices it might cause issues with this integration.
 
 Possible workarounds:
-- On iOS, log in using the old "MySkoda Essentials" app (see #198).
-- Open the MySkoda app on an Android device and it should present an EULA or new terms and conditions to be accepted.
+- Log in using the **old** "MySkoda Essentials" iOS/Android app (see #198). It should present an EULA or new terms and conditions to be accepted.
 - Log in through a web browser (https://www.skoda-connect.com/)
 
 If this does not work for you and the particular problem you are facing, please open an issue and provide as detailed problem description as possible and relevant debug logs.
@@ -97,7 +101,7 @@ If this does not work for you and the particular problem you are facing, please 
 ### Breaking changes
 
 - Combustion heater/ventilation is now named parking heater so it's not mixed up with aux heater for PHEV
-- Many resources have changed names to avoid confusion in the code, some have changed from sensor to switch and vice versa. Sensors with trailing "_km" in the name has been renamed to "_distance" for better compability between imperial and non-imperial units.
+- Many resources have changed names to avoid confusion in the code, some have changed from sensor to switch and vice versa. Sensors with trailing "_km" in the name has been renamed to "_distance" for better compatibility between imperial and non-imperial units.
 - Major code changes has been made for requests handling.
   - request_in_progress is now a binary sensor instead of a switch
   - force_data_refresh is a new switch with the same functionality as "request_in_progress" previously, it will force refresh data from car
@@ -119,6 +123,35 @@ Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/cus
 ```sh
 pip install skodaconnect
 ```
+
+## Enable debug logging
+
+For comprehensive debug logging you can add this to your `<config dir>/configuration.yaml`:
+
+```yaml
+logger:
+  default: info
+  logs:
+    skodaconnect.connection: debug
+    skodaconnect.vehicle: debug
+    custom_components.skodaconnect: debug
+    custom_components.skodaconnect.climate: debug
+    custom_components.skodaconnect.lock: debug
+    custom_components.skodaconnect.device_tracker: debug
+    custom_components.skodaconnect.switch: debug
+    custom_components.skodaconnect.binary_sensor: debug
+    custom_components.skodaconnect.sensor: debug
+ ```
+
+- **skodaconnect.connection:** Set the debug level for the Connection class of the Skoda Connect library. This handles the GET/SET requests towards the API
+
+- **skodaconnect.vehicle:** Set the debug level for the Vehicle class of the Skoda Connect library. One object created for every vehicle in account and stores all data.
+
+- **skodaconnect.dashboard:** Set the debug level for the Dashboard class of the Skoda Connect library. A wrapper class between hass component and library.
+
+- **custom_components.skodaconnect:** Set debug level for the custom component. The communication between hass and library.
+
+- **custom_components.skodaconnect.XYZ** Sets debug level for individual entity types in the custom component.
 
 ## Configuration
 
@@ -286,36 +319,3 @@ This might be broken since 1.0.30 when device_tracker changed behaviour.
         entity_id: media_player.kitchen
         message: "My Lord, the car is unlocked. Please attend this this issue at your earliest inconvenience!"
 ```
-
-## Enable debug logging
-
-For comprehensive debug logging you can add this to your `<config dir>/configuration.yaml`:
-
-```yaml
-logger:
-  default: info
-  logs:
-    skodaconnect.connection: debug
-    skodaconnect.vehicle: debug
-    custom_components.skodaconnect: debug
-    custom_components.skodaconnect.climate: debug
-    custom_components.skodaconnect.lock: debug
-    custom_components.skodaconnect.device_tracker: debug
-    custom_components.skodaconnect.switch: debug
-    custom_components.skodaconnect.binary_sensor: debug
-    custom_components.skodaconnect.sensor: debug
- ```
-
-- **skodaconnect.connection:** Set the debug level for the Connection class of the Skoda Connect library. This handles the GET/SET requests towards the API
-
-- **skodaconnect.vehicle:** Set the debug level for the Vehicle class of the Skoda Connect library. One object created for every vehicle in account and stores all data.
-
-- **skodaconnect.dashboard:** Set the debug level for the Dashboard class of the Skoda Connect library. A wrapper class between hass component and library.
-
-- **custom_components.skodaconnect:** Set debug level for the custom component. The communication between hass and library.
-
-- **custom_components.skodaconnect.XYZ** Sets debug level for individual entity types in the custom component.
-
-## Further help or contributions
-
-For questions, further help or contributions you can join the Discord server at <https://discord.gg/826X9jEtCh>
