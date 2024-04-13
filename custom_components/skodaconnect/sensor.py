@@ -64,11 +64,16 @@ class SkodaSensor(SkodaEntity, SensorEntity):
     @property
     def state_class(self):
         """Return the state_class for the sensor, to enable statistics"""
-        state_class = None
         if self.instrument.attr in [
             'battery_level', 'adblue_level', 'fuel_level', 'charging_time_left', 'charging_power', 'charge_rate',
             'electric_range', 'combustion_range', 'combined_range', 'outside_temperature'
         ]:
             state_class = "measurement"
+        elif self.instrument.attr in [
+            'odometer'
+        ]:
+            state_class = "total"
+        else:
+            state_class = None
         return state_class
 
