@@ -12,9 +12,9 @@
         "@dvx76"
     ],
     "requirements": [
-        "skodaconnect==1.3.10",
-        "homeassistant>=2023.3.0"
+        "skodaconnect==1.3.11",
+        "homeassistant>=2024.4.0"
     ],
-    "version": "v1.2.9",
+    "version": "v1.2.10",
     "iot_class": "cloud_polling"
 }
