@@ -230,17 +230,15 @@ template:
   - sensor:
     - name: "Charge speed guesstimate"
       state: >
-        {% if is_state('switch.<name>_charging', 'on') %}
-        {% set maxcharge = <capacity> %}
-        {% set percentleft = 100 - states('sensor.<name>_battery_level') | int %}
-        {% set hoursleft = states('sensor.<name>_charging_time_left').split(':')[0] | int  %}
-        {% set minutesleft = states('sensor.<name>_charging_time_left').split(':')[1] | int %}
-        {% set totalminutesleft = hoursleft*60 + minutesleft %}
-        {% set chargeleft = maxcharge * percentleft / 100  %}
-        {% set chargespeed = chargeleft / (totalminutesleft / 60)  %}
-        {{ (chargespeed / 1000) | round(1) }}
+        {% if is_state('switch.skoda_<name>_charging', 'on') %}
+          {% set battery_capacity = <battery-size-in-kwh> | int %}
+          {% set charge = { "remaining": states('sensor.skoda_<name>_minimum_charge_level') | int - states('sensor.skoda_<name>_battery_level') | int } %}
+          {% set timeleft = states('sensor.skoda_<name>_charging_time_left') | int %}
+          {% set chargeleft = battery_capacity * charge.remaining / 100  %}
+          {% set chargespeed = chargeleft / (timeleft / 60) %}
+          {{ chargespeed | round (1) }}
         {% else %}
-        0
+          0
         {% endif %}
       unit_of_measurement: "kW"
       state_class: measurement
