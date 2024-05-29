@@ -2,6 +2,16 @@
 ![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20library)
 ![Downloads](https://img.shields.io/github/downloads/skodaconnect/homeassistant-skodaconnect/total)
 
+# **IMPORTANT NOTE**
+
+This integration currently only supports the old Skoda API compatible with the old Skoda Essentials App.
+
+If you are unable to use the Skoda Essentials account the integration will not work for you. This is the case for new vehicles and/or Skoda accounts.
+
+We are aware the Skoda Essentials app is being deprecated and are working on updating the integration to be compatible with the new API / MySkoda app, but this is a major piece of development work.
+
+Please do not open new issues for this.
+
 # **Maintainers and contributors needed**
 
 Keeping up with changes made by Skoda/VAG to the API requires coders with access to various cars and the ability to reverse engineer changes and new features into this project. Contributions in the form of raised issues and pull requests are much needed in order to maintain the functionality for all different models of Skoda cars.
