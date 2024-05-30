@@ -1,6 +1,16 @@
 
 This plugin allows you to use Skoda Connect connection to your car.
 
+## IMPORTANT NOTE
+
+This integration currently only supports the old Skoda API compatible with the old Skoda Essentials App.
+
+If you are unable to use the Skoda Essentials account the integration will not work for you. This is the case for new vehicles and/or Skoda accounts.
+
+We are aware the Skoda Essentials app is being deprecated and are working on updating the integration to be compatible with the new API / MySkoda app, but this is a major piece of development work.
+
+Please do not open new issues for this.
+
 {%- if selected_tag == "master" %}
 ## This is a development version!
 This is **only** intended for test by developers!
