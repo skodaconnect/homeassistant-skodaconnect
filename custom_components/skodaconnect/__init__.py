@@ -253,9 +253,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     for component in components:
         coordinator.platforms.append(component)
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, component)
-        )
+        await hass.config_entries.async_forward_entry_setup(entry, component)
 
     # Service functions
     async def get_car(service_call):
