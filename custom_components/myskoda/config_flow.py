@@ -13,7 +13,7 @@ from homeassistant.const import (
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from skodaconnect import Connection
+from myskoda import Connection
 from .const import (
     CONF_CONVERT,
     CONF_NO_CONVERSION,
@@ -34,7 +34,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class MySkodaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 3
     task_login: asyncio.Task | None = None
     task_finish: asyncio.Task | None = None
@@ -413,11 +413,11 @@ class SkodaConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry):
         """Get the options flow for this handler."""
-        return SkodaConnectOptionsFlowHandler(config_entry)
+        return MySkodaOptionsFlowHandler(config_entry)
 
 
-class SkodaConnectOptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle SkodaConnect options."""
+class MySkodaOptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle MySkoda options."""
 
     def __init__(self, config_entry: ConfigEntry):
         """Initialize domain options flow."""

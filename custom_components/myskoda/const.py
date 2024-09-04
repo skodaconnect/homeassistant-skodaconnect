@@ -1,4 +1,4 @@
-DOMAIN = "skodaconnect"
+DOMAIN = "myskoda"
 DATA_KEY = DOMAIN
 
 # Configuration definitions

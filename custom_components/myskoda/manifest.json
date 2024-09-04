@@ -1,0 +1,18 @@
+{
+    "domain": "myskoda",
+    "name": "MySkoda",
+    "documentation": "https://github.com/skodaconnect/homeassistant-myskoda/blob/main/README.md",
+    "issue_tracker": "https://github.com/skodaconnect/homeassistant-myskoda/issues",
+    "integration_type": "hub",
+    "dependencies": [],
+    "config_flow": true,
+    "codeowners": [
+        "@dvx76",
+        "@WebSpider"
+    ],
+    "requirements": [
+        "homeassistant>=2024.4.0"
+    ],
+    "version": "v0.0.1",
+    "iot_class": "cloud_polling"
+}

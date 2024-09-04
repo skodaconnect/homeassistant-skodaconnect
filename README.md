@@ -1,6 +1,12 @@
-![Version](https://img.shields.io/github/v/release/skodaconnect/homeassistant-skodaconnect?include_prereleases)
+![Version](https://img.shields.io/github/v/release/skodaconnect/homeassistant-myskoda?include_prereleases)
 ![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20library)
-![Downloads](https://img.shields.io/github/downloads/skodaconnect/homeassistant-skodaconnect/total)
+![Downloads](https://img.shields.io/github/downloads/skodaconnect/homeassistant-myskoda/total)
+
+# DO NOT USE
+
+This fork of https://github.com/skodaconnect/homeassistant-skodaconnect is used to switch to the new MySkoda API and is not ready for use.
+
+Use https://github.com/skodaconnect/homeassistant-skodaconnect
 
 # **IMPORTANT NOTE**
 
@@ -31,7 +37,7 @@ Skoda Connect never fetch data directly from car, the car sends updated data to 
 When vehicle actions fails or return with no response, a force refresh might help. This will trigger a "wake up" call from VAG servers to the car.
 The scan_interval is how often the integration should fetch data from the servers, if there's no new data from the car then entities won't be updated.
 
-This project contains the Home Assistant custom component code. It depends on https://github.com/skodaconnect/skodaconnect which provides the Python library interacting with the Skoda API.
+This project contains the Home Assistant custom component code. It depends on https://github.com/skodaconnect/myskoda which provides the Python library interacting with the Skoda API.
 
 ### Supported setups
 
@@ -127,11 +133,11 @@ If you don't have it installed, check it out here: [HACS](https://community.home
 
 ### Manual installation
 
-Clone or copy the repository and copy the folder 'homeassistant-skodaconnect/custom_component/skodaconnect' into '[config dir]/custom_components'.
+Clone or copy the repository and copy the folder 'homeassistant-myskoda/custom_component/skodaconnect' into '[config dir]/custom_components'.
   Install required python library with (adjust to suit your environment):
 
 ```sh
-pip install skodaconnect
+pip install myskoda
 ```
 
 ## Enable debug logging
@@ -142,32 +148,32 @@ For comprehensive debug logging you can add this to your `<config dir>/configura
 logger:
   default: info
   logs:
-    skodaconnect.connection: debug
-    skodaconnect.vehicle: debug
-    custom_components.skodaconnect: debug
-    custom_components.skodaconnect.climate: debug
-    custom_components.skodaconnect.lock: debug
-    custom_components.skodaconnect.device_tracker: debug
-    custom_components.skodaconnect.switch: debug
-    custom_components.skodaconnect.binary_sensor: debug
-    custom_components.skodaconnect.sensor: debug
+    myskoda.connection: debug
+    myskoda.vehicle: debug
+    custom_components.myskoda: debug
+    custom_components.myskoda.climate: debug
+    custom_components.myskoda.lock: debug
+    custom_components.myskoda.device_tracker: debug
+    custom_components.myskoda.switch: debug
+    custom_components.myskoda.binary_sensor: debug
+    custom_components.myskoda.sensor: debug
  ```
 
-- **skodaconnect.connection:** Set the debug level for the Connection class of the Skoda Connect library. This handles the GET/SET requests towards the API
+- **myskoda.connection:** Set the debug level for the Connection class of the Skoda Connect library. This handles the GET/SET requests towards the API
 
-- **skodaconnect.vehicle:** Set the debug level for the Vehicle class of the Skoda Connect library. One object created for every vehicle in account and stores all data.
+- **myskoda.vehicle:** Set the debug level for the Vehicle class of the Skoda Connect library. One object created for every vehicle in account and stores all data.
 
-- **skodaconnect.dashboard:** Set the debug level for the Dashboard class of the Skoda Connect library. A wrapper class between hass component and library.
+- **myskoda.dashboard:** Set the debug level for the Dashboard class of the Skoda Connect library. A wrapper class between hass component and library.
 
-- **custom_components.skodaconnect:** Set debug level for the custom component. The communication between hass and library.
+- **custom_components.myskoda:** Set debug level for the custom component. The communication between hass and library.
 
-- **custom_components.skodaconnect.XYZ** Sets debug level for individual entity types in the custom component.
+- **custom_components.myskoda.XYZ** Sets debug level for individual entity types in the custom component.
 
 ## Configuration
 
 Configuration in configuration.yaml is now deprecated and can interfere with setup of the integration.
 To configure the integration, go to Configuration in the side panel of Home Assistant and then select Integrations.
-Click on the "ADD INTEGRATION" button in the bottom right corner and search/select skodaconnect.
+Click on the "ADD INTEGRATION" button in the bottom right corner and search/select myskoda.
 Follow the steps and enter the required information. Because of how the data is stored and handled in Home Assistant, there will be one integration per vehicle.
 Setup multiple vehicles by adding the integration multiple times.
 
@@ -176,7 +182,7 @@ Setup multiple vehicles by adding the integration multiple times.
 The integration options can be changed after setup by clicking on the "CONFIGURE" text on the integration.
 The options available are:
 
-- **Poll frequency** The interval (in seconds) that the servers are polled for updated data. Several users have reported being rate limited (HTTP 429) when using 60s or lower. It is recommended to start with a value of 120s or 180s. See [#215](https://github.com/skodaconnect/homeassistant-skodaconnect/issues/215).
+- **Poll frequency** The interval (in seconds) that the servers are polled for updated data. Several users have reported being rate limited (HTTP 429) when using 60s or lower. It is recommended to start with a value of 120s or 180s. See [#215](https://github.com/skodaconnect/homeassistant-myskoda/issues/215).
 
 - **S-PIN** The S-PIN for the vehicle. This is optional and is only needed for certain vehicle requests/actions (auxiliary heater, lock etc).
 
@@ -222,7 +228,7 @@ Create the automation, in yaml or via GUI editor. You can find the device id by 
       entity_id: input_number.pheater_duration
   condition: []
   action:
-    - service: skodaconnect.set_pheater_duration
+    - service: myskoda.set_pheater_duration
       data_template:
         device_id: <Your Device ID for vehicle>
         duration: "{{ (states('input_number.pheater_duration') | float ) | round(0) }}"

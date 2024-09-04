@@ -17,6 +17,6 @@ We are aware the Skoda Essentials app is being deprecated and are working on upd
 
 Please do not open new issues for this.
 
-**Please search issues in https://github.com/skodaconnect/skodaconnect and https://github.com/skodaconnect/homeassistant-skodaconnect for duplicates or fixes before reporting a new issue.**
+**Please search issues in https://github.com/skodaconnect/myskoda and https://github.com/skodaconnect/homeassistant-myskoda for duplicates or fixes before reporting a new issue.**
 
 

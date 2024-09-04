@@ -12,7 +12,7 @@ set_charge_limit:
       required: true
       selector:
         device:
-          integration: skodaconnect
+          integration: myskoda
     limit:
       name: Limit
       description: The charging upper limit
@@ -34,7 +34,7 @@ set_charger_max_current:
       required: true
       selector:
         device:
-          integration: skodaconnect
+          integration: myskoda
     current:
       name: Current
       description: >
@@ -56,7 +56,7 @@ set_pheater_duration:
       required: true
       selector:
         device:
-          integration: skodaconnect
+          integration: myskoda
     duration:
       name: Runtime
       description: Runtime for heating or ventilation of the parking heater.
@@ -78,7 +78,7 @@ set_climater:
       required: true
       selector:
         device:
-          integration: skodaconnect
+          integration: myskoda
     enabled:
       name: Activate
       description: Start or stop the climatisation
@@ -131,7 +131,7 @@ set_departure_schedule:
       required: true
       selector:
         device:
-          integration: skodaconnect
+          integration: myskoda
     id:
       name: ID
       description: "[Required] Which departure schedule to change."
