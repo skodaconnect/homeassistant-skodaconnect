@@ -2,23 +2,17 @@
 ![PyPi](https://img.shields.io/pypi/v/skodaconnect?label=latest%20library)
 ![Downloads](https://img.shields.io/github/downloads/skodaconnect/homeassistant-skodaconnect/total)
 
-# **IMPORTANT NOTE**
+# **DEPRECATION NOTICE**
 
-This integration currently only supports the old Skoda API compatible with the old Skoda Essentials App.
+This integration only supports the 'old' Skoda API (associated with the old mobile app called _Skoda Essentials_) and will stop working when Skoda shuts down the old API. This is announced to be on December 2nd 2024 but that date has shifted already in the past.
 
-If you are unable to use the Skoda Essentials account the integration will not work for you. This is the case for new vehicles and/or Skoda accounts.
+If you are unable to use the Skoda Essentials app then this integration will **not** work for you. This is reported to be the case for newer Skoda accounts.
 
-We are aware the Skoda Essentials app is being deprecated and are working on updating the integration to be compatible with the new API / MySkoda app, but this is a major piece of development work.
+Development on this integration has essentially completely halted and it will not be updated to support the new app/API.
 
-Please do not open new issues for this.
+A new integration is being developed to work with the 'new' Skoda API (associated with the new mobile app called _MySkoda_): https://github.com/skodaconnect/homeassistant-myskoda
 
-# **Maintainers and contributors needed**
-
-Keeping up with changes made by Skoda/VAG to the API requires coders with access to various cars and the ability to reverse engineer changes and new features into this project. Contributions in the form of raised issues and pull requests are much needed in order to maintain the functionality for all different models of Skoda cars.
-
-Contributors and maintainers will naturally drift away from the project once they either no longer own a Skoda or move away from Home Assistant. As a results, there aren't really any long-term maintainers or contributors still active. But we do what we can to keep the project alive and up to date.
-
-For questions, further help or contributions you can join the Discord server at https://discord.gg/826X9jEtCh.
+The new integration is actively developed and only a few models are (partially) supported at this time. Still we highly encourage everyone to try out the new integration and provide feedback through Github issues or [Discord](https://discord.gg/826X9jEtCh).
 
 # Skoda Connect - A Home Assistant custom component for Skoda Connect/MyŠKODA
 
